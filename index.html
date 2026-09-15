@@ -1771,8 +1771,15 @@ function fromRow(store, row) {
 
 function dbFail(context, error) {
   console.error("Veritabanı hatası (" + context + "):", error);
-  showToast("Bağlantı sorunu: değişiklik kaydedilemedi. İnternetini kontrol et.");
-  throw error;
+  const msg = (error && (error.message || error.hint)) || "bilinmeyen hata";
+  if (/does not exist|schema cache|relation/i.test(String(msg))) {
+    showToast("Veritabanı tabloları bulunamadı — kurulum betiğini çalıştır.");
+  } else {
+    showToast("Kaydedilemedi: " + msg);
+  }
+  const err = new Error(msg);
+  err.original = error;
+  throw err;
 }
 
 async function getAll(store) {
@@ -2143,8 +2150,26 @@ async function seedBundledDataIfNeeded() {
    BAŞLATMA
    ======================================================= */
 async function startApp() {
-  await reloadAll();
-  await seedBundledDataIfNeeded();
+  try {
+    await reloadAll();
+  } catch (e) {
+    const msg = String((e && e.message) || e);
+    if (/does not exist|schema cache|relation/i.test(msg)) {
+      showBlockingMessage(
+        "Veritabanı tabloları bulunamadı",
+        "Supabase'de kurulum betiği henüz çalıştırılmamış görünüyor. Supabase panelinde SQL Editor → New query → supabase-kurulum.sql dosyasının içeriğini yapıştır → Run. Sonra bu sayfayı yenile."
+      );
+    } else {
+      showBlockingMessage("Veriler yüklenemedi", msg);
+    }
+    return;
+  }
+  try {
+    await seedBundledDataIfNeeded();
+  } catch (e) {
+    showBlockingMessage("İlk veriler yüklenemedi", String((e && e.message) || e));
+    return;
+  }
   subscribeToChanges();
   refreshDatalists(true);
   bindNav();
@@ -2160,6 +2185,18 @@ async function startApp() {
   renderSuppliersView();
   renderReportsView();
   checkDailyDigest();
+}
+
+function showBlockingMessage(title, detail) {
+  const main = document.querySelector(".main-content");
+  if (!main) return;
+  main.innerHTML = `
+    <div class="empty-state" style="text-align:left; max-width:620px;">
+      <h2 style="font-family:var(--font-display); font-size:18px; margin:0 0 10px;">${escapeHtml(title)}</h2>
+      <p style="margin:0 0 16px; line-height:1.6;">${escapeHtml(detail)}</p>
+      <button class="btn btn-primary" onclick="location.reload()">Sayfayı Yenile</button>
+    </div>
+  `;
 }
 
 /* =======================================================
