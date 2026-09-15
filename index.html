@@ -1567,7 +1567,6 @@ body::after {
 
 <script id="prontoSeedData" type="application/json">{"orders":[],"customers":[],"suppliers":[],"products":[]}</script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script src="./pronto-runtime-config.js"></script>
 <script>
 "use strict";
 
@@ -1581,9 +1580,11 @@ body::after {
    bu dosyada DEĞİL, Supabase tarafında tutulur.
    ======================================================= */
 const PRONTO_CONFIG = Object.freeze({
-  url: String(window.__PRONTO_RUNTIME_CONFIG__?.url || "").trim(),
-  anonKey: String(window.__PRONTO_RUNTIME_CONFIG__?.anonKey || "").trim(),
-  sharedEmail: String(window.__PRONTO_RUNTIME_CONFIG__?.sharedEmail || "").trim()
+  // Supabase Publishable Key: tarayıcıda kullanılmak üzere tasarlanmıştır.
+  // Service-role key / gizli anahtar kesinlikle burada kullanılmamalıdır.
+  url: "https://ehdoledrfdoluixohypp.supabase.co",
+  anonKey: "sb_publishable_S20ikh0v3dOAFjY-zX6p8Q_aHATfRxW",
+  sharedEmail: "ekip@ofischi.local"
 });
 
 // 3 yanlış parola denemesi = 1 saat giriş kilidi.
@@ -1726,8 +1727,8 @@ function supabaseSetupProblem() {
     const u = new URL(PRONTO_CONFIG.url);
     validUrl = u.protocol === "https:" && !!u.hostname && !/[\s<>]/.test(u.toString());
   } catch (_) {}
-  if (!validUrl) return "Güvenli Supabase URL yapılandırması eksik.";
-  if (!PRONTO_CONFIG.anonKey || PRONTO_CONFIG.anonKey.length < 20 || /[<>\s]/.test(PRONTO_CONFIG.anonKey)) return "Supabase runtime anahtarı eksik veya geçersiz.";
+  if (!validUrl) return "Supabase URL yapılandırması eksik veya geçersiz.";
+  if (!PRONTO_CONFIG.anonKey || PRONTO_CONFIG.anonKey.length < 20 || /[<>\s]/.test(PRONTO_CONFIG.anonKey)) return "Supabase Publishable Key eksik veya geçersiz.";
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(PRONTO_CONFIG.sharedEmail)) return "Ortak giriş hesabı yapılandırması geçersiz.";
   if (!window.supabase) return "Supabase kütüphanesi yüklenemedi. İnternet bağlantısını kontrol et.";
   return null;
