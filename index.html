@@ -1834,11 +1834,37 @@ async function getAll(store) {
   return rows.map((r) => fromRow(store, r));
 }
 
+function upsertLocalStore(store, data) {
+  const list = Array.isArray(data) ? data : [data];
+  if (!list.length) return;
+  const target = store === "orders" ? allOrders : store === "products" ? allProducts : store === "customers" ? allCustomers : store === "suppliers" ? allSuppliers : allStockMovements;
+  if (!Array.isArray(target)) return;
+  for (const item of list) {
+    if (!item || item.id == null) continue;
+    const idx = target.findIndex((x) => x.id === item.id);
+    if (idx >= 0) target[idx] = item; else target.push(item);
+  }
+  if (store === "orders") sortedOrders = allOrders.slice().sort((a, b) => b.id - a.id);
+  if (store === "stockMovements") stockLoaded = true;
+  rebuildDerivedIndexes();
+}
+
+function removeLocalStore(store, id) {
+  const target = store === "orders" ? allOrders : store === "products" ? allProducts : store === "customers" ? allCustomers : store === "suppliers" ? allSuppliers : allStockMovements;
+  if (!Array.isArray(target)) return;
+  const idx = target.findIndex((x) => x.id === id);
+  if (idx >= 0) target.splice(idx, 1);
+  if (store === "orders") sortedOrders = allOrders.slice().sort((a, b) => b.id - a.id);
+  rebuildDerivedIndexes();
+}
+
 async function dbAdd(store, obj) {
   await throttleApi();
-  const { data, error } = await supa.from(TABLES[store]).insert(toRow(store, obj)).select("id").single();
+  const { data, error } = await supa.from(TABLES[store]).insert(toRow(store, obj)).select(STORE_COLUMNS[store]).single();
   if (error) dbFail("ekleme: " + store, error);
-  return data.id;
+  const local = fromRow(store, data);
+  upsertLocalStore(store, local);
+  return local.id;
 }
 
 async function dbAddMany(store, list) {
@@ -1847,15 +1873,17 @@ async function dbAddMany(store, list) {
   for (let i = 0; i < list.length; i += chunk) {
     const rows = list.slice(i, i + chunk).map((o) => toRow(store, o));
     await throttleApi();
-    const { error } = await supa.from(TABLES[store]).insert(rows);
+    const { data, error } = await supa.from(TABLES[store]).insert(rows).select(STORE_COLUMNS[store]);
     if (error) dbFail("toplu ekleme: " + store, error);
+    upsertLocalStore(store, (data || []).map((r) => fromRow(store, r)));
   }
 }
 
 async function dbPut(store, obj) {
   await throttleApi();
-  const { error } = await supa.from(TABLES[store]).update(toRow(store, obj)).eq("id", obj.id);
+  const { data, error } = await supa.from(TABLES[store]).update(toRow(store, obj)).eq("id", obj.id).select(STORE_COLUMNS[store]).single();
   if (error) dbFail("güncelleme: " + store, error);
+  upsertLocalStore(store, fromRow(store, data));
   return obj.id;
 }
 
@@ -1864,19 +1892,59 @@ async function dbDelete(store, id) {
   await throttleApi();
   const { error } = await supa.from(TABLES[store]).delete().eq("id", safeId);
   if (error) dbFail("silme: " + store, error);
+  removeLocalStore(store, safeId);
 }
 
 async function dbClear(store) {
   await throttleApi();
   const { error } = await supa.from(TABLES[store]).delete().gte("id", 0);
   if (error) dbFail("temizleme: " + store, error);
+  const target = store === "orders" ? allOrders : store === "products" ? allProducts : store === "customers" ? allCustomers : store === "suppliers" ? allSuppliers : allStockMovements;
+  if (Array.isArray(target)) target.length = 0;
+  if (store === "orders") sortedOrders = [];
+  if (store === "stockMovements") stockLoaded = true;
+  rebuildDerivedIndexes();
 }
 
-/* Başka biri değişiklik yapınca ekranı tazele */
+/* Başka biri değişiklik yapınca sadece değişen kaydı yerelde güncelle.
+   Böylece her değişiklikte 4-5 adet SELECT atılmaz; trafik ciddi azalır. */
 let stockLoaded = false;
 let sortedOrders = [];
 let remoteRefreshTimer = null;
-const pendingRemoteStores = new Set();
+const pendingRemotePayloads = new Map();
+
+let reservedByProduct = new Map();
+let supplierByProductId = new Map();
+
+function rebuildDerivedIndexes() {
+  reservedByProduct = new Map();
+  for (const o of allOrders) {
+    if (o.status === "Teslim Edildi" || o.status === "İptal") continue;
+    const key = normName(o.product);
+    if (!key) continue;
+    reservedByProduct.set(key, (reservedByProduct.get(key) || 0) + (Number(o.quantity) || 0));
+  }
+
+  supplierByProductId = new Map();
+  const movementBest = new Map();
+  for (const m of allStockMovements) {
+    if (m.type !== "stock-in" || !m.supplier) continue;
+    const key = m.productId != null ? `id:${m.productId}` : `name:${normName(m.productName)}`;
+    const prev = movementBest.get(key);
+    if (!prev || (m.date || "") > (prev.date || "") || ((m.date || "") === (prev.date || "") && (m.id || 0) > (prev.id || 0))) movementBest.set(key, m);
+  }
+  for (const p of allProducts) {
+    const direct = movementBest.get(`id:${p.id}`) || movementBest.get(`name:${normName(p.name)}`);
+    if (direct) { supplierByProductId.set(p.id, direct.supplier); continue; }
+    let best = null;
+    const pn = normName(p.name);
+    for (const o of allOrders) {
+      if (normName(o.product) !== pn || !o.supplier) continue;
+      if (!best || (o.orderDate || "") > (best.orderDate || "") || ((o.orderDate || "") === (best.orderDate || "") && o.id > best.id)) best = o;
+    }
+    if (best) supplierByProductId.set(p.id, best.supplier);
+  }
+}
 
 function applyStoreData(store, data) {
   if (store === "orders") { allOrders = data; sortedOrders = data.slice().sort((a, b) => b.id - a.id); }
@@ -1884,6 +1952,7 @@ function applyStoreData(store, data) {
   else if (store === "customers") allCustomers = data;
   else if (store === "suppliers") allSuppliers = data;
   else if (store === "stockMovements") { allStockMovements = data; stockLoaded = true; }
+  rebuildDerivedIndexes();
 }
 async function reloadStore(store) { applyStoreData(store, await getAll(store)); }
 async function ensureStockLoaded(force = false) { if (stockLoaded && !force) return; await reloadStore("stockMovements"); }
@@ -1894,33 +1963,38 @@ function subscribeToChanges() {
       const table = payload && payload.table;
       const store = Object.keys(TABLES).find((k) => TABLES[k] === table);
       if (!store) return;
-      pendingRemoteStores.add(store);
+      const row = payload.eventType === "DELETE" ? payload.old : payload.new;
+      if (!row || row.id == null) return;
+      pendingRemotePayloads.set(`${store}:${row.id}`, { store, eventType: payload.eventType, row });
       scheduleRemoteRefresh();
     }).subscribe();
 }
 function scheduleRemoteRefresh() {
   clearTimeout(remoteRefreshTimer);
-  remoteRefreshTimer = setTimeout(async () => {
-    const stores = Array.from(pendingRemoteStores);
-    pendingRemoteStores.clear();
-    try {
-      await Promise.all(stores.map((store) => reloadStore(store)));
-      refreshDatalists(true);
-      if (stores.includes("orders")) renderOrdersView();
-      if (stores.includes("products") && currentView === "products") renderProductsView();
-      if (stores.includes("customers") && currentView === "customers") renderCustomersView();
-      if (stores.includes("suppliers") && currentView === "suppliers") renderSuppliersView();
-      if (stores.includes("stockMovements") && currentView === "stock") renderStockView();
-      if (stores.includes("orders") && currentView === "reports") renderReportsView();
-    } catch (e) { console.error("Uzak yenileme hatası:", e); }
-  }, 300);
+  remoteRefreshTimer = setTimeout(() => {
+    const changes = Array.from(pendingRemotePayloads.values());
+    pendingRemotePayloads.clear();
+    const stores = new Set();
+    for (const c of changes) {
+      stores.add(c.store);
+      if (c.eventType === "DELETE") removeLocalStore(c.store, Number(c.row.id));
+      else upsertLocalStore(c.store, fromRow(c.store, c.row));
+    }
+    refreshDatalists(true);
+    if (stores.has("orders")) renderOrdersView();
+    if (stores.has("products") && currentView === "products") renderProductsView();
+    if (stores.has("customers") && currentView === "customers") renderCustomersView();
+    if (stores.has("suppliers") && currentView === "suppliers") renderSuppliersView();
+    if (stores.has("stockMovements") && currentView === "stock") renderStockView();
+    if (stores.has("orders") && currentView === "reports") renderReportsView();
+  }, 250);
 }
 
+/* reloadAll artık gereksiz ağ trafiği oluşturmaz. CRUD işlemleri yerel önbelleği
+   zaten güncellediği için sadece arayüzü yeniden hesaplar. */
 async function reloadAll({ includeStock = false } = {}) {
-  const stores = ["orders", "products", "customers", "suppliers"];
-  if (includeStock) stores.push("stockMovements");
-  const entries = await Promise.all(stores.map(async (store) => [store, await getAll(store)]));
-  for (const [store, data] of entries) applyStoreData(store, data);
+  if (includeStock && !stockLoaded) await reloadStore("stockMovements");
+  rebuildDerivedIndexes();
   refreshDatalists(true);
 }
 
@@ -3412,22 +3486,11 @@ function renderProductsView() {
    ======================================================= */
 // Ürünün en son stok girişindeki tedarikçi (hareket kayıtlarından)
 function lastSupplierForProduct(product) {
-  const moves = allStockMovements
-    .filter((m) => m.type === "stock-in" && m.supplier &&
-      (m.productId === product.id || normName(m.productName) === normName(product.name)))
-    .sort((a, b) => (b.date || "").localeCompare(a.date || "") || (b.id || 0) - (a.id || 0));
-  if (moves.length) return moves[0].supplier;
-  // Stok girişi yoksa, o ürünün en son siparişindeki tedarikçiye düş
-  const orders = allOrders
-    .filter((o) => normName(o.product) === normName(product.name) && o.supplier)
-    .sort((a, b) => (b.orderDate || "").localeCompare(a.orderDate || "") || b.id - a.id);
-  return orders.length ? orders[0].supplier : "";
+  return supplierByProductId.get(product.id) || "";
 }
 
 function reservedQtyForProduct(name) {
-  return allOrders
-    .filter((o) => normName(o.product) === normName(name) && o.status !== "Teslim Edildi" && o.status !== "İptal")
-    .reduce((sum, o) => sum + (o.quantity || 0), 0);
+  return reservedByProduct.get(normName(name)) || 0;
 }
 
 function renderStockView() {
