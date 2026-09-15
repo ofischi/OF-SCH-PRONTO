@@ -2951,6 +2951,10 @@ function showConfirm(text, onConfirm) {
   pendingConfirmAction = onConfirm;
   document.getElementById("confirmModal").classList.remove("hidden");
 }
+function closeConfirmModal() {
+  document.getElementById("confirmModal").classList.add("hidden");
+  pendingConfirmAction = null;
+}
 function closeAllModals() {
   document.getElementById("orderModal").classList.add("hidden");
   document.getElementById("detailModal").classList.add("hidden");
@@ -2958,6 +2962,7 @@ function closeAllModals() {
   document.getElementById("entityHistoryModal").classList.add("hidden");
   document.getElementById("stockInModal").classList.add("hidden");
   document.getElementById("confirmModal").classList.add("hidden");
+  pendingConfirmAction = null;
   hideRowMenu();
 }
 function attemptCloseOrderModal() {
@@ -4248,7 +4253,7 @@ function bindGlobalEvents() {
     overlay.classList.remove("open");
   });
 
-  document.getElementById("confirmCancelBtn").addEventListener("click", closeAllModals);
+  document.getElementById("confirmCancelBtn").addEventListener("click", closeConfirmModal);
   document.getElementById("confirmOkBtn").addEventListener("click", () => {
     if (pendingConfirmAction) pendingConfirmAction();
     pendingConfirmAction = null;
@@ -4256,10 +4261,13 @@ function bindGlobalEvents() {
 
   document.getElementById("orderModal").addEventListener("click", (e) => { if (e.target.id === "orderModal") attemptCloseOrderModal(); });
   document.getElementById("entityModal").addEventListener("click", (e) => { if (e.target.id === "entityModal") attemptCloseEntityModal(); });
-  [document.getElementById("detailModal"), document.getElementById("entityHistoryModal"), document.getElementById("confirmModal")]
+  [document.getElementById("detailModal"), document.getElementById("entityHistoryModal")]
     .forEach((overlayEl) => {
       overlayEl.addEventListener("click", (e) => { if (e.target === overlayEl) closeAllModals(); });
     });
+  document.getElementById("confirmModal").addEventListener("click", (e) => {
+    if (e.target === e.currentTarget) closeConfirmModal();
+  });
 }
 
 /* =======================================================
