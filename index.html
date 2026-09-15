@@ -2117,10 +2117,15 @@ function initLockScreen() {
 
   const problem = supabaseSetupProblem();
   if (problem || !initSupabase()) {
+    // Yapılandırma hatası olsa bile parola alanını KİLİTLEME.
+    // Kullanıcı parolasını yazabilmeli; yapılandırma düzeltilince
+    // aynı ekran üzerinden giriş yapılabilir.
     lockError.textContent = problem || "Sunucuya bağlanılamadı.";
     lockError.classList.remove("hidden");
-    lockForm.querySelector('button[type="submit"]').disabled = true;
-    lockInput.disabled = true;
+    const submitBtn = lockForm.querySelector('button[type="submit"]');
+    submitBtn.disabled = false;
+    lockInput.disabled = false;
+    lockInput.removeAttribute("aria-disabled");
     return;
   }
 
@@ -2135,6 +2140,13 @@ function initLockScreen() {
 
   lockForm.addEventListener("submit", async (e) => {
     e.preventDefault();
+
+    const setupProblem = supabaseSetupProblem();
+    if (setupProblem || !initSupabase()) {
+      lockError.textContent = setupProblem || "Sunucuya bağlanılamadı.";
+      lockError.classList.remove("hidden");
+      return;
+    }
 
     const remaining = loginLockRemainingMs();
     if (remaining > 0) {
