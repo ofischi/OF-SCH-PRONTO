@@ -1566,8 +1566,8 @@ body::after {
 <div id="printArea"></div>
 
 <script id="prontoSeedData" type="application/json">{"orders":[],"customers":[],"suppliers":[],"products":[]}</script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="./pronto-runtime-config.js"></script>
 <script>
 "use strict";
 
@@ -1580,15 +1580,43 @@ body::after {
    ortak parolayla giriş yapıldığında ulaşılır — parola
    bu dosyada DEĞİL, Supabase tarafında tutulur.
    ======================================================= */
-const PRONTO_CONFIG = {
-  url: "https://ehdoledrfdoluixohypp.supabase.co",
-  anonKey: "sb_publishable_S20ikh0v3dOAFjY-zX6p8Q_aHATfRxW",
-  sharedEmail: "ekip@ofischi.local"
-};
+const PRONTO_CONFIG = Object.freeze({
+  url: String(window.__PRONTO_RUNTIME_CONFIG__?.url || "").trim(),
+  anonKey: String(window.__PRONTO_RUNTIME_CONFIG__?.anonKey || "").trim(),
+  sharedEmail: String(window.__PRONTO_RUNTIME_CONFIG__?.sharedEmail || "").trim()
+});
 
-// Giriş denemesi hız sınırlama (brute-force yavaşlatma)
-const LOGIN_MAX_ATTEMPTS = 5;
-const LOGIN_LOCKOUT_MS = 60 * 1000;
+// 3 yanlış parola denemesi = 1 saat giriş kilidi.
+const LOGIN_MAX_ATTEMPTS = 3;
+const LOGIN_LOCKOUT_MS = 60 * 60 * 1000;
+const API_THROTTLE_MS = 80;
+const AUTH_THROTTLE_MS = 1200;
+let apiNextAllowedAt = 0;
+let apiThrottleQueue = Promise.resolve();
+async function throttleApi() {
+  apiThrottleQueue = apiThrottleQueue.then(async () => {
+    const wait = Math.max(0, apiNextAllowedAt - Date.now());
+    if (wait) await new Promise((r) => setTimeout(r, wait));
+    apiNextAllowedAt = Date.now() + API_THROTTLE_MS;
+  });
+  return apiThrottleQueue;
+}
+
+// Excel kütüphanesi yalnızca gerçekten ihtiyaç olduğunda yüklenir.
+let xlsxPromise = null;
+function ensureXlsx() {
+  if (window.XLSX) return Promise.resolve(window.XLSX);
+  if (xlsxPromise) return xlsxPromise;
+  xlsxPromise = new Promise((resolve, reject) => {
+    const script = document.createElement("script");
+    script.src = "https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js";
+    script.async = true;
+    script.onload = () => window.XLSX ? resolve(window.XLSX) : reject(new Error("Excel modülü yüklenemedi."));
+    script.onerror = () => reject(new Error("Excel modülü indirilemedi."));
+    document.head.appendChild(script);
+  });
+  return xlsxPromise;
+}
 
 /* =======================================================
    DURUM AYARLARI
@@ -1693,15 +1721,15 @@ let supa = null;
 
 // Bağlantı kurulamazsa NEDENİNİ döndürür — sessiz hata olmasın
 function supabaseSetupProblem() {
-  if (!PRONTO_CONFIG.url || PRONTO_CONFIG.url.indexOf("BURAYA") === 0) {
-    return "Supabase adresi girilmemiş. index.html içindeki PRONTO_CONFIG bölümüne Supabase URL'ini yaz.";
-  }
-  if (!PRONTO_CONFIG.anonKey || PRONTO_CONFIG.anonKey.indexOf("BURAYA") === 0) {
-    return "Supabase anahtarı girilmemiş. index.html içindeki PRONTO_CONFIG bölümüne anon key'i yaz.";
-  }
-  if (!window.supabase) {
-    return "Supabase kütüphanesi yüklenemedi. Bu sürüm internet bağlantısı gerektirir ve dosyayı doğrudan açarak (önizlemede) çalışmaz — gerçek bir adrese yükleyip oradan aç.";
-  }
+  let validUrl = false;
+  try {
+    const u = new URL(PRONTO_CONFIG.url);
+    validUrl = u.protocol === "https:" && !!u.hostname && !/[\s<>]/.test(u.toString());
+  } catch (_) {}
+  if (!validUrl) return "Güvenli Supabase URL yapılandırması eksik.";
+  if (!PRONTO_CONFIG.anonKey || PRONTO_CONFIG.anonKey.length < 20 || /[<>\s]/.test(PRONTO_CONFIG.anonKey)) return "Supabase runtime anahtarı eksik veya geçersiz.";
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(PRONTO_CONFIG.sharedEmail)) return "Ortak giriş hesabı yapılandırması geçersiz.";
+  if (!window.supabase) return "Supabase kütüphanesi yüklenemedi. İnternet bağlantısını kontrol et.";
   return null;
 }
 
@@ -1782,76 +1810,117 @@ function dbFail(context, error) {
   throw err;
 }
 
+const STORE_COLUMNS = {
+  orders: "id,customer,supplier,product,quantity,order_date,delivery_date,color_code,fabric_code,description,status,stock_deducted,stock_deducted_qty,created_at",
+  products: "id,name,category,unit,price,stock,description,created_at",
+  customers: "id,name,phone,email,tax_no,address,notes,created_at",
+  suppliers: "id,name,phone,email,address,notes,created_at",
+  stockMovements: "id,product_id,product_name,delta,resulting_stock,type,note,supplier,date,created_at"
+};
+
 async function getAll(store) {
+  if (!TABLES[store] || !STORE_COLUMNS[store]) throw new Error("Geçersiz veri kaynağı.");
   const rows = [];
-  const pageSize = 1000;                    // Supabase tek seferde 1000 satır döndürür
+  const pageSize = 1000;
   for (let from = 0; ; from += pageSize) {
-    const { data, error } = await supa.from(TABLES[store]).select("*")
-      .order("id", { ascending: true })
-      .range(from, from + pageSize - 1);
+    await throttleApi();
+    const { data, error } = await supa.from(TABLES[store]).select(STORE_COLUMNS[store])
+      .order("id", { ascending: true }).range(from, from + pageSize - 1);
     if (error) dbFail("okuma: " + store, error);
-    rows.push(...data);
-    if (data.length < pageSize) break;
+    rows.push(...(data || []));
+    if (!data || data.length < pageSize) break;
   }
   return rows.map((r) => fromRow(store, r));
 }
 
 async function dbAdd(store, obj) {
-  const { data, error } = await supa.from(TABLES[store])
-    .insert(toRow(store, obj)).select("id").single();
+  await throttleApi();
+  const { data, error } = await supa.from(TABLES[store]).insert(toRow(store, obj)).select("id").single();
   if (error) dbFail("ekleme: " + store, error);
   return data.id;
 }
 
 async function dbAddMany(store, list) {
+  if (!Array.isArray(list) || !list.length) return;
   const chunk = 500;
   for (let i = 0; i < list.length; i += chunk) {
     const rows = list.slice(i, i + chunk).map((o) => toRow(store, o));
+    await throttleApi();
     const { error } = await supa.from(TABLES[store]).insert(rows);
     if (error) dbFail("toplu ekleme: " + store, error);
   }
 }
 
 async function dbPut(store, obj) {
-  const { error } = await supa.from(TABLES[store])
-    .update(toRow(store, obj)).eq("id", obj.id);
+  await throttleApi();
+  const { error } = await supa.from(TABLES[store]).update(toRow(store, obj)).eq("id", obj.id);
   if (error) dbFail("güncelleme: " + store, error);
   return obj.id;
 }
 
 async function dbDelete(store, id) {
-  const { error } = await supa.from(TABLES[store]).delete().eq("id", id);
+  const safeId = sanitizeNumber(id, { min: 1, max: 100000000, integer: true });
+  await throttleApi();
+  const { error } = await supa.from(TABLES[store]).delete().eq("id", safeId);
   if (error) dbFail("silme: " + store, error);
 }
 
 async function dbClear(store) {
+  await throttleApi();
   const { error } = await supa.from(TABLES[store]).delete().gte("id", 0);
   if (error) dbFail("temizleme: " + store, error);
 }
 
 /* Başka biri değişiklik yapınca ekranı tazele */
+let stockLoaded = false;
+let sortedOrders = [];
+let remoteRefreshTimer = null;
+const pendingRemoteStores = new Set();
+
+function applyStoreData(store, data) {
+  if (store === "orders") { allOrders = data; sortedOrders = data.slice().sort((a, b) => b.id - a.id); }
+  else if (store === "products") allProducts = data;
+  else if (store === "customers") allCustomers = data;
+  else if (store === "suppliers") allSuppliers = data;
+  else if (store === "stockMovements") { allStockMovements = data; stockLoaded = true; }
+}
+async function reloadStore(store) { applyStoreData(store, await getAll(store)); }
+async function ensureStockLoaded(force = false) { if (stockLoaded && !force) return; await reloadStore("stockMovements"); }
+
 function subscribeToChanges() {
   supa.channel("pronto-degisiklikler")
-    .on("postgres_changes", { event: "*", schema: "public" }, () => {
+    .on("postgres_changes", { event: "*", schema: "public" }, (payload) => {
+      const table = payload && payload.table;
+      const store = Object.keys(TABLES).find((k) => TABLES[k] === table);
+      if (!store) return;
+      pendingRemoteStores.add(store);
       scheduleRemoteRefresh();
-    })
-    .subscribe();
+    }).subscribe();
 }
-let remoteRefreshTimer = null;
 function scheduleRemoteRefresh() {
   clearTimeout(remoteRefreshTimer);
   remoteRefreshTimer = setTimeout(async () => {
-    await reloadAll();
-    refreshDatalists(true);
-    renderOrdersView(); renderProductsView(); renderStockView();
-    renderCustomersView(); renderSuppliersView(); renderReportsView();
-  }, 400);
+    const stores = Array.from(pendingRemoteStores);
+    pendingRemoteStores.clear();
+    try {
+      await Promise.all(stores.map((store) => reloadStore(store)));
+      refreshDatalists(true);
+      if (stores.includes("orders")) renderOrdersView();
+      if (stores.includes("products") && currentView === "products") renderProductsView();
+      if (stores.includes("customers") && currentView === "customers") renderCustomersView();
+      if (stores.includes("suppliers") && currentView === "suppliers") renderSuppliersView();
+      if (stores.includes("stockMovements") && currentView === "stock") renderStockView();
+      if (stores.includes("orders") && currentView === "reports") renderReportsView();
+    } catch (e) { console.error("Uzak yenileme hatası:", e); }
+  }, 300);
 }
 
-async function reloadAll() {
-  [allOrders, allProducts, allCustomers, allSuppliers, allStockMovements] = await Promise.all([
-    getAll("orders"), getAll("products"), getAll("customers"), getAll("suppliers"), getAll("stockMovements")
-  ]);
+async function reloadAll({ includeStock = false } = {}) {
+  const stores = ["orders", "products", "customers", "suppliers"];
+  if (includeStock) stores.push("stockMovements");
+  const entries = await Promise.all(stores.map(async (store) => [store, await getAll(store)]));
+  for (const [store, data] of entries) applyStoreData(store, data);
+  refreshDatalists(true);
 }
 
 /* =======================================================
@@ -1946,11 +2015,18 @@ function showToast(msg) {
    Parola bu dosyada bulunmaz; girilen parolayla ortak
    hesaba giriş denenir. Yanlışsa Supabase reddeder. */
 let lastAuthError = "";
+let lastAuthAttemptAt = 0;
 async function signInWithSharedPassword(pw) {
+  const password = String(pw || "");
+  if (password.length < 1 || password.length > 256) { lastAuthError = "Parola geçersiz."; return false; }
   try {
+    const wait = Math.max(0, AUTH_THROTTLE_MS - (Date.now() - lastAuthAttemptAt));
+    if (wait) await new Promise((r) => setTimeout(r, wait));
+    lastAuthAttemptAt = Date.now();
+    await throttleApi();
     const { error } = await supa.auth.signInWithPassword({
       email: PRONTO_CONFIG.sharedEmail,
-      password: pw
+      password
     });
     lastAuthError = error ? error.message : "";
     if (error) console.error("Giriş hatası:", error);
@@ -1962,39 +2038,41 @@ async function signInWithSharedPassword(pw) {
   }
 }
 async function hasActiveSession() {
+  await throttleApi();
   const { data } = await supa.auth.getSession();
   return !!(data && data.session);
 }
 async function signOut() {
-  try { await supa.auth.signOut(); } catch (e) {}
+  try { await throttleApi(); await supa.auth.signOut(); } catch (_) {}
 }
 
 /* Giriş hız sınırlama: art arda başarısız denemelerde kilitle */
 function getLoginState() {
   try {
-    return JSON.parse(localStorage.getItem("prontoLoginState") || "{}") || {};
-  } catch (e) { return {}; }
+    const raw = localStorage.getItem("prontoLoginState");
+    const st = raw ? JSON.parse(raw) : {};
+    if (!st || typeof st !== "object") return { fails: 0, lockedUntil: 0 };
+    return {
+      fails: Number.isInteger(st.fails) && st.fails >= 0 && st.fails <= LOGIN_MAX_ATTEMPTS ? st.fails : 0,
+      lockedUntil: Number.isFinite(st.lockedUntil) ? st.lockedUntil : 0
+    };
+  } catch (_) { return { fails: 0, lockedUntil: 0 }; }
 }
-function setLoginState(state) {
-  localStorage.setItem("prontoLoginState", JSON.stringify(state));
-}
+function setLoginState(state) { try { localStorage.setItem("prontoLoginState", JSON.stringify(state)); } catch (_) {} }
 function loginLockRemainingMs() {
   const st = getLoginState();
   if (!st.lockedUntil) return 0;
-  return Math.max(0, st.lockedUntil - Date.now());
+  const remaining = Math.max(0, st.lockedUntil - Date.now());
+  if (!remaining) setLoginState({ fails: 0, lockedUntil: 0 });
+  return remaining;
 }
 function registerFailedLogin() {
   const st = getLoginState();
-  st.fails = (st.fails || 0) + 1;
-  if (st.fails >= LOGIN_MAX_ATTEMPTS) {
-    st.lockedUntil = Date.now() + LOGIN_LOCKOUT_MS;
-    st.fails = 0;
-  }
+  st.fails += 1;
+  if (st.fails >= LOGIN_MAX_ATTEMPTS) { st.lockedUntil = Date.now() + LOGIN_LOCKOUT_MS; st.fails = 0; }
   setLoginState(st);
 }
-function clearFailedLogins() {
-  setLoginState({});
-}
+function clearFailedLogins() { setLoginState({ fails: 0, lockedUntil: 0 }); }
 
 /* =======================================================
    KARANLIK MOD
@@ -2151,7 +2229,8 @@ async function seedBundledDataIfNeeded() {
    ======================================================= */
 async function startApp() {
   try {
-    await reloadAll();
+    await reloadStore("orders");
+    renderOrdersView();
   } catch (e) {
     const msg = String((e && e.message) || e);
     if (/does not exist|schema cache|relation/i.test(msg)) {
@@ -2171,20 +2250,18 @@ async function startApp() {
     return;
   }
   subscribeToChanges();
-  refreshDatalists(true);
   bindNav();
   bindGlobalEvents();
   bindOrderEvents();
   bindEntityEvents();
   bindStockEvents();
   bindSettingsEvents();
-  renderOrdersView();
-  renderProductsView();
-  renderStockView();
-  renderCustomersView();
-  renderSuppliersView();
-  renderReportsView();
   checkDailyDigest();
+
+  // İlk ekranı bekletmeden referans listelerini arka planda getir.
+  Promise.all(["products", "customers", "suppliers"].map((store) => reloadStore(store)))
+    .then(() => { refreshDatalists(true); if (currentView === "orders") renderOrdersView(); })
+    .catch((e) => console.error("Arka plan veri yükleme hatası:", e));
 }
 
 function showBlockingMessage(title, detail) {
@@ -2194,9 +2271,11 @@ function showBlockingMessage(title, detail) {
     <div class="empty-state" style="text-align:left; max-width:620px;">
       <h2 style="font-family:var(--font-display); font-size:18px; margin:0 0 10px;">${escapeHtml(title)}</h2>
       <p style="margin:0 0 16px; line-height:1.6;">${escapeHtml(detail)}</p>
-      <button class="btn btn-primary" onclick="location.reload()">Sayfayı Yenile</button>
+      <button class="btn btn-primary" type="button" id="blockingReloadBtn">Sayfayı Yenile</button>
     </div>
   `;
+  const btn = document.getElementById("blockingReloadBtn");
+  if (btn) btn.addEventListener("click", () => window.location.reload());
 }
 
 /* =======================================================
@@ -2216,8 +2295,11 @@ function switchView(view) {
   });
   document.getElementById("sidebar").classList.remove("open");
   document.getElementById("sidebarOverlay").classList.remove("open");
+  if (view === "products") renderProductsView();
+  if (view === "customers") renderCustomersView();
+  if (view === "suppliers") renderSuppliersView();
   if (view === "reports") renderReportsView();
-  if (view === "stock") renderStockView();
+  if (view === "stock") ensureStockLoaded().then(() => { if (currentView === "stock") renderStockView(); }).catch(() => showToast("Stok verileri yüklenemedi."));
 }
 
 /* =======================================================
@@ -2257,7 +2339,7 @@ function showRowMenu(triggerEl, items) {
 
   setTimeout(() => {
     document.addEventListener("click", hideRowMenuOnce);
-    window.addEventListener("scroll", hideRowMenu, true);
+    window.addEventListener("scroll", hideRowMenu, { capture: true, passive: true });
   }, 0);
 }
 function hideRowMenuOnce(e) {
@@ -2274,7 +2356,7 @@ function hideRowMenu() {
    SİPARİŞLER — FİLTRELEME
    ======================================================= */
 function getFilteredOrders() {
-  let list = allOrders.slice().sort((a, b) => b.id - a.id);
+  let list = sortedOrders;
 
   if (currentFilter !== "Tümü") {
     list = currentFilter === "Gecikti"
@@ -2285,7 +2367,7 @@ function getFilteredOrders() {
   if (currentDateTo) list = list.filter((o) => o.orderDate && o.orderDate <= currentDateTo);
 
   if (currentSearch.trim()) {
-    const q = currentSearch.trim().toLocaleLowerCase("tr");
+    const q = sanitizeText(currentSearch, 100).toLocaleLowerCase("tr-TR");
     list = list.filter((o) =>
       (o.customer || "").toLocaleLowerCase("tr").includes(q) ||
       (o.product || "").toLocaleLowerCase("tr").includes(q) ||
@@ -2613,7 +2695,7 @@ let datalistSignature = "";
 function refreshDatalists(force) {
   // 800+ <option> her render'da yeniden kurulursa arama tuş tuş yavaşlar.
   // Yalnızca kaynak veri değiştiğinde yeniden kur.
-  const sig = `${allCustomers.length}|${allProducts.length}|${allSuppliers.length}|${allOrders.length}`;
+  const sig = `${allCustomers.length}|${allProducts.length}|${allSuppliers.length}|${allOrders.length}|${allCustomers.map(c=>c.name||"").join("\u241f")}|${allProducts.map(p=>p.name||"").join("\u241f")}|${allSuppliers.map(s=>s.name||"").join("\u241f")}`;
   if (!force && sig === datalistSignature) return;
   datalistSignature = sig;
   buildDatalists();
@@ -2889,18 +2971,18 @@ function attemptCloseEntityModal() {
 /* =======================================================
    EXCEL'E AKTAR
    ======================================================= */
-function exportToExcel() {
-  if (typeof XLSX === "undefined") {
-    showToast("Excel modülü yüklenemedi. İnternet bağlantını kontrol et.");
-    return;
-  }
+let exportBusy = false;
+async function exportToExcel() {
+  if (exportBusy) return;
+  exportBusy = true;
+  try { await ensureXlsx(); } catch (_) { exportBusy = false; showToast("Excel modülü yüklenemedi."); return; }
   const rows = allOrders.slice().sort((a, b) => a.id - b.id).map((o) => ({
     "Sipariş No": orderNo(o), "Müşteri": o.customer, "Tedarikçi": o.supplier, "Ürün": o.product,
     "Adet": o.quantity, "Sipariş Tarihi": formatDate(o.orderDate), "Teslim Tarihi": formatDate(o.deliveryDate),
     "Renk Kodu": o.colorCode || "", "Kumaş Kodu": o.fabricCode || "", "Açıklama": o.description || "",
     "Durum": o.status, "Gecikti mi": isOverdue(o) ? "Evet" : "Hayır"
   }));
-  if (rows.length === 0) { showToast("Aktarılacak sipariş bulunamadı."); return; }
+  if (rows.length === 0) { exportBusy = false; showToast("Aktarılacak sipariş bulunamadı."); return; }
   const ws = XLSX.utils.json_to_sheet(rows);
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, "Siparişler");
@@ -2961,7 +3043,7 @@ function bindOrderEvents() {
   });
 
   document.getElementById("searchInput").addEventListener("input", debounce((e) => {
-    currentSearch = e.target.value;
+    currentSearch = sanitizeText(e.target.value, 100); e.target.value = currentSearch;
     pageState.orders.page = 1;
     renderOrdersView();
   }, 140));
@@ -3238,10 +3320,10 @@ function bindEntityEvents() {
   document.getElementById("entityForm").addEventListener("submit", (e) => { e.preventDefault(); saveEntityFromForm(); });
   document.getElementById("entityHistoryClose").addEventListener("click", closeAllModals);
 
-  document.getElementById("productSearchInput").addEventListener("input", debounce((e) => { productSearch = e.target.value; pageState.products.page = 1; renderProductsView(); }, 140));
-  document.getElementById("customerSearchInput").addEventListener("input", debounce((e) => { customerSearch = e.target.value; pageState.customers.page = 1; renderCustomersView(); }, 140));
-  document.getElementById("supplierSearchInput").addEventListener("input", debounce((e) => { supplierSearch = e.target.value; pageState.suppliers.page = 1; renderSuppliersView(); }, 140));
-  document.getElementById("stockSearchInput").addEventListener("input", debounce((e) => { stockSearch = e.target.value; pageState.stock.page = 1; renderStockView(); }, 140));
+  document.getElementById("productSearchInput").addEventListener("input", debounce((e) => { productSearch = sanitizeText(e.target.value, 100); e.target.value = productSearch; pageState.products.page = 1; renderProductsView(); }, 140));
+  document.getElementById("customerSearchInput").addEventListener("input", debounce((e) => { customerSearch = sanitizeText(e.target.value, 100); e.target.value = customerSearch; pageState.customers.page = 1; renderCustomersView(); }, 140));
+  document.getElementById("supplierSearchInput").addEventListener("input", debounce((e) => { supplierSearch = sanitizeText(e.target.value, 100); e.target.value = supplierSearch; pageState.suppliers.page = 1; renderSuppliersView(); }, 140));
+  document.getElementById("stockSearchInput").addEventListener("input", debounce((e) => { stockSearch = sanitizeText(e.target.value, 100); e.target.value = stockSearch; pageState.stock.page = 1; renderStockView(); }, 140));
 }
 
 /* =======================================================
@@ -3829,10 +3911,8 @@ function parseQuantityCell(val) {
 }
 
 async function importOrdersFromExcel(file) {
-  if (typeof XLSX === "undefined") {
-    showToast("Excel modülü yüklenemedi. İnternet bağlantını kontrol et.");
-    return;
-  }
+  if (!(file instanceof File) || file.size <= 0 || file.size > 25 * 1024 * 1024) { showToast("Geçersiz Excel dosyası (maksimum 25 MB)."); return; }
+  try { await ensureXlsx(); } catch (_) { showToast("Excel modülü yüklenemedi."); return; }
   const buf = await file.arrayBuffer();
   const wb = XLSX.read(new Uint8Array(buf), { type: "array", cellDates: true });
   const sheetName = wb.SheetNames[0];
@@ -3927,10 +4007,12 @@ async function importOrdersFromExcel(file) {
   }
 
   showConfirm(`${parsedOrders.length} sipariş bulundu. Mevcut verilerin üzerine eklenecek (silinmeyecek). Devam edilsin mi?`, async () => {
-    for (const name of newCustomerNames.values()) await dbAdd("customers", { name: sanitizeText(name) });
-    for (const name of newSupplierNames.values()) await dbAdd("suppliers", { name: sanitizeText(name) });
-    for (const name of newProductNames.values()) await dbAdd("products", { name: sanitizeText(name) });
-    for (const o of parsedOrders) await dbAdd("orders", o);
+    await Promise.all([
+      dbAddMany("customers", Array.from(newCustomerNames.values()).map((name) => ({ name: sanitizeText(name) }))),
+      dbAddMany("suppliers", Array.from(newSupplierNames.values()).map((name) => ({ name: sanitizeText(name) }))),
+      dbAddMany("products", Array.from(newProductNames.values()).map((name) => ({ name: sanitizeText(name) }))),
+      dbAddMany("orders", parsedOrders)
+    ]);
 
     await reloadAll();
     closeAllModals();
@@ -3954,6 +4036,11 @@ async function importOrdersFromExcel(file) {
 function bindSettingsEvents() {
   document.getElementById("passwordForm").addEventListener("submit", async (e) => {
     e.preventDefault();
+    if (loginLockRemainingMs() > 0) {
+      const sec = Math.ceil(loginLockRemainingMs() / 1000);
+      showToast(`Giriş kilitli. ${sec} saniye sonra tekrar dene.`);
+      return;
+    }
     const cur = document.getElementById("pw_current").value;
     const next = document.getElementById("pw_new").value;
     const confirmVal = document.getElementById("pw_confirm").value;
@@ -3970,9 +4057,11 @@ function bindSettingsEvents() {
     }
     // Mevcut parolayı doğrula, sonra Supabase'deki ortak hesabın parolasını değiştir
     if (!(await signInWithSharedPassword(cur))) {
-      errEl.textContent = "Mevcut parola yanlış.";
+      registerFailedLogin();
+      errEl.textContent = loginLockRemainingMs() > 0 ? "3 yanlış deneme yapıldı. 1 saat giriş engellendi." : "Mevcut parola yanlış.";
       errEl.classList.remove("hidden"); return;
     }
+    await throttleApi();
     const { error } = await supa.auth.updateUser({ password: next });
     if (error) {
       errEl.textContent = "Parola değiştirilemedi: " + error.message;
@@ -4012,10 +4101,14 @@ function bindSettingsEvents() {
   document.getElementById("restoreInput").addEventListener("change", (e) => {
     const file = e.target.files[0];
     if (!file) return;
+    if (file.size > 25 * 1024 * 1024) { showToast("Yedek dosyası 25 MB'dan küçük olmalı."); e.target.value = ""; return; }
     const reader = new FileReader();
     reader.onload = () => {
       let data;
-      try { data = JSON.parse(reader.result); } catch (err) {
+      try {
+        if (typeof reader.result !== "string" || reader.result.length > 25 * 1024 * 1024) throw new Error("too-large");
+        data = JSON.parse(reader.result);
+      } catch (err) {
         showToast("Dosya okunamadı, geçerli bir yedek dosyası seç.");
         return;
       }
