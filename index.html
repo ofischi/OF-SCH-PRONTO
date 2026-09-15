@@ -1581,8 +1581,10 @@ body::after {
    bu dosyada DEĞİL, Supabase tarafında tutulur.
    ======================================================= */
 const PRONTO_CONFIG = {
+  // >>>>>>>>>> DEĞİŞTİRECEĞİN İKİ SATIR BURASI <<<<<<<<<<
   url: "BURAYA_SUPABASE_URL",
   anonKey: "BURAYA_SUPABASE_ANON_KEY",
+  // >>>>>>>>>> DEĞİŞTİRECEĞİN İKİ SATIR BURASI <<<<<<<<<<
   // Ortak hesabın e-postası (Supabase'de bu kullanıcıyı sen oluşturacaksın)
   sharedEmail: "ekip@ofischi.local"
 };
@@ -1692,12 +1694,31 @@ let stockInFormDirty = false;
 
 let supa = null;
 
+// Bağlantı kurulamazsa NEDENİNİ döndürür — sessiz hata olmasın
+function supabaseSetupProblem() {
+  if (!PRONTO_CONFIG.url || PRONTO_CONFIG.url.indexOf("BURAYA") === 0) {
+    return "Supabase adresi girilmemiş. index.html içindeki PRONTO_CONFIG bölümüne Supabase URL'ini yaz.";
+  }
+  if (!PRONTO_CONFIG.anonKey || PRONTO_CONFIG.anonKey.indexOf("BURAYA") === 0) {
+    return "Supabase anahtarı girilmemiş. index.html içindeki PRONTO_CONFIG bölümüne anon key'i yaz.";
+  }
+  if (!window.supabase) {
+    return "Supabase kütüphanesi yüklenemedi. Bu sürüm internet bağlantısı gerektirir ve dosyayı doğrudan açarak (önizlemede) çalışmaz — gerçek bir adrese yükleyip oradan aç.";
+  }
+  return null;
+}
+
 function initSupabase() {
   if (supa) return supa;
-  if (!window.supabase || !PRONTO_CONFIG.url || !PRONTO_CONFIG.anonKey) return null;
-  supa = window.supabase.createClient(PRONTO_CONFIG.url, PRONTO_CONFIG.anonKey, {
-    auth: { persistSession: true, autoRefreshToken: true }
-  });
+  if (supabaseSetupProblem()) return null;
+  try {
+    supa = window.supabase.createClient(PRONTO_CONFIG.url, PRONTO_CONFIG.anonKey, {
+      auth: { persistSession: true, autoRefreshToken: true }
+    });
+  } catch (e) {
+    console.error("Supabase başlatılamadı:", e);
+    return null;
+  }
   return supa;
 }
 
@@ -1920,12 +1941,21 @@ function showToast(msg) {
 /* Parola doğrulaması Supabase tarafında yapılır.
    Parola bu dosyada bulunmaz; girilen parolayla ortak
    hesaba giriş denenir. Yanlışsa Supabase reddeder. */
+let lastAuthError = "";
 async function signInWithSharedPassword(pw) {
-  const { error } = await supa.auth.signInWithPassword({
-    email: PRONTO_CONFIG.sharedEmail,
-    password: pw
-  });
-  return !error;
+  try {
+    const { error } = await supa.auth.signInWithPassword({
+      email: PRONTO_CONFIG.sharedEmail,
+      password: pw
+    });
+    lastAuthError = error ? error.message : "";
+    if (error) console.error("Giriş hatası:", error);
+    return !error;
+  } catch (e) {
+    lastAuthError = "Sunucuya ulaşılamadı (internet veya adres hatası).";
+    console.error("Giriş isteği başarısız:", e);
+    return false;
+  }
 }
 async function hasActiveSession() {
   const { data } = await supa.auth.getSession();
@@ -2000,10 +2030,15 @@ function initLockScreen() {
   const lockInput = document.getElementById("lockInput");
   const lockError = document.getElementById("lockError");
 
-  if (!initSupabase()) {
-    lockError.textContent = "Sunucu ayarları eksik. index.html içindeki PRONTO_CONFIG bölümünü doldur.";
+  // Form gönderimi HER DURUMDA engellenir — sorun olsa bile sayfa yenilenmez
+  lockForm.addEventListener("submit", (e) => e.preventDefault());
+
+  const problem = supabaseSetupProblem();
+  if (problem || !initSupabase()) {
+    lockError.textContent = problem || "Sunucuya bağlanılamadı.";
     lockError.classList.remove("hidden");
     lockForm.querySelector('button[type="submit"]').disabled = true;
+    lockInput.disabled = true;
     return;
   }
 
@@ -2044,7 +2079,9 @@ function initLockScreen() {
       const nowLocked = loginLockRemainingMs();
       lockError.textContent = nowLocked > 0
         ? `Çok fazla hatalı deneme. ${Math.ceil(nowLocked / 1000)} saniye bekle.`
-        : "Parola yanlış, tekrar dene.";
+        : (/invalid login credentials/i.test(lastAuthError)
+            ? "Parola yanlış, tekrar dene."
+            : (lastAuthError || "Giriş yapılamadı."));
       lockError.classList.remove("hidden");
       lockInput.value = "";
       lockInput.focus();
