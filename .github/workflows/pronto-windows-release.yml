@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - 'PRONTO_DESKTOP/**'
+      - 'index.html'
   workflow_dispatch:
 
 permissions:
