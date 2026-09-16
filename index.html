@@ -4411,19 +4411,33 @@ function renderShipmentView() {
   groups.querySelectorAll(".shipment-checkbox").forEach((cb)=>cb.addEventListener("change",()=>{ const id=Number(cb.dataset.id); if(cb.checked) shipmentSelectedIds.add(id); else shipmentSelectedIds.delete(id); renderShipmentView(); }));
   groups.querySelectorAll(".shipment-hide-btn").forEach((btn)=>btn.addEventListener("click", async (e)=>{
     e.stopPropagation();
+    if (btn.dataset.busy === "1") return;
     const id=Number(btn.dataset.id);
     const order=allOrders.find((o)=>o.id===id);
     if(!order) return;
     const hidden=!shipmentShowHidden;
-    setShipmentHidden(order, hidden);
+    const oldDescription=String(order.description || "");
+    const nextDescription=hidden
+      ? (SHIPMENT_HIDDEN_RE.test(oldDescription) ? oldDescription : `${oldDescription}${oldDescription ? " " : ""}${SHIPMENT_HIDDEN_MARKER}`)
+      : oldDescription.replace(SHIPMENT_HIDDEN_RE, "").replace(/\s{2,}/g, " ").trim();
+
+    // Önce ekranı anında güncelle; ağ isteğini bekletme.
+    btn.dataset.busy = "1";
+    order.description = nextDescription;
+    shipmentSelectedIds.delete(id);
+    renderShipmentView();
+
     try {
-      await dbPut("orders",order);
-      shipmentSelectedIds.delete(id);
-      renderShipmentView();
-      showToast(hidden ? "Sipariş sevkiyat bölümünde gizlendi." : "Sipariş yeniden sevkiyat listesine alındı.");
+      // Yalnızca gerekli alanı güncelle: daha hızlı ve mevcut sipariş verilerine dokunmaz.
+      await throttleApi();
+      const { error } = await supa.from(TABLES.orders).update({ description: nextDescription }).eq("id", id);
+      if (error) throw error;
+      showToast(hidden ? "Sipariş sevkiyatta gizlendi." : "Sipariş sevkiyat listesine geri alındı.");
     } catch(e) {
-      setShipmentHidden(order, !hidden);
-      showToast("Gizleme işlemi kaydedilemedi.");
+      order.description = oldDescription;
+      renderShipmentView();
+      console.error("Sevkiyat gizleme hatası:", e);
+      showToast("İşlem kaydedilemedi. Tekrar deneyin.");
     }
   }));
   bindStatusBadges(groups);
