@@ -18,17 +18,20 @@ concurrency:
 jobs:
   release:
     runs-on: windows-latest
+
     defaults:
       run:
         working-directory: PRONTO_DESKTOP
 
     steps:
+
       - name: Checkout
         uses: actions/checkout@v4
 
       - name: Copy current PRONTO web application
         shell: pwsh
-        run: Copy-Item -Force ..\index.html .\index.html
+        run: |
+          Copy-Item -Force ..\index.html .\index.html
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -45,12 +48,14 @@ jobs:
           $headers = @{
             Authorization = "Bearer $env:GITHUB_TOKEN"
             Accept = "application/vnd.github+json"
-            "X-GitHub-Api-Version" = "2026-03-10"
+            "X-GitHub-Api-Version" = "2022-11-28"
           }
 
           $package = Get-Content package.json -Raw | ConvertFrom-Json
+
           $baseVersion = [string]$package.version
           $baseParts = $baseVersion.Split('.')
+
           $major = [int]$baseParts[0]
           $minor = [int]$baseParts[1]
           $patch = [int]($baseParts[2] -replace '[^0-9].*$', '')
@@ -62,37 +67,73 @@ jobs:
               -Method Get
 
             if ($release.tag_name -match '^v(\d+)\.(\d+)\.(\d+)$') {
+
               $releaseMajor = [int]$Matches[1]
               $releaseMinor = [int]$Matches[2]
               $releasePatch = [int]$Matches[3]
 
-              if (($releaseMajor -gt $major) -or (($releaseMajor -eq $major) -and ($releaseMinor -gt $minor))) {
+              if (
+                ($releaseMajor -gt $major) -or
+                (
+                  ($releaseMajor -eq $major) -and
+                  ($releaseMinor -gt $minor)
+                )
+              ) {
                 $major = $releaseMajor
                 $minor = $releaseMinor
                 $patch = $releasePatch + 1
-              } elseif (($releaseMajor -eq $major) -and ($releaseMinor -eq $minor) -and ($releasePatch -ge $patch)) {
+              }
+              elseif (
+                ($releaseMajor -eq $major) -and
+                ($releaseMinor -eq $minor) -and
+                ($releasePatch -ge $patch)
+              ) {
                 $patch = $releasePatch + 1
-              } else {
+              }
+              else {
                 $patch = $patch + 1
               }
-            } else {
+
+            }
+            else {
               $patch = $patch + 1
             }
-          } catch {
-            Write-Host "Son yayın okunamadı; mevcut package.json sürümünden devam ediliyor."
+
+          }
+          catch {
+            Write-Host "Son GitHub Release okunamadı."
+            Write-Host "Mevcut package.json sürümünden devam ediliyor."
             $patch = $patch + 1
           }
 
           $version = "$major.$minor.$patch"
-          $package.version = $version
-          $package | ConvertTo-Json -Depth 20 | Set-Content package.json -Encoding UTF8
 
-          Write-Host "Otomatik PRONTO sürümü: $version"
+          $package.version = $version
+
+          $package |
+            ConvertTo-Json -Depth 20 |
+            Set-Content package.json -Encoding UTF8
+
+          "RELEASE_VERSION=$version" | Out-File $env:GITHUB_ENV -Encoding utf8
+
+          Write-Host "Yeni PRONTO sürümü: $version"
 
       - name: Install dependencies
         run: npm install --no-audit --no-fund
 
-      - name: Build and publish Windows installer
+      - name: Build Windows installer
+        run: npm run dist
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ env.RELEASE_VERSION }}
+          name: PRONTO v${{ env.RELEASE_VERSION }}
+          target_commitish: main
+          generate_release_notes: true
+          files: |
+            PRONTO_DESKTOP/dist/*.exe
+            PRONTO_DESKTOP/dist/*.blockmap
+            PRONTO_DESKTOP/dist/latest.yml
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npm run dist:publish
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
