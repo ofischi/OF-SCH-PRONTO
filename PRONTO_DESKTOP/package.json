@@ -1,6 +1,6 @@
 {
   "name": "pronto-siparis-takip",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "PRONTO Sipariş ve Stok Takip - Windows masaüstü uygulaması",
   "main": "main.js",
   "author": "Ofischi Büro Mobilyaları",
@@ -10,10 +10,12 @@
     "dist": "electron-builder --win nsis",
     "dist:publish": "electron-builder --win nsis --publish always"
   },
+  "dependencies": {
+    "electron-updater": "^6.6.2"
+  },
   "devDependencies": {
     "electron": "^38.1.0",
-    "electron-builder": "^26.0.12",
-    "electron-updater": "^6.6.2"
+    "electron-builder": "^26.0.12"
   },
   "build": {
     "appId": "com.ofischi.pronto",
