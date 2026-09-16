@@ -1,0 +1,41 @@
+{
+  "name": "pronto-siparis-takip",
+  "version": "1.0.2",
+  "description": "PRONTO Sipariş ve Stok Takip - Windows masaüstü uygulaması",
+  "main": "main.js",
+  "author": "Ofischi Büro Mobilyaları",
+  "license": "UNLICENSED",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --win nsis",
+    "dist:publish": "electron-builder --win nsis --publish always"
+  },
+  "devDependencies": {
+    "electron": "^38.1.0",
+    "electron-builder": "^26.0.12",
+    "electron-updater": "^6.6.2"
+  },
+  "build": {
+    "appId": "com.ofischi.pronto",
+    "productName": "PRONTO Sipariş Takibi",
+    "files": ["index.html", "main.js", "preload.js"],
+    "directories": {"output": "dist"},
+    "win": {
+      "target": [{"target": "nsis", "arch": ["x64"]}],
+      "artifactName": "PRONTO-Siparis-Takibi-Setup-${version}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    },
+    "publish": {
+      "provider": "github",
+      "owner": "ofischi",
+      "repo": "OF-SCH-PRONTO",
+      "releaseType": "release"
+    }
+  }
+}
