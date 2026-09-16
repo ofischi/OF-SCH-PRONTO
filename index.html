@@ -3546,7 +3546,9 @@ function bindOrderEvents() {
       document.getElementById("f_customerAddress").value = c.address || "";
     }
   });
-  // Kaydet yalnızca form submit üzerinden çalışır; böylece butona tıklayınca çift kayıt oluşmaz.
+  // Kaydet butonu formun dışında olduğu için tıklamayı doğrudan save fonksiyonuna bağla.
+  // Form submit de korunur; böylece Enter ile kaydetme çalışmaya devam eder.
+  document.getElementById("orderSaveBtn").addEventListener("click", () => saveOrderFromForm());
   document.getElementById("orderForm").addEventListener("submit", (e) => { e.preventDefault(); saveOrderFromForm(); });
   document.getElementById("detailModalClose").addEventListener("click", closeAllModals);
   document.getElementById("detailPdfBtn").addEventListener("click", () => exportOrderPdf(currentDetailOrderId));
