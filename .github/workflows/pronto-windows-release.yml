@@ -10,6 +10,11 @@ on:
 permissions:
   contents: write
 
+# Aynı anda iki PRONTO sürümünün yayınlanmasını engeller.
+concurrency:
+  group: pronto-windows-release
+  cancel-in-progress: false
+
 jobs:
   release:
     runs-on: windows-latest
@@ -31,6 +36,58 @@ jobs:
           node-version: 20
           cache: npm
           cache-dependency-path: PRONTO_DESKTOP/package.json
+
+      - name: Set automatic release version
+        shell: pwsh
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $headers = @{
+            Authorization = "Bearer $env:GITHUB_TOKEN"
+            Accept = "application/vnd.github+json"
+            "X-GitHub-Api-Version" = "2026-03-10"
+          }
+
+          $package = Get-Content package.json -Raw | ConvertFrom-Json
+          $baseVersion = [string]$package.version
+          $baseParts = $baseVersion.Split('.')
+          $major = [int]$baseParts[0]
+          $minor = [int]$baseParts[1]
+          $patch = [int]($baseParts[2] -replace '[^0-9].*$', '')
+
+          try {
+            $release = Invoke-RestMethod `
+              -Uri "https://api.github.com/repos/${{ github.repository }}/releases/latest" `
+              -Headers $headers `
+              -Method Get
+
+            if ($release.tag_name -match '^v(\d+)\.(\d+)\.(\d+)$') {
+              $releaseMajor = [int]$Matches[1]
+              $releaseMinor = [int]$Matches[2]
+              $releasePatch = [int]$Matches[3]
+
+              if (($releaseMajor -gt $major) -or (($releaseMajor -eq $major) -and ($releaseMinor -gt $minor))) {
+                $major = $releaseMajor
+                $minor = $releaseMinor
+                $patch = $releasePatch + 1
+              } elseif (($releaseMajor -eq $major) -and ($releaseMinor -eq $minor) -and ($releasePatch -ge $patch)) {
+                $patch = $releasePatch + 1
+              } else {
+                $patch = $patch + 1
+              }
+            } else {
+              $patch = $patch + 1
+            }
+          } catch {
+            Write-Host "Son yayın okunamadı; mevcut package.json sürümünden devam ediliyor."
+            $patch = $patch + 1
+          }
+
+          $version = "$major.$minor.$patch"
+          $package.version = $version
+          $package | ConvertTo-Json -Depth 20 | Set-Content package.json -Encoding UTF8
+
+          Write-Host "Otomatik PRONTO sürümü: $version"
 
       - name: Install dependencies
         run: npm install --no-audit --no-fund
