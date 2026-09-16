@@ -479,6 +479,8 @@ input, select, textarea { font-family: inherit; }
   .shipment-city-card { animation: none !important; }
 }
 .shipment-toolbar { align-items: stretch; }
+.shipment-archive-actions { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+.shipment-archive-btn { font-size:12px; padding:7px 10px; }
 .shipment-select { min-width: 190px; }
 #shipmentGroups { display: flex; flex-direction: column; gap: 16px; }
 .shipment-city-card { background: var(--glass-bg-strong); border: 1px solid var(--glass-edge); border-radius: var(--radius); box-shadow: var(--shadow-glass); overflow: hidden; }
@@ -1246,7 +1248,15 @@ body::after {
       <div class="bulk-bar hidden" id="bulkBar">
         <span id="bulkCount">0 seçili</span>
         <div class="bulk-bar-actions">
-          <button class="btn btn-secondary" id="bulkDeliveredBtn">Teslim Edildi Yap</button>
+          <select class="page-size-select" id="bulkStatusSelect" aria-label="Toplu durum seç">
+            <option value="">Durum seç…</option>
+            <option value="Beklemede">Beklemede</option>
+            <option value="Üretimde">Üretimde</option>
+            <option value="Sevkiyata Hazır">Sevkiyata Hazır</option>
+            <option value="Teslim Edildi">Teslim Edildi</option>
+            <option value="İptal">İptal</option>
+          </select>
+          <button class="btn btn-secondary" id="bulkStatusBtn">Durumu Uygula</button>
           <button class="btn btn-danger" id="bulkDeleteBtn">Sil</button>
           <button class="btn btn-ghost" id="bulkClearBtn">Seçimi Temizle</button>
         </div>
@@ -1292,6 +1302,7 @@ body::after {
           <p class="subtitle">Geciken ve bu hafta teslim edilmesi gereken siparişleri şehir ve sevkiyat tipine göre hazırla.</p>
         </div>
         <div class="header-actions">
+          <button class="btn btn-secondary" id="shipmentHiddenToggleBtn">Gizlenenleri Göster</button>
           <button class="btn btn-primary" id="shipmentPdfBtn">PDF Sevkiyat Listesi</button>
         </div>
       </div>
@@ -2230,7 +2241,11 @@ function shipmentDateWindow() {
   return { todayIso: iso(today), weekStart: iso(monday), weekEnd: iso(sunday) };
 }
 function isShipmentCandidate(order) {
-  if (!order || order.status === "Teslim Edildi" || order.status === "İptal" || !order.deliveryDate) return false;
+  if (!order || order.status === "Teslim Edildi" || order.status === "İptal") return false;
+  if (isShipmentHidden(order)) return false;
+  // "Sevkiyata Hazır" siparişler teslim tarihini beklemeden hemen görünür.
+  if (order.status === "Sevkiyata Hazır") return true;
+  if (!order.deliveryDate) return false;
   const w = shipmentDateWindow();
   return order.deliveryDate < w.todayIso || (order.deliveryDate >= w.weekStart && order.deliveryDate <= w.weekEnd);
 }
@@ -2746,9 +2761,7 @@ async function updateOrderStatus(id, status) {
   }
 
   rebuildDerivedIndexes();
-  // Durumun kendi sekmesine geç ve tek render yap. Ağ cevabını bekleme.
-  currentFilter = status;
-  pageState.orders.page = 1;
+  // Kullanıcının bulunduğu sekmeyi değiştirme. Sadece mevcut görünümü güncelle.
   renderOrdersView();
   if (currentDetailOrderId === id && !document.getElementById("detailModal").classList.contains("hidden")) openDetailModal(id);
   showToast(`Durum "${status}" olarak güncellendi.`);
@@ -3534,40 +3547,48 @@ function bindOrderEvents() {
     renderOrdersView();
   });
   document.getElementById("bulkClearBtn").addEventListener("click", clearSelection);
-  document.getElementById("bulkDeliveredBtn").addEventListener("click", () => {
+  document.getElementById("bulkStatusBtn").addEventListener("click", () => {
     const ids = Array.from(selectedOrderIds);
-    showConfirm(`${ids.length} sipariş 'Teslim Edildi' olarak işaretlensin mi?`, async () => {
+    const newStatus = document.getElementById("bulkStatusSelect").value;
+    if (!ids.length) return;
+    if (!newStatus) { showToast("Önce toplu uygulanacak durumu seç."); return; }
+
+    showConfirm(`${ids.length} sipariş "${newStatus}" olarak güncellensin mi?`, async () => {
       const orders = ids.map((id) => allOrders.find((o) => o.id === id)).filter(Boolean);
       if (!orders.length) return;
 
-      const productMap = new Map();
-      for (const p of allProducts) productMap.set(normName(p.name), p);
+      const productMap = new Map(allProducts.map((p) => [normName(p.name), p]));
       const changedProducts = new Map();
       const stockMovements = [];
 
       for (const order of orders) {
-        if (order.status === "Teslim Edildi") continue;
-        order.status = "Teslim Edildi";
+        const oldStatus = order.status;
+        if (oldStatus === newStatus) continue;
         const product = productMap.get(normName(order.product));
-        if (!product || typeof product.stock !== "number" || order.stockDeducted) continue;
-        const before = product.stock;
-        const qty = Number(order.quantity) || 0;
-        product.stock = Math.max(0, before - qty);
-        order.stockDeducted = true;
-        order.stockDeductedQty = before - product.stock;
-        changedProducts.set(product.id, product);
-        stockMovements.push({ productId: product.id, productName: product.name, delta: product.stock - before, resultingStock: product.stock, type: "delivery", note: `Sipariş ${orderNo(order)} teslim edildi`, supplier: "", date: order.deliveryDate || todayISO(), createdAt: new Date().toISOString() });
+
+        if (newStatus === "Teslim Edildi" && oldStatus !== "Teslim Edildi" && product && typeof product.stock === "number" && !order.stockDeducted) {
+          const before = product.stock;
+          const qty = Number(order.quantity) || 0;
+          product.stock = Math.max(0, before - qty);
+          order.stockDeducted = true;
+          order.stockDeductedQty = before - product.stock;
+          changedProducts.set(product.id, product);
+          stockMovements.push({ productId: product.id, productName: product.name, delta: product.stock - before, resultingStock: product.stock, type: "delivery", note: `Sipariş ${orderNo(order)} teslim edildi`, supplier: "", date: order.deliveryDate || todayISO(), createdAt: new Date().toISOString() });
+        } else if (oldStatus === "Teslim Edildi" && newStatus !== "Teslim Edildi" && product && typeof product.stock === "number" && order.stockDeducted) {
+          const back = typeof order.stockDeductedQty === "number" ? order.stockDeductedQty : (Number(order.quantity) || 0);
+          const before = product.stock;
+          product.stock = before + back;
+          order.stockDeducted = false;
+          order.stockDeductedQty = 0;
+          changedProducts.set(product.id, product);
+          stockMovements.push({ productId: product.id, productName: product.name, delta: back, resultingStock: product.stock, type: "delivery", note: `Sipariş ${orderNo(order)} durumu geri alındı`, supplier: "", date: todayISO(), createdAt: new Date().toISOString() });
+        }
+        order.status = newStatus;
       }
 
-      // Yereli hemen güncelle ve tek render yap.
-      upsertLocalStore("orders", orders);
-      if (changedProducts.size) upsertLocalStore("products", Array.from(changedProducts.values()));
       rebuildDerivedIndexes();
-      currentFilter = "Teslim Edildi";
-      pageState.orders.page = 1;
       selectedOrderIds.clear();
       renderOrdersView();
-      closeAllModals();
       showToast(`${orders.length} sipariş güncelleniyor…`);
 
       try {
@@ -3576,9 +3597,10 @@ function bindOrderEvents() {
           changedProducts.size ? dbUpsertMany("products", Array.from(changedProducts.values())) : Promise.resolve(),
           stockMovements.length ? dbAddMany("stockMovements", stockMovements) : Promise.resolve()
         ]);
-        showToast(`${orders.length} sipariş hızlıca güncellendi.`);
+        document.getElementById("bulkStatusSelect").value = "";
+        showToast(`${orders.length} sipariş "${newStatus}" olarak güncellendi.`);
       } catch (e) {
-        showToast("Toplu işlem sırasında veritabanı hatası oluştu. Yerel görünüm korunuyor.");
+        showToast("Toplu durum güncellemesi sırasında veritabanı hatası oluştu.");
       }
     });
   });
@@ -4299,9 +4321,35 @@ let shipmentSelectedIds = new Set();
 let shipmentSearch = "";
 let shipmentCityFilter = "";
 let shipmentTypeFilter = "";
+let shipmentShowHidden = false;
+const SHIPMENT_HIDDEN_MARKER = "[[SEVKIYAT:GIZLI]]";
+const SHIPMENT_HIDDEN_RE = /\\[\\[SEVKIYAT:GIZLI\\]\\]/i;
+function isShipmentHidden(order) { return SHIPMENT_HIDDEN_RE.test(String(order && order.description || "")); }
+function setShipmentHidden(order, hidden) {
+  const desc = String(order && order.description || "");
+  if (hidden) {
+    if (!SHIPMENT_HIDDEN_RE.test(desc)) order.description = `${desc}${desc ? " " : ""}${SHIPMENT_HIDDEN_MARKER}`;
+  } else {
+    order.description = desc.replace(SHIPMENT_HIDDEN_RE, "").replace(/\\s{2,}/g, " ").trim();
+  }
+}
 function renderShipmentView() {
-  const candidates = allOrders.filter(isShipmentCandidate);
+  const baseCandidates = allOrders.filter((o) => {
+    if (!o || o.status === "Teslim Edildi" || o.status === "İptal") return false;
+    if (shipmentShowHidden) return isShipmentHidden(o);
+    return !isShipmentHidden(o) && (
+      o.status === "Sevkiyata Hazır" ||
+      (!!o.deliveryDate && (() => {
+        const w = shipmentDateWindow();
+        return o.deliveryDate < w.todayIso || (o.deliveryDate >= w.weekStart && o.deliveryDate <= w.weekEnd);
+      })())
+    );
+  });
+  const candidates = baseCandidates;
   const w = shipmentDateWindow();
+  const hiddenCount = allOrders.filter((o) => isShipmentHidden(o) && o.status !== "Teslim Edildi" && o.status !== "İptal").length;
+  const hiddenBtn = document.getElementById("shipmentHiddenToggleBtn");
+  if (hiddenBtn) hiddenBtn.textContent = shipmentShowHidden ? `Aktif Sevkiyatları Göster (${allOrders.filter(isShipmentCandidate).length})` : `Gizlenenleri Göster (${hiddenCount})`;
   const filtered = candidates.filter((o) => {
     const c = shipmentCity(o);
     const t = getShipmentType(o);
@@ -4335,7 +4383,7 @@ function renderShipmentView() {
   groups.innerHTML = Array.from(byCity.entries()).map(([city, orders]) => `
     <div class="shipment-city-card">
       <div class="shipment-city-head"><span class="shipment-city-title">${escapeHtml(city)}</span><span class="shipment-city-count">${orders.length} sipariş</span></div>
-      <table class="shipment-table"><thead><tr><th>Seç</th><th>Sipariş</th><th>Müşteri / Telefon</th><th>Adres</th><th>Ürün</th><th>Adet</th><th>Teslim</th><th>Durum</th><th>Sevkiyat</th></tr></thead><tbody>
+      <table class="shipment-table"><thead><tr><th>Seç</th><th>Sipariş</th><th>Müşteri / Telefon</th><th>Adres</th><th>Ürün</th><th>Adet</th><th>Teslim</th><th>Durum</th><th>Sevkiyat</th><th>İşlem</th></tr></thead><tbody>
       ${orders.map((o)=>{ const c=customerForOrder(o); const checked=shipmentSelectedIds.has(o.id); return `<tr class="${checked?"shipment-selected":""}">
         <td><input class="shipment-checkbox" type="checkbox" data-id="${o.id}" ${checked?"checked":""}></td>
         <td><strong>${orderNo(o)}</strong></td>
@@ -4344,11 +4392,29 @@ function renderShipmentView() {
         <td>${escapeHtml(o.product)}</td><td>${escapeHtml(o.quantity)}</td><td>${formatDate(o.deliveryDate)}${o.deliveryDate < w.todayIso ? " · <strong>Gecikti</strong>" : ""}</td>
         <td>${statusBadgeHtml(o)}</td>
         <td><span class="shipment-type ${getShipmentType(o)==="Nakliye"?"shipment-type--transport":""}">${getShipmentType(o)}</span></td>
+        <td><button type="button" class="btn btn-ghost shipment-archive-btn shipment-hide-btn" data-id="${o.id}">${shipmentShowHidden ? "Gizlemeyi Kaldır" : "Gizle"}</button></td>
       </tr>`;}).join("")}
       </tbody></table>
-      <div class="shipment-mobile-list">${orders.map((o)=>{ const c=customerForOrder(o); const checked=shipmentSelectedIds.has(o.id); return `<div class="shipment-mobile-item"><div class="shipment-mobile-top"><input class="shipment-checkbox" type="checkbox" data-id="${o.id}" ${checked?"checked":""}><div class="shipment-mobile-info"><div class="shipment-customer">${escapeHtml(o.customer)}</div><div class="shipment-contact">${escapeHtml(c?.phone)||"Telefon yok"} · ${escapeHtml(orderNo(o))}</div><div style="margin-top:7px;">${escapeHtml(c?.address)||"Adres yok"}</div><div style="margin-top:7px;">${escapeHtml(o.product)} · ${escapeHtml(o.quantity)} adet · ${formatDate(o.deliveryDate)}</div><div style="margin-top:7px;">${statusBadgeHtml(o)}</div><div style="margin-top:7px;"><span class="shipment-type ${getShipmentType(o)==="Nakliye"?"shipment-type--transport":""}">${getShipmentType(o)}</span></div></div></div></div>`;}).join("")}</div>
+      <div class="shipment-mobile-list">${orders.map((o)=>{ const c=customerForOrder(o); const checked=shipmentSelectedIds.has(o.id); return `<div class="shipment-mobile-item"><div class="shipment-mobile-top"><input class="shipment-checkbox" type="checkbox" data-id="${o.id}" ${checked?"checked":""}><div class="shipment-mobile-info"><div class="shipment-customer">${escapeHtml(o.customer)}</div><div class="shipment-contact">${escapeHtml(c?.phone)||"Telefon yok"} · ${escapeHtml(orderNo(o))}</div><div style="margin-top:7px;">${escapeHtml(c?.address)||"Adres yok"}</div><div style="margin-top:7px;">${escapeHtml(o.product)} · ${escapeHtml(o.quantity)} adet · ${formatDate(o.deliveryDate)}</div><div style="margin-top:7px;">${statusBadgeHtml(o)}</div><div style="margin-top:7px;"><span class="shipment-type ${getShipmentType(o)==="Nakliye"?"shipment-type--transport":""}">${getShipmentType(o)}</span></div><div style="margin-top:10px;"><button type="button" class="btn btn-ghost shipment-archive-btn shipment-hide-btn" data-id="${o.id}">${shipmentShowHidden ? "Gizlemeyi Kaldır" : "Gizle"}</button></div></div></div></div>`;}).join("")}</div>
     </div>`).join("");
   groups.querySelectorAll(".shipment-checkbox").forEach((cb)=>cb.addEventListener("change",()=>{ const id=Number(cb.dataset.id); if(cb.checked) shipmentSelectedIds.add(id); else shipmentSelectedIds.delete(id); renderShipmentView(); }));
+  groups.querySelectorAll(".shipment-hide-btn").forEach((btn)=>btn.addEventListener("click", async (e)=>{
+    e.stopPropagation();
+    const id=Number(btn.dataset.id);
+    const order=allOrders.find((o)=>o.id===id);
+    if(!order) return;
+    const hidden=!shipmentShowHidden;
+    setShipmentHidden(order, hidden);
+    try {
+      await dbUpsertMany("orders",[order]);
+      shipmentSelectedIds.delete(id);
+      renderShipmentView();
+      showToast(hidden ? "Sipariş sevkiyat bölümünde gizlendi." : "Sipariş yeniden sevkiyat listesine alındı.");
+    } catch(e) {
+      setShipmentHidden(order, !hidden);
+      showToast("Gizleme işlemi kaydedilemedi.");
+    }
+  }));
   bindStatusBadges(groups);
 }
 async function exportShipmentPdf() {
@@ -4365,6 +4431,7 @@ async function exportShipmentPdf() {
   await downloadPrintAreaAsPdf(`Ofischi_Sevkiyat_Listesi_${todayISO()}`);
 }
 function bindShipmentEvents() {
+  document.getElementById("shipmentHiddenToggleBtn").addEventListener("click", () => { shipmentShowHidden = !shipmentShowHidden; shipmentSelectedIds.clear(); renderShipmentView(); });
   document.getElementById("shipmentPdfBtn").addEventListener("click", exportShipmentPdf);
   document.getElementById("shipmentSearch").addEventListener("input", (e) => { shipmentSearch = sanitizeText(e.target.value, 100); renderShipmentView(); });
   document.getElementById("shipmentCityFilter").addEventListener("change", (e) => { shipmentCityFilter = e.target.value; renderShipmentView(); });
