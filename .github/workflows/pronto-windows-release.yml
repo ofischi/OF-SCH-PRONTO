@@ -24,12 +24,13 @@ jobs:
 
       - name: Copy current PRONTO web application
         shell: pwsh
-        run: Copy-Item -Force .\index.html .\PRONTO_DESKTOP\index.html
+        run: |
+          Copy-Item -Force ".\index.html" ".\PRONTO_DESKTOP\index.html"
 
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
           cache: npm
           cache-dependency-path: PRONTO_DESKTOP/package.json
 
@@ -37,9 +38,8 @@ jobs:
         shell: pwsh
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        working-directory: PRONTO_DESKTOP
         run: |
-          cd PRONTO_DESKTOP
-
           $headers = @{
             Authorization = "Bearer $env:GITHUB_TOKEN"
             Accept = "application/vnd.github+json"
@@ -47,32 +47,48 @@ jobs:
           }
 
           $package = Get-Content package.json -Raw | ConvertFrom-Json
-          $parts = ([string]$package.version).Split('.')
 
-          $major = [int]$parts[0]
-          $minor = [int]$parts[1]
-          $patch = [int]($parts[2] -replace '[^0-9].*$', '')
+          $baseVersion = [string]$package.version
+          $baseParts = $baseVersion.Split('.')
+
+          $major = [int]$baseParts[0]
+          $minor = [int]$baseParts[1]
+          $patch = [int]($baseParts[2] -replace '[^0-9].*$', '')
+
+          $highestPatch = $patch
 
           try {
-            $release = Invoke-RestMethod `
-              -Uri "https://api.github.com/repos/${{ github.repository }}/releases/latest" `
+            $releases = Invoke-RestMethod `
+              -Uri "https://api.github.com/repos/${{ github.repository }}/releases?per_page=100" `
               -Headers $headers `
               -Method Get
 
-            if ($release.tag_name -match '^v(\d+)\.(\d+)\.(\d+)$') {
-              $major = [int]$Matches[1]
-              $minor = [int]$Matches[2]
-              $patch = [int]$Matches[3] + 1
-            }
-            else {
-              $patch++
+            foreach ($release in $releases) {
+              if ($release.tag_name -match '^v(\d+)\.(\d+)\.(\d+)$') {
+                $rMajor = [int]$Matches[1]
+                $rMinor = [int]$Matches[2]
+                $rPatch = [int]$Matches[3]
+
+                if ($rMajor -gt $major) {
+                  $major = $rMajor
+                  $minor = $rMinor
+                  $highestPatch = $rPatch
+                }
+                elseif ($rMajor -eq $major -and $rMinor -gt $minor) {
+                  $minor = $rMinor
+                  $highestPatch = $rPatch
+                }
+                elseif ($rMajor -eq $major -and $rMinor -eq $minor -and $rPatch -gt $highestPatch) {
+                  $highestPatch = $rPatch
+                }
+              }
             }
           }
           catch {
-            $patch++
+            Write-Host "GitHub releases okunamadı. package.json sürümünden devam ediliyor."
           }
 
-          $version = "$major.$minor.$patch"
+          $version = "$major.$minor.$($highestPatch + 1)"
 
           $package.version = $version
 
