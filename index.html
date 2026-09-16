@@ -2029,10 +2029,16 @@ async function dbAddMany(store, list) {
 
 async function dbPut(store, obj) {
   await throttleApi();
-  const { data, error } = await supa.from(TABLES[store]).update(toRow(store, obj)).eq("id", obj.id).select(STORE_COLUMNS[store]).single();
+  const { data, error } = await supa.from(TABLES[store])
+    .update(toRow(store, obj))
+    .eq("id", obj.id)
+    .select(STORE_COLUMNS[store])
+    .single();
   if (error) dbFail("güncelleme: " + store, error);
-  upsertLocalStore(store, fromRow(store, data));
-  return obj.id;
+  if (!data) dbFail("güncelleme: " + store, { message: "Kayıt bulunamadı veya güncelleme yetkisi yok." });
+  const saved = fromRow(store, data);
+  upsertLocalStore(store, saved);
+  return saved.id;
 }
 
 // Toplu teslim işleminde tek HTTP isteği kullanılır.
@@ -2767,7 +2773,7 @@ async function updateOrderStatus(id, status) {
   showToast(`Durum "${status}" olarak güncellendi.`);
 
   try {
-    const writes = [dbUpsertMany("orders", [order])];
+    const writes = [dbPut("orders", order)];
     if (product && productSnapshot && product.stock !== productSnapshot.stock) writes.push(dbUpsertMany("products", [product]));
     if (stockMovement) writes.push(dbAddMany("stockMovements", [stockMovement]));
     await Promise.all(writes);
@@ -3213,21 +3219,26 @@ async function saveOrderFromForm() {
     upsertLocalStore("customers", newCustomer);
   }
 
-  if (idVal) {
-    order.id = Number(idVal);
-    await applyStockForStatusChange(order, oldOrder ? oldOrder.status : null, order.status);
-    await dbPut("orders", order);
-    showToast("Sipariş güncellendi.");
-  } else {
-    order.createdAt = new Date().toISOString();
-    order.id = await dbAdd("orders", order);
-    showToast("Sipariş kaydedildi.");
-  }
+  try {
+    if (idVal) {
+      order.id = Number(idVal);
+      await applyStockForStatusChange(order, oldOrder ? oldOrder.status : null, order.status);
+      await dbPut("orders", order);
+      showToast("Sipariş güncellendi.");
+    } else {
+      order.createdAt = new Date().toISOString();
+      order.id = await dbAdd("orders", order);
+      showToast("Sipariş kaydedildi.");
+    }
 
-  await reloadAll();
-  orderFormDirty = false;
-  closeAllModals();
-  renderOrdersView();
+    await reloadAll();
+    orderFormDirty = false;
+    closeAllModals();
+    renderOrdersView();
+  } catch (e) {
+    console.error("Sipariş kaydetme hatası:", e);
+    showToast("Sipariş kaydedilemedi. Veritabanı bağlantısını kontrol et.");
+  }
 }
 
 /* =======================================================
@@ -3535,7 +3546,7 @@ function bindOrderEvents() {
       document.getElementById("f_customerAddress").value = c.address || "";
     }
   });
-  document.getElementById("orderSaveBtn").addEventListener("click", saveOrderFromForm);
+  // Kaydet yalnızca form submit üzerinden çalışır; böylece butona tıklayınca çift kayıt oluşmaz.
   document.getElementById("orderForm").addEventListener("submit", (e) => { e.preventDefault(); saveOrderFromForm(); });
   document.getElementById("detailModalClose").addEventListener("click", closeAllModals);
   document.getElementById("detailPdfBtn").addEventListener("click", () => exportOrderPdf(currentDetailOrderId));
@@ -3593,8 +3604,8 @@ function bindOrderEvents() {
 
       try {
         await Promise.all([
-          dbUpsertMany("orders", orders),
-          changedProducts.size ? dbUpsertMany("products", Array.from(changedProducts.values())) : Promise.resolve(),
+          Promise.all(orders.filter((o) => o.status === newStatus).map((o) => dbPut("orders", o))),
+          changedProducts.size ? Promise.all(Array.from(changedProducts.values()).map((p) => dbPut("products", p))) : Promise.resolve(),
           stockMovements.length ? dbAddMany("stockMovements", stockMovements) : Promise.resolve()
         ]);
         document.getElementById("bulkStatusSelect").value = "";
@@ -4323,14 +4334,14 @@ let shipmentCityFilter = "";
 let shipmentTypeFilter = "";
 let shipmentShowHidden = false;
 const SHIPMENT_HIDDEN_MARKER = "[[SEVKIYAT:GIZLI]]";
-const SHIPMENT_HIDDEN_RE = /\\[\\[SEVKIYAT:GIZLI\\]\\]/i;
+const SHIPMENT_HIDDEN_RE = /\[\[SEVKIYAT:GIZLI\]\]/i;
 function isShipmentHidden(order) { return SHIPMENT_HIDDEN_RE.test(String(order && order.description || "")); }
 function setShipmentHidden(order, hidden) {
   const desc = String(order && order.description || "");
   if (hidden) {
     if (!SHIPMENT_HIDDEN_RE.test(desc)) order.description = `${desc}${desc ? " " : ""}${SHIPMENT_HIDDEN_MARKER}`;
   } else {
-    order.description = desc.replace(SHIPMENT_HIDDEN_RE, "").replace(/\\s{2,}/g, " ").trim();
+    order.description = desc.replace(SHIPMENT_HIDDEN_RE, "").replace(/\s{2,}/g, " ").trim();
   }
 }
 function renderShipmentView() {
@@ -4406,7 +4417,7 @@ function renderShipmentView() {
     const hidden=!shipmentShowHidden;
     setShipmentHidden(order, hidden);
     try {
-      await dbUpsertMany("orders",[order]);
+      await dbPut("orders",order);
       shipmentSelectedIds.delete(id);
       renderShipmentView();
       showToast(hidden ? "Sipariş sevkiyat bölümünde gizlendi." : "Sipariş yeniden sevkiyat listesine alındı.");
@@ -4436,7 +4447,14 @@ function bindShipmentEvents() {
   document.getElementById("shipmentSearch").addEventListener("input", (e) => { shipmentSearch = sanitizeText(e.target.value, 100); renderShipmentView(); });
   document.getElementById("shipmentCityFilter").addEventListener("change", (e) => { shipmentCityFilter = e.target.value; renderShipmentView(); });
   document.getElementById("shipmentTypeFilter").addEventListener("change", (e) => { shipmentTypeFilter = e.target.value; renderShipmentView(); });
-  document.getElementById("shipmentSelectAllBtn").addEventListener("click", () => { allOrders.filter(isShipmentCandidate).forEach((o)=>shipmentSelectedIds.add(o.id)); renderShipmentView(); });
+  document.getElementById("shipmentSelectAllBtn").addEventListener("click", () => {
+    const visible = allOrders.filter((o) => {
+      if (!o || o.status === "Teslim Edildi" || o.status === "İptal") return false;
+      return shipmentShowHidden ? isShipmentHidden(o) : isShipmentCandidate(o);
+    });
+    visible.forEach((o) => shipmentSelectedIds.add(o.id));
+    renderShipmentView();
+  });
   document.getElementById("shipmentClearBtn").addEventListener("click", () => { shipmentSelectedIds.clear(); renderShipmentView(); });
 }
 
