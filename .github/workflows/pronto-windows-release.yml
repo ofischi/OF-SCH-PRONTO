@@ -1,0 +1,40 @@
+name: PRONTO Windows Release
+
+on:
+  push:
+    paths:
+      - 'PRONTO_DESKTOP/**'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: PRONTO_DESKTOP
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Copy current PRONTO web application
+        shell: pwsh
+        run: Copy-Item -Force ..\index.html .\index.html
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: PRONTO_DESKTOP/package.json
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Build and publish Windows installer
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npm run dist:publish
