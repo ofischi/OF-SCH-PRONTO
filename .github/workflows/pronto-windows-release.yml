@@ -10,7 +10,6 @@ on:
 permissions:
   contents: write
 
-# Aynı anda iki PRONTO sürümünün yayınlanmasını engeller.
 concurrency:
   group: pronto-windows-release
   cancel-in-progress: false
@@ -19,19 +18,13 @@ jobs:
   release:
     runs-on: windows-latest
 
-    defaults:
-      run:
-        working-directory: PRONTO_DESKTOP
-
     steps:
-
       - name: Checkout
         uses: actions/checkout@v4
 
       - name: Copy current PRONTO web application
         shell: pwsh
-        run: |
-          Copy-Item -Force ..\index.html .\index.html
+        run: Copy-Item -Force .\index.html .\PRONTO_DESKTOP\index.html
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -45,6 +38,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          cd PRONTO_DESKTOP
+
           $headers = @{
             Authorization = "Bearer $env:GITHUB_TOKEN"
             Accept = "application/vnd.github+json"
@@ -52,13 +47,11 @@ jobs:
           }
 
           $package = Get-Content package.json -Raw | ConvertFrom-Json
+          $parts = ([string]$package.version).Split('.')
 
-          $baseVersion = [string]$package.version
-          $baseParts = $baseVersion.Split('.')
-
-          $major = [int]$baseParts[0]
-          $minor = [int]$baseParts[1]
-          $patch = [int]($baseParts[2] -replace '[^0-9].*$', '')
+          $major = [int]$parts[0]
+          $minor = [int]$parts[1]
+          $patch = [int]($parts[2] -replace '[^0-9].*$', '')
 
           try {
             $release = Invoke-RestMethod `
@@ -67,43 +60,16 @@ jobs:
               -Method Get
 
             if ($release.tag_name -match '^v(\d+)\.(\d+)\.(\d+)$') {
-
-              $releaseMajor = [int]$Matches[1]
-              $releaseMinor = [int]$Matches[2]
-              $releasePatch = [int]$Matches[3]
-
-              if (
-                ($releaseMajor -gt $major) -or
-                (
-                  ($releaseMajor -eq $major) -and
-                  ($releaseMinor -gt $minor)
-                )
-              ) {
-                $major = $releaseMajor
-                $minor = $releaseMinor
-                $patch = $releasePatch + 1
-              }
-              elseif (
-                ($releaseMajor -eq $major) -and
-                ($releaseMinor -eq $minor) -and
-                ($releasePatch -ge $patch)
-              ) {
-                $patch = $releasePatch + 1
-              }
-              else {
-                $patch = $patch + 1
-              }
-
+              $major = [int]$Matches[1]
+              $minor = [int]$Matches[2]
+              $patch = [int]$Matches[3] + 1
             }
             else {
-              $patch = $patch + 1
+              $patch++
             }
-
           }
           catch {
-            Write-Host "Son GitHub Release okunamadı."
-            Write-Host "Mevcut package.json sürümünden devam ediliyor."
-            $patch = $patch + 1
+            $patch++
           }
 
           $version = "$major.$minor.$patch"
@@ -119,10 +85,12 @@ jobs:
           Write-Host "Yeni PRONTO sürümü: $version"
 
       - name: Install dependencies
+        working-directory: PRONTO_DESKTOP
         run: npm install --no-audit --no-fund
 
       - name: Build Windows installer
-       run: npm run dist -- --publish never
+        working-directory: PRONTO_DESKTOP
+        run: npm run dist -- --publish never
 
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
