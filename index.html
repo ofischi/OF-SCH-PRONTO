@@ -1375,6 +1375,12 @@ body::after {
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
           <input type="text" id="customerSearchInput" placeholder="Müşteri adı, telefon veya e-posta ara…">
         </div>
+        <div class="filter-pills" aria-label="Müşteri sıralama">
+          <button type="button" class="pill active" data-customer-sort="new">Yeni</button>
+          <button type="button" class="pill" data-customer-sort="old">Eski</button>
+          <button type="button" class="pill" data-customer-sort="az">A-Z</button>
+          <button type="button" class="pill" data-customer-sort="za">Z-A</button>
+        </div>
       </div>
       <div class="table-wrap" id="customersTableWrap">
         <table class="orders-table">
@@ -1400,6 +1406,12 @@ body::after {
         <div class="search-box">
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
           <input type="text" id="supplierSearchInput" placeholder="Tedarikçi adı, telefon veya e-posta ara…">
+        </div>
+        <div class="filter-pills" aria-label="Tedarikçi sıralama">
+          <button type="button" class="pill active" data-supplier-sort="new">Yeni</button>
+          <button type="button" class="pill" data-supplier-sort="old">Eski</button>
+          <button type="button" class="pill" data-supplier-sort="az">A-Z</button>
+          <button type="button" class="pill" data-supplier-sort="za">Z-A</button>
         </div>
       </div>
       <div class="table-wrap" id="suppliersTableWrap">
@@ -1537,6 +1549,14 @@ body::after {
           <textarea id="f_customerAddress" rows="2" placeholder="Müşteri teslimat adresi"></textarea>
         </label>
         <label class="form-field">
+          <span>Sipariş Tarihi *</span>
+          <input type="date" id="f_orderDate" required>
+        </label>
+        <label class="form-field">
+          <span>Teslim Tarihi *</span>
+          <input type="date" id="f_deliveryDate" required>
+        </label>
+        <label class="form-field">
           <span>Tedarikçi *</span>
           <input type="text" id="f_supplier" list="dl_suppliers" required>
         </label>
@@ -1547,14 +1567,6 @@ body::after {
         <label class="form-field">
           <span>Adet *</span>
           <input type="number" id="f_quantity" min="1" step="1" required>
-        </label>
-        <label class="form-field">
-          <span>Sipariş Tarihi *</span>
-          <input type="date" id="f_orderDate" required>
-        </label>
-        <label class="form-field">
-          <span>Teslim Tarihi *</span>
-          <input type="date" id="f_deliveryDate" required>
         </label>
         <label class="form-field">
           <span>Renk Kodu</span>
@@ -1590,7 +1602,7 @@ body::after {
     </form>
     <div class="modal-foot">
       <button class="btn btn-ghost" id="orderCancelBtn">İptal</button>
-      <button class="btn btn-primary" id="orderSaveBtn">Siparişi Kaydet</button>
+      <button type="button" class="btn btn-primary" id="orderSaveBtn">Siparişi Kaydet</button>
     </div>
   </div>
 </div>
@@ -1844,6 +1856,7 @@ let allStockMovements = [];
 let pendingConfirmAction = null;
 let currentEntityType = null; // 'product' | 'customer' | 'supplier'
 let productSearch = "", customerSearch = "", supplierSearch = "", stockSearch = "";
+let customerSort = "new", supplierSort = "new";
 const PAGE_SIZE_OPTIONS = [20, 50, 100];
 let pageState = {
   orders: { page: 1, size: 20 },
@@ -3546,10 +3559,9 @@ function bindOrderEvents() {
       document.getElementById("f_customerAddress").value = c.address || "";
     }
   });
-  // Kaydet butonu formun dışında olduğu için tıklamayı doğrudan save fonksiyonuna bağla.
-  // Form submit de korunur; böylece Enter ile kaydetme çalışmaya devam eder.
-  document.getElementById("orderSaveBtn").addEventListener("click", () => saveOrderFromForm());
+  // Kaydet yalnızca form submit üzerinden çalışır; böylece butona tıklayınca çift kayıt oluşmaz.
   document.getElementById("orderForm").addEventListener("submit", (e) => { e.preventDefault(); saveOrderFromForm(); });
+  document.getElementById("orderSaveBtn").addEventListener("click", () => saveOrderFromForm());
   document.getElementById("detailModalClose").addEventListener("click", closeAllModals);
   document.getElementById("detailPdfBtn").addEventListener("click", () => exportOrderPdf(currentDetailOrderId));
 
@@ -3567,6 +3579,8 @@ function bindOrderEvents() {
     if (!newStatus) { showToast("Önce toplu uygulanacak durumu seç."); return; }
 
     showConfirm(`${ids.length} sipariş "${newStatus}" olarak güncellensin mi?`, async () => {
+      // Onay verildiği anda onay penceresini kapat; mevcut toplu işlem akışı aynen devam eder.
+      closeConfirmModal();
       const orders = ids.map((id) => allOrders.find((o) => o.id === id)).filter(Boolean);
       if (!orders.length) return;
 
@@ -3922,6 +3936,18 @@ function bindEntityEvents() {
   document.getElementById("productSearchInput").addEventListener("input", debounce((e) => { productSearch = sanitizeText(e.target.value, 100); e.target.value = productSearch; pageState.products.page = 1; renderProductsView(); }, 140));
   document.getElementById("customerSearchInput").addEventListener("input", debounce((e) => { customerSearch = sanitizeText(e.target.value, 100); e.target.value = customerSearch; pageState.customers.page = 1; renderCustomersView(); }, 140));
   document.getElementById("supplierSearchInput").addEventListener("input", debounce((e) => { supplierSearch = sanitizeText(e.target.value, 100); e.target.value = supplierSearch; pageState.suppliers.page = 1; renderSuppliersView(); }, 140));
+  document.querySelectorAll("[data-customer-sort]").forEach((btn) => btn.addEventListener("click", () => {
+    customerSort = btn.dataset.customerSort;
+    document.querySelectorAll("[data-customer-sort]").forEach((b) => b.classList.toggle("active", b === btn));
+    pageState.customers.page = 1;
+    renderCustomersView();
+  }));
+  document.querySelectorAll("[data-supplier-sort]").forEach((btn) => btn.addEventListener("click", () => {
+    supplierSort = btn.dataset.supplierSort;
+    document.querySelectorAll("[data-supplier-sort]").forEach((b) => b.classList.toggle("active", b === btn));
+    pageState.suppliers.page = 1;
+    renderSuppliersView();
+  }));
   document.getElementById("stockSearchInput").addEventListener("input", debounce((e) => { stockSearch = sanitizeText(e.target.value, 100); e.target.value = stockSearch; pageState.stock.page = 1; renderStockView(); }, 140));
 }
 
@@ -4201,7 +4227,11 @@ function bindStockEvents() {
    ======================================================= */
 function renderCustomersView() {
   const q = customerSearch.trim().toLocaleLowerCase("tr");
-  let list = allCustomers.slice().sort((a, b) => b.id - a.id);
+  let list = allCustomers.slice();
+  if (customerSort === "az") list.sort((a, b) => (a.name || "").localeCompare(b.name || "", "tr") || a.id - b.id);
+  else if (customerSort === "za") list.sort((a, b) => (b.name || "").localeCompare(a.name || "", "tr") || b.id - a.id);
+  else if (customerSort === "old") list.sort((a, b) => a.id - b.id);
+  else list.sort((a, b) => b.id - a.id);
   if (q) list = list.filter((c) =>
     (c.name || "").toLocaleLowerCase("tr").includes(q) ||
     (c.phone || "").toLocaleLowerCase("tr").includes(q) ||
@@ -4267,7 +4297,11 @@ function renderCustomersView() {
    ======================================================= */
 function renderSuppliersView() {
   const q = supplierSearch.trim().toLocaleLowerCase("tr");
-  let list = allSuppliers.slice().sort((a, b) => b.id - a.id);
+  let list = allSuppliers.slice();
+  if (supplierSort === "az") list.sort((a, b) => (a.name || "").localeCompare(b.name || "", "tr") || a.id - b.id);
+  else if (supplierSort === "za") list.sort((a, b) => (b.name || "").localeCompare(a.name || "", "tr") || b.id - a.id);
+  else if (supplierSort === "old") list.sort((a, b) => a.id - b.id);
+  else list.sort((a, b) => b.id - a.id);
   if (q) list = list.filter((s) =>
     (s.name || "").toLocaleLowerCase("tr").includes(q) ||
     (s.phone || "").toLocaleLowerCase("tr").includes(q) ||
@@ -4346,34 +4380,107 @@ function setShipmentHidden(order, hidden) {
     order.description = desc.replace(SHIPMENT_HIDDEN_RE, "").replace(/\s{2,}/g, " ").trim();
   }
 }
-function renderShipmentView() {
-  const baseCandidates = allOrders.filter((o) => {
-    if (!o || o.status === "Teslim Edildi" || o.status === "İptal") return false;
-    if (shipmentShowHidden) return isShipmentHidden(o);
-    return !isShipmentHidden(o) && (
-      o.status === "Sevkiyata Hazır" ||
-      (!!o.deliveryDate && (() => {
-        const w = shipmentDateWindow();
-        return o.deliveryDate < w.todayIso || (o.deliveryDate >= w.weekStart && o.deliveryDate <= w.weekEnd);
-      })())
-    );
-  });
-  const candidates = baseCandidates;
-  const w = shipmentDateWindow();
-  const hiddenCount = allOrders.filter((o) => isShipmentHidden(o) && o.status !== "Teslim Edildi" && o.status !== "İptal").length;
-  const hiddenBtn = document.getElementById("shipmentHiddenToggleBtn");
-  if (hiddenBtn) hiddenBtn.textContent = shipmentShowHidden ? `Aktif Sevkiyatları Göster (${allOrders.filter(isShipmentCandidate).length})` : `Gizlenenleri Göster (${hiddenCount})`;
-  const filtered = candidates.filter((o) => {
-    const c = shipmentCity(o);
-    const t = getShipmentType(o);
-    const q = shipmentSearch.trim().toLocaleLowerCase("tr-TR");
-    if (shipmentCityFilter && c !== shipmentCityFilter) return false;
-    if (shipmentTypeFilter && t !== shipmentTypeFilter) return false;
-    if (q && ![orderNo(o), o.customer, o.product, o.supplier].some((v) => String(v || "").toLocaleLowerCase("tr-TR").includes(q))) return false;
-    return true;
-  }).sort((a,b) => (shipmentCity(a).localeCompare(shipmentCity(b),"tr")) || (a.deliveryDate || "").localeCompare(b.deliveryDate || "") || a.id-b.id);
+function buildShipmentGroups() {
+  const activeOrders = allOrders.filter((o) => o && o.status !== "Teslim Edildi" && o.status !== "İptal");
+  const map = new Map();
 
-  const cities = Array.from(new Set(candidates.map(shipmentCity))).sort((a,b)=>a.localeCompare(b,"tr"));
+  activeOrders.forEach((o) => {
+    const customerKey = normName(o.customer);
+    const deliveryKey = o.deliveryDate || "NO_DATE";
+    const key = `${customerKey}||${deliveryKey}`;
+    if (!map.has(key)) map.set(key, []);
+    map.get(key).push(o);
+  });
+
+  return Array.from(map.entries()).map(([key, orders]) => {
+    const first = orders[0];
+    const customer = customerForOrder(first);
+    const shipmentTypes = Array.from(new Set(orders.map(getShipmentType)));
+    const allReady = orders.length > 0 && orders.every((o) => o.status === "Sevkiyata Hazır");
+    const hasHidden = orders.some(isShipmentHidden);
+    const allHidden = orders.length > 0 && orders.every(isShipmentHidden);
+    const deliveryDate = first.deliveryDate || "";
+    const w = shipmentDateWindow();
+    const dateInShipmentWindow = !!deliveryDate && (
+      deliveryDate < w.todayIso ||
+      (deliveryDate >= w.weekStart && deliveryDate <= w.weekEnd)
+    );
+
+    return {
+      key,
+      orders,
+      ids: orders.map((o) => o.id),
+      first,
+      customer,
+      customerName: first.customer || "-",
+      phone: customer?.phone || "-",
+      address: customer?.address || "-",
+      city: shipmentCity(first),
+      deliveryDate,
+      shipmentType: shipmentTypes.join(" / "),
+      allReady,
+      hasHidden,
+      allHidden,
+      dateInShipmentWindow
+    };
+  });
+}
+
+function isShipmentGroupCandidate(group) {
+  if (!group || !group.orders.length) return false;
+  // Bir grubun içindeki herhangi bir kalem gizliyse grup aktif sevkiyatta görünmez.
+  if (group.hasHidden) return false;
+  // Tüm kalemler hazırsa teslim tarihini beklemeden sevkiyata gelir.
+  if (group.allReady) return true;
+  // Hazır olmayan grup yalnızca tarihi geçmişse veya bu haftadaysa görünür.
+  return group.dateInShipmentWindow;
+}
+
+function isShipmentGroupSelected(group) {
+  return !!group && group.ids.length > 0 && group.ids.every((id) => shipmentSelectedIds.has(id));
+}
+
+function selectedShipmentGroups(groups) {
+  return groups.filter((group) => isShipmentGroupSelected(group));
+}
+
+function renderShipmentView() {
+  const allGroups = buildShipmentGroups();
+  const candidates = shipmentShowHidden
+    ? allGroups.filter((g) => g.hasHidden)
+    : allGroups.filter(isShipmentGroupCandidate);
+  const w = shipmentDateWindow();
+  const hiddenCount = allGroups.filter((g) => g.hasHidden).length;
+  const hiddenBtn = document.getElementById("shipmentHiddenToggleBtn");
+  if (hiddenBtn) {
+    hiddenBtn.textContent = shipmentShowHidden
+      ? `Aktif Sevkiyatları Göster (${allGroups.filter(isShipmentGroupCandidate).length})`
+      : `Gizlenenleri Göster (${hiddenCount})`;
+  }
+
+  const filtered = candidates.filter((g) => {
+    const q = shipmentSearch.trim().toLocaleLowerCase("tr-TR");
+    if (shipmentCityFilter && g.city !== shipmentCityFilter) return false;
+    if (shipmentTypeFilter && !g.orders.some((o) => getShipmentType(o) === shipmentTypeFilter)) return false;
+    if (q) {
+      const haystack = [
+        g.customerName,
+        g.phone,
+        g.address,
+        g.city,
+        g.shipmentType,
+        formatDate(g.deliveryDate)
+      ].map((v) => String(v || "").toLocaleLowerCase("tr-TR"));
+      if (!haystack.some((v) => v.includes(q))) return false;
+    }
+    return true;
+  }).sort((a,b) =>
+    a.city.localeCompare(b.city,"tr") ||
+    (a.deliveryDate || "").localeCompare(b.deliveryDate || "") ||
+    a.customerName.localeCompare(b.customerName,"tr")
+  );
+
+  const cities = Array.from(new Set(candidates.map((g) => g.city))).sort((a,b)=>a.localeCompare(b,"tr"));
   const citySelect = document.getElementById("shipmentCityFilter");
   const oldCity = shipmentCityFilter;
   citySelect.innerHTML = `<option value="">Tüm Şehirler</option>` + cities.map((c) => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join("");
@@ -4381,82 +4488,123 @@ function renderShipmentView() {
   shipmentCityFilter = citySelect.value;
 
   document.getElementById("shipmentTotal").textContent = candidates.length;
-  document.getElementById("shipmentLate").textContent = candidates.filter((o) => o.deliveryDate < w.todayIso).length;
-  document.getElementById("shipmentWeek").textContent = candidates.filter((o) => o.deliveryDate >= w.weekStart && o.deliveryDate <= w.weekEnd).length;
-  shipmentSelectedIds.forEach((id) => { if (!filtered.some((o)=>o.id===id)) shipmentSelectedIds.delete(id); });
-  document.getElementById("shipmentSelected").textContent = shipmentSelectedIds.size;
-  document.getElementById("shipmentSelectionText").textContent = `${shipmentSelectedIds.size} sipariş seçildi`;
+  document.getElementById("shipmentLate").textContent = candidates.filter((g) => g.deliveryDate && g.deliveryDate < w.todayIso).length;
+  document.getElementById("shipmentWeek").textContent = candidates.filter((g) => g.deliveryDate && g.deliveryDate >= w.weekStart && g.deliveryDate <= w.weekEnd).length;
+
+  const visibleGroupKeys = new Set(filtered.map((g) => g.key));
+  Array.from(shipmentSelectedIds).forEach((id) => {
+    const belongsToVisibleGroup = filtered.some((g) => g.ids.includes(id));
+    if (!belongsToVisibleGroup) shipmentSelectedIds.delete(id);
+  });
+
+  const selectedCount = filtered.filter(isShipmentGroupSelected).length;
+  document.getElementById("shipmentSelected").textContent = selectedCount;
+  document.getElementById("shipmentSelectionText").textContent = `${selectedCount} sevkiyat seçildi`;
 
   const empty = document.getElementById("shipmentEmptyState");
   const groups = document.getElementById("shipmentGroups");
   if (!filtered.length) { empty.classList.remove("hidden"); groups.innerHTML = ""; return; }
   empty.classList.add("hidden");
+
   const byCity = new Map();
-  filtered.forEach((o)=>{ const c=shipmentCity(o); if(!byCity.has(c)) byCity.set(c,[]); byCity.get(c).push(o); });
-  groups.innerHTML = Array.from(byCity.entries()).map(([city, orders]) => `
+  filtered.forEach((g)=>{ if(!byCity.has(g.city)) byCity.set(g.city,[]); byCity.get(g.city).push(g); });
+
+  groups.innerHTML = Array.from(byCity.entries()).map(([city, shipmentGroups]) => `
     <div class="shipment-city-card">
-      <div class="shipment-city-head"><span class="shipment-city-title">${escapeHtml(city)}</span><span class="shipment-city-count">${orders.length} sipariş</span></div>
-      <table class="shipment-table"><thead><tr><th>Seç</th><th>Sipariş</th><th>Müşteri / Telefon</th><th>Adres</th><th>Ürün</th><th>Adet</th><th>Teslim</th><th>Durum</th><th>Sevkiyat</th><th>İşlem</th></tr></thead><tbody>
-      ${orders.map((o)=>{ const c=customerForOrder(o); const checked=shipmentSelectedIds.has(o.id); return `<tr class="${checked?"shipment-selected":""}">
-        <td><input class="shipment-checkbox" type="checkbox" data-id="${o.id}" ${checked?"checked":""}></td>
-        <td><strong>${orderNo(o)}</strong></td>
-        <td><div class="shipment-customer">${escapeHtml(o.customer)}</div><div class="shipment-contact">${escapeHtml(c?.phone)||"Telefon yok"}</div></td>
-        <td class="shipment-address">${escapeHtml(c?.address)||"Adres yok"}</td>
-        <td>${escapeHtml(o.product)}</td><td>${escapeHtml(o.quantity)}</td><td>${formatDate(o.deliveryDate)}${o.deliveryDate < w.todayIso ? " · <strong>Gecikti</strong>" : ""}</td>
-        <td>${statusBadgeHtml(o)}</td>
-        <td><span class="shipment-type ${getShipmentType(o)==="Nakliye"?"shipment-type--transport":""}">${getShipmentType(o)}</span></td>
-        <td><button type="button" class="btn btn-ghost shipment-archive-btn shipment-hide-btn" data-id="${o.id}">${shipmentShowHidden ? "Gizlemeyi Kaldır" : "Gizle"}</button></td>
-      </tr>`;}).join("")}
+      <div class="shipment-city-head"><span class="shipment-city-title">${escapeHtml(city)}</span><span class="shipment-city-count">${shipmentGroups.length} sevkiyat</span></div>
+      <table class="shipment-table"><thead><tr><th>Seç</th><th>Müşteri / Telefon</th><th>Adres</th><th>Teslim</th><th>Nakliye Durumu</th><th>İşlem</th></tr></thead><tbody>
+      ${shipmentGroups.map((g)=>{
+        const checked=isShipmentGroupSelected(g);
+        const late=g.deliveryDate && g.deliveryDate < w.todayIso;
+        return `<tr class="${checked?"shipment-selected":""}">
+          <td><input class="shipment-checkbox" type="checkbox" data-id="${g.first.id}" ${checked?"checked":""}></td>
+          <td><div class="shipment-customer">${escapeHtml(g.customerName)}</div><div class="shipment-contact">${escapeHtml(g.phone)}</div></td>
+          <td class="shipment-address">${escapeHtml(g.address)}</td>
+          <td>${g.deliveryDate ? formatDate(g.deliveryDate) : "-"}${late ? " · <strong>Gecikti</strong>" : ""}</td>
+          <td><span class="shipment-type ${g.shipmentType.includes("Nakliye")?"shipment-type--transport":""}">${escapeHtml(g.shipmentType)}</span></td>
+          <td><button type="button" class="btn btn-ghost shipment-archive-btn shipment-hide-btn" data-id="${g.first.id}">${shipmentShowHidden ? "Gizlemeyi Kaldır" : "Gizle"}</button></td>
+        </tr>`;
+      }).join("")}
       </tbody></table>
-      <div class="shipment-mobile-list">${orders.map((o)=>{ const c=customerForOrder(o); const checked=shipmentSelectedIds.has(o.id); return `<div class="shipment-mobile-item"><div class="shipment-mobile-top"><input class="shipment-checkbox" type="checkbox" data-id="${o.id}" ${checked?"checked":""}><div class="shipment-mobile-info"><div class="shipment-customer">${escapeHtml(o.customer)}</div><div class="shipment-contact">${escapeHtml(c?.phone)||"Telefon yok"} · ${escapeHtml(orderNo(o))}</div><div style="margin-top:7px;">${escapeHtml(c?.address)||"Adres yok"}</div><div style="margin-top:7px;">${escapeHtml(o.product)} · ${escapeHtml(o.quantity)} adet · ${formatDate(o.deliveryDate)}</div><div style="margin-top:7px;">${statusBadgeHtml(o)}</div><div style="margin-top:7px;"><span class="shipment-type ${getShipmentType(o)==="Nakliye"?"shipment-type--transport":""}">${getShipmentType(o)}</span></div><div style="margin-top:10px;"><button type="button" class="btn btn-ghost shipment-archive-btn shipment-hide-btn" data-id="${o.id}">${shipmentShowHidden ? "Gizlemeyi Kaldır" : "Gizle"}</button></div></div></div></div>`;}).join("")}</div>
+      <div class="shipment-mobile-list">${shipmentGroups.map((g)=>{
+        const checked=isShipmentGroupSelected(g);
+        const late=g.deliveryDate && g.deliveryDate < w.todayIso;
+        return `<div class="shipment-mobile-item"><div class="shipment-mobile-top"><input class="shipment-checkbox" type="checkbox" data-id="${g.first.id}" ${checked?"checked":""}><div class="shipment-mobile-info"><div class="shipment-customer">${escapeHtml(g.customerName)}</div><div class="shipment-contact">${escapeHtml(g.phone)}</div><div style="margin-top:7px;">${escapeHtml(g.address)}</div><div style="margin-top:7px;">Teslim: ${g.deliveryDate ? formatDate(g.deliveryDate) : "-"}${late ? " · Gecikti" : ""}</div><div style="margin-top:7px;"><span class="shipment-type ${g.shipmentType.includes("Nakliye")?"shipment-type--transport":""}">${escapeHtml(g.shipmentType)}</span></div><div style="margin-top:10px;"><button type="button" class="btn btn-ghost shipment-archive-btn shipment-hide-btn" data-id="${g.first.id}">${shipmentShowHidden ? "Gizlemeyi Kaldır" : "Gizle"}</button></div></div></div></div>`;
+      }).join("")}</div>
     </div>`).join("");
-  groups.querySelectorAll(".shipment-checkbox").forEach((cb)=>cb.addEventListener("change",()=>{ const id=Number(cb.dataset.id); if(cb.checked) shipmentSelectedIds.add(id); else shipmentSelectedIds.delete(id); renderShipmentView(); }));
+
+  groups.querySelectorAll(".shipment-checkbox").forEach((cb)=>cb.addEventListener("change",()=>{
+    const id=Number(cb.dataset.id);
+    const group=filtered.find((g)=>g.ids.includes(id));
+    if (!group) return;
+    if(cb.checked) group.ids.forEach((groupId)=>shipmentSelectedIds.add(groupId));
+    else group.ids.forEach((groupId)=>shipmentSelectedIds.delete(groupId));
+    renderShipmentView();
+  }));
+
   groups.querySelectorAll(".shipment-hide-btn").forEach((btn)=>btn.addEventListener("click", async (e)=>{
     e.stopPropagation();
     if (btn.dataset.busy === "1") return;
     const id=Number(btn.dataset.id);
-    const order=allOrders.find((o)=>o.id===id);
-    if(!order) return;
+    const group=filtered.find((g)=>g.ids.includes(id));
+    if(!group) return;
     const hidden=!shipmentShowHidden;
-    const oldDescription=String(order.description || "");
-    const nextDescription=hidden
-      ? (SHIPMENT_HIDDEN_RE.test(oldDescription) ? oldDescription : `${oldDescription}${oldDescription ? " " : ""}${SHIPMENT_HIDDEN_MARKER}`)
-      : oldDescription.replace(SHIPMENT_HIDDEN_RE, "").replace(/\s{2,}/g, " ").trim();
+    const affectedOrders=group.ids.map((orderId)=>allOrders.find((o)=>o.id===orderId)).filter(Boolean);
+    const oldDescriptions=new Map(affectedOrders.map((o)=>[o.id,String(o.description || "")]));
 
-    // Önce ekranı anında güncelle; ağ isteğini bekletme.
-    btn.dataset.busy = "1";
-    order.description = nextDescription;
-    shipmentSelectedIds.delete(id);
+    const nextDescriptions = new Map();
+    affectedOrders.forEach((order)=>{
+      const oldDescription=oldDescriptions.get(order.id);
+      const nextDescription=hidden
+        ? (SHIPMENT_HIDDEN_RE.test(oldDescription) ? oldDescription : `${oldDescription}${oldDescription ? " " : ""}${SHIPMENT_HIDDEN_MARKER}`)
+        : oldDescription.replace(SHIPMENT_HIDDEN_RE, "").replace(/\s{2,}/g, " ").trim();
+      nextDescriptions.set(order.id,nextDescription);
+    });
+
+    btn.dataset.busy="1";
+    affectedOrders.forEach((order)=>{ order.description=nextDescriptions.get(order.id); });
+    group.ids.forEach((groupId)=>shipmentSelectedIds.delete(groupId));
     renderShipmentView();
 
     try {
-      // Yalnızca gerekli alanı güncelle: daha hızlı ve mevcut sipariş verilerine dokunmaz.
       await throttleApi();
-      const { error } = await supa.from(TABLES.orders).update({ description: nextDescription }).eq("id", id);
-      if (error) throw error;
-      showToast(hidden ? "Sipariş sevkiyatta gizlendi." : "Sipariş sevkiyat listesine geri alındı.");
+      const results=await Promise.all(affectedOrders.map((order)=>supa.from(TABLES.orders).update({description:nextDescriptions.get(order.id)}).eq("id",order.id)));
+      const failed=results.find((result)=>result.error);
+      if(failed) throw failed.error;
+      showToast(hidden ? "Sevkiyat grubu gizlendi." : "Sevkiyat grubu geri alındı.");
     } catch(e) {
-      order.description = oldDescription;
+      affectedOrders.forEach((order)=>{ order.description=oldDescriptions.get(order.id); });
       renderShipmentView();
-      console.error("Sevkiyat gizleme hatası:", e);
+      console.error("Sevkiyat grubu gizleme hatası:",e);
       showToast("İşlem kaydedilemedi. Tekrar deneyin.");
     }
   }));
   bindStatusBadges(groups);
 }
+
 async function exportShipmentPdf() {
-  const ids = Array.from(shipmentSelectedIds);
-  if (!ids.length) { showToast("Önce sevkiyata çıkacak siparişleri seç."); return; }
-  const selected = ids.map((id)=>allOrders.find((o)=>o.id===id)).filter(Boolean).sort((a,b)=>shipmentCity(a).localeCompare(shipmentCity(b),"tr") || (a.deliveryDate||"").localeCompare(b.deliveryDate||""));
+  const groups = buildShipmentGroups();
+  const selectedGroups = selectedShipmentGroups(groups).filter((g) => shipmentShowHidden ? g.hasHidden : isShipmentGroupCandidate(g));
+  if (!selectedGroups.length) { showToast("Önce sevkiyata çıkacak müşterileri seç."); return; }
+
+  const selected = selectedGroups.sort((a,b)=>
+    a.city.localeCompare(b.city,"tr") ||
+    (a.deliveryDate||"").localeCompare(b.deliveryDate||"") ||
+    a.customerName.localeCompare(b.customerName,"tr")
+  );
+
   // Sevkiyat PDF'inde yalnızca bu özel logo kullanılır; uygulamanın ekran logosuna dokunulmaz.
   const logoSrc = shipmentPdfLogoSrc;
-  const byCity = new Map(); selected.forEach((o)=>{ const c=shipmentCity(o); if(!byCity.has(c)) byCity.set(c,[]); byCity.get(c).push(o); });
+  const byCity = new Map();
+  selected.forEach((g)=>{ if(!byCity.has(g.city)) byCity.set(g.city,[]); byCity.get(g.city).push(g); });
+
   document.getElementById("printArea").innerHTML = `
-    <div class="shipment-print-header"><div>${logoSrc ? `<img src="${logoSrc}" style="max-width:150px;max-height:48px;margin-bottom:10px;">` : ""}<h1 class="shipment-print-title">SEVKİYAT LİSTESİ</h1><p class="shipment-print-sub">Hazırlanma tarihi: ${formatDate(todayISO())} · ${selected.length} sipariş</p></div><div style="font-size:11px;text-align:right;">OFİSCHİ<br>PRONTO</div></div>
-    ${Array.from(byCity.entries()).map(([city, orders])=>`<div class="shipment-print-city"><h2>${escapeHtml(city)} — ${orders.length} sipariş</h2><table class="shipment-print-table"><thead><tr><th>Sipariş</th><th>Müşteri</th><th>Telefon</th><th>Adres</th><th>Ürün</th><th>Adet</th><th>Teslim</th><th>Sevkiyat</th></tr></thead><tbody>${orders.map((o)=>{const c=customerForOrder(o);return `<tr><td>${orderNo(o)}</td><td>${escapeHtml(o.customer)}</td><td>${escapeHtml(c?.phone)||"-"}</td><td>${escapeHtml(c?.address)||"-"}</td><td>${escapeHtml(o.product)}</td><td>${escapeHtml(o.quantity)}</td><td>${formatDate(o.deliveryDate)}</td><td>${escapeHtml(getShipmentType(o).toUpperCase())}</td></tr>`;}).join("")}</tbody></table></div>`).join("")}
+    <div class="shipment-print-header"><div>${logoSrc ? `<img src="${logoSrc}" style="max-width:150px;max-height:48px;margin-bottom:10px;">` : ""}<h1 class="shipment-print-title">SEVKİYAT LİSTESİ</h1><p class="shipment-print-sub">Hazırlanma tarihi: ${formatDate(todayISO())} · ${selected.length} sevkiyat</p></div><div style="font-size:11px;text-align:right;">OFİSCHİ<br>PRONTO</div></div>
+    ${Array.from(byCity.entries()).map(([city, shipmentGroups])=>`<div class="shipment-print-city"><h2>${escapeHtml(city)} — ${shipmentGroups.length} sevkiyat</h2><table class="shipment-print-table"><thead><tr><th>Müşteri / Ünvan</th><th>Telefon</th><th>Adres</th><th>Teslim Tarihi</th><th>Nakliye Durumu</th></tr></thead><tbody>${shipmentGroups.map((g)=>`<tr><td>${escapeHtml(g.customerName)}</td><td>${escapeHtml(g.phone)}</td><td>${escapeHtml(g.address)}</td><td>${g.deliveryDate ? formatDate(g.deliveryDate) : "-"}</td><td>${escapeHtml(g.shipmentType.toUpperCase())}</td></tr>`).join("")}</tbody></table></div>`).join("")}
     <div class="shipment-print-footer">Bu liste PRONTO sipariş takip sisteminden oluşturulmuştur.</div>`;
   await downloadPrintAreaAsPdf(`Ofischi_Sevkiyat_Listesi_${todayISO()}`);
 }
+
 function bindShipmentEvents() {
   document.getElementById("shipmentHiddenToggleBtn").addEventListener("click", () => { shipmentShowHidden = !shipmentShowHidden; shipmentSelectedIds.clear(); renderShipmentView(); });
   document.getElementById("shipmentPdfBtn").addEventListener("click", exportShipmentPdf);
@@ -4464,11 +4612,9 @@ function bindShipmentEvents() {
   document.getElementById("shipmentCityFilter").addEventListener("change", (e) => { shipmentCityFilter = e.target.value; renderShipmentView(); });
   document.getElementById("shipmentTypeFilter").addEventListener("change", (e) => { shipmentTypeFilter = e.target.value; renderShipmentView(); });
   document.getElementById("shipmentSelectAllBtn").addEventListener("click", () => {
-    const visible = allOrders.filter((o) => {
-      if (!o || o.status === "Teslim Edildi" || o.status === "İptal") return false;
-      return shipmentShowHidden ? isShipmentHidden(o) : isShipmentCandidate(o);
-    });
-    visible.forEach((o) => shipmentSelectedIds.add(o.id));
+    const groups = buildShipmentGroups();
+    const visible = shipmentShowHidden ? groups.filter((g) => g.hasHidden) : groups.filter(isShipmentGroupCandidate);
+    visible.forEach((g) => g.ids.forEach((id) => shipmentSelectedIds.add(id)));
     renderShipmentView();
   });
   document.getElementById("shipmentClearBtn").addEventListener("click", () => { shipmentSelectedIds.clear(); renderShipmentView(); });
