@@ -1364,6 +1364,63 @@ body::after {
   .pdf-action-choice-buttons { grid-template-columns:1fr; }
 }
 
+/* ===================== UYGULAMA İÇİ PDF ÖN İZLEME ===================== */
+.pdf-preview-modal {
+  position:fixed;
+  inset:0;
+  z-index:10060;
+  display:flex;
+  flex-direction:column;
+  background:rgba(0,0,0,.55);
+  backdrop-filter:blur(2px);
+}
+.pdf-preview-modal.hidden { display:none; }
+.pdf-preview-topbar {
+  flex:0 0 auto;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:12px 16px;
+  background:var(--color-surface,#fff);
+  border-bottom:1px solid var(--color-border,#ddd);
+}
+.pdf-preview-title {
+  min-width:0;
+  font-size:15px;
+  font-weight:800;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.pdf-preview-close {
+  flex:0 0 auto;
+  min-width:90px;
+}
+.pdf-preview-body {
+  flex:1 1 auto;
+  min-height:0;
+  overflow:auto;
+  padding:18px;
+  background:#ececec;
+}
+.pdf-preview-loading {
+  width:min(794px,calc(100vw - 36px));
+  margin:40px auto;
+  padding:40px 20px;
+  box-sizing:border-box;
+  text-align:center;
+  color:#666;
+  background:#fff;
+  border-radius:10px;
+}
+@media (max-width:820px) {
+  .pdf-preview-body { padding:8px; }
+  .pdf-preview-body #prontoPdfPreviewPage {
+    transform-origin:top left;
+  }
+}
+
 </style>
 </head>
 <body>
@@ -2042,6 +2099,15 @@ body::after {
 
 <!-- BİLDİRİM -->
 <div class="toast hidden" id="toast"></div>
+
+<!-- UYGULAMA İÇİ PDF ÖN İZLEME -->
+<div id="pdfPreviewModal" class="pdf-preview-modal hidden" aria-hidden="true">
+  <div class="pdf-preview-topbar">
+    <div class="pdf-preview-title" id="pdfPreviewTitle">PDF Ön İzleme</div>
+    <button type="button" class="btn btn-ghost pdf-preview-close" id="pdfPreviewCloseBtn">Kapat</button>
+  </div>
+  <div class="pdf-preview-body" id="pdfPreviewBody"></div>
+</div>
 
 <!-- YAZDIRMA ALANI -->
 <div id="printArea"></div>
@@ -4059,41 +4125,48 @@ function openPdfActionChoice(orderId) {
   modal.setAttribute("aria-hidden", "false");
 }
 
+function closePdfPreview() {
+  const modal = document.getElementById("pdfPreviewModal");
+  const body = document.getElementById("pdfPreviewBody");
+  if (modal) {
+    modal.classList.add("hidden");
+    modal.setAttribute("aria-hidden", "true");
+  }
+  if (body) body.innerHTML = "";
+}
+
 async function previewOrderPdf(id) {
   const order = allOrders.find((o) => o.id === id);
   if (!order) return;
 
-  // Open immediately. No PDF library, canvas or PDF encoding is required
-  // for the visual preview.
-  const previewWindow = window.open("about:blank", "_blank");
-  if (!previewWindow) {
-    showToast("Ön izleme penceresi tarayıcı tarafından engellendi. Açılır pencerelere izin verin.");
+  // Electron'da window.open kullanmadan, önizlemeyi PRONTO'nun kendi
+  // penceresi içinde açıyoruz. Böylece tarayıcı/Electron popup engeli oluşmaz.
+  const modal = document.getElementById("pdfPreviewModal");
+  const body = document.getElementById("pdfPreviewBody");
+  const title = document.getElementById("pdfPreviewTitle");
+  if (!modal || !body) {
+    showToast("PDF ön izleme alanı bulunamadı.");
     return;
   }
 
-  previewWindow.document.open();
-  previewWindow.document.write(`<!doctype html>
-<html lang="tr">
-<head>
-<meta charset="utf-8">
-<title>Sipariş ${escapeHtml(orderNo(order))} - PDF Ön İzleme</title>
-</head>
-<body></body>
-</html>`);
-  previewWindow.document.close();
+  if (title) title.textContent = `Sipariş ${orderNo(order)} - PDF Ön İzleme`;
+  body.innerHTML = '<div class="pdf-preview-loading">PDF ön izleme hazırlanıyor…</div>';
+  modal.classList.remove("hidden");
+  modal.setAttribute("aria-hidden", "false");
 
   try {
-    // Same printArea markup + same PDF-only CSS, but without the slow
-    // html2canvas/jsPDF rasterization. The visual template is identical.
-    await exportOrderPdf(id, previewWindow, true);
+    // Aynı printArea + aynı PDF stilleri kullanılır. Sadece pencere yerine
+    // uygulama içindeki önizleme alanına yerleştirilir.
+    await exportOrderPdf(id, null, true, true);
   } catch (e) {
     console.error("PDF ön izleme hatası:", e);
-    try { previewWindow.close(); } catch (_) {}
+    body.innerHTML = "";
+    closePdfPreview();
     showToast(e.message || "PDF ön izleme oluşturulamadı.");
   }
 }
 
-async function exportOrderPdf(id, previewWindow = null, fastPreview = false) {
+async function exportOrderPdf(id, previewWindow = null, fastPreview = false, inAppPreview = false) {
   const order = allOrders.find((o) => o.id === id);
   if (!order) return;
 
@@ -4137,20 +4210,27 @@ async function exportOrderPdf(id, previewWindow = null, fastPreview = false) {
     <div class="print-footer">PRONTO — Ofischi Premium için hazırlandı</div>
   `;
 
-  if (fastPreview && previewWindow) {
-    // IMPORTANT: this is the same #printArea and the same PDF-only CSS used
-    // by the real PDF renderer. No second/different template is created.
+  if (fastPreview && (previewWindow || inAppPreview)) {
+    // IMPORTANT: aynı #printArea ve aynı PDF-only CSS kullanılır.
+    // İn-app modda yeni pencere açılmaz; mevcut PRONTO ekranındaki modal
+    // içine yerleştirilir.
     const previewSource = document.getElementById("printArea");
-    const wrapper = previewWindow.document.createElement("div");
+    const targetDocument = inAppPreview ? document : previewWindow.document;
+    const targetBody = inAppPreview
+      ? document.getElementById("pdfPreviewBody")
+      : previewWindow.document.body;
+    if (!targetBody) throw new Error("PDF ön izleme alanı bulunamadı.");
+
+    const wrapper = targetDocument.createElement("div");
     wrapper.id = "prontoPdfPreviewPage";
-    wrapper.style.cssText = "width:794px;min-height:1123px;margin:18px auto;padding:32px;background:#fff;color:#111;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:1.35;box-sizing:border-box;";
+    wrapper.style.cssText = "width:794px;min-height:1123px;margin:18px auto;padding:32px;background:#fff;color:#111;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:1.35;box-sizing:border-box;box-shadow:0 8px 30px rgba(0,0,0,.14);";
 
     const clone = previewSource.cloneNode(true);
     clone.removeAttribute("id");
     clone.style.cssText = "display:block!important;position:static!important;width:100%!important;max-width:none!important;margin:0!important;padding:0!important;background:#fff!important;color:#111!important;box-sizing:border-box!important;";
     wrapper.appendChild(clone);
 
-    const style = previewWindow.document.createElement("style");
+    const style = targetDocument.createElement("style");
     style.textContent = PRONTO_PDF_PREVIEW_STYLES + `
 html,body{margin:0;padding:0;background:#ececec}
 @media print{
@@ -4160,19 +4240,22 @@ html,body{margin:0;padding:0;background:#ececec}
 }`;
     wrapper.appendChild(style);
 
-    previewWindow.document.body.innerHTML = "";
-    previewWindow.document.body.appendChild(wrapper);
-    previewWindow.document.title = `Sipariş ${escapeHtml(orderNo(order))} - PDF Ön İzleme`;
-    previewWindow.focus();
+    targetBody.innerHTML = "";
+    targetBody.appendChild(wrapper);
+    if (previewWindow) {
+      previewWindow.document.title = `Sipariş ${escapeHtml(orderNo(order))} - PDF Ön İzleme`;
+      previewWindow.focus();
+    }
 
-    // Fetch photo after the page is already visible.
+    // Fotoğraf sayfa göründükten sonra yüklenir; önizleme açılışını bekletmez.
     getOrderPhotoSignedUrl(id).then((url) => {
-      if (!url || !previewWindow || previewWindow.closed) return;
-      const imageWrap = previewWindow.document.createElement("div");
+      if (!url) return;
+      if (previewWindow && previewWindow.closed) return;
+      const imageWrap = targetDocument.createElement("div");
       imageWrap.className = "print-photo-header";
       imageWrap.innerHTML = `<img src="${url}" class="print-order-photo-header" alt="Sipariş fotoğrafı">`;
-      const header = previewWindow.document.querySelector(".print-order-header");
-      if (header && !previewWindow.document.querySelector(".print-photo-header")) {
+      const header = targetBody.querySelector(".print-order-header");
+      if (header && !targetBody.querySelector(".print-photo-header")) {
         header.appendChild(imageWrap);
       }
     }).catch(() => {});
@@ -4317,6 +4400,11 @@ function bindOrderEvents() {
 
   document.getElementById("pdfActionChoiceModal")?.addEventListener("click", (e) => {
     if (e.target.id === "pdfActionChoiceModal") closePdfActionChoice();
+  });
+
+  document.getElementById("pdfPreviewCloseBtn")?.addEventListener("click", closePdfPreview);
+  document.getElementById("pdfPreviewModal")?.addEventListener("click", (e) => {
+    if (e.target.id === "pdfPreviewModal") closePdfPreview();
   });
 
   document.getElementById("detailModalClose").addEventListener("click", closeAllModals);
