@@ -1471,10 +1471,6 @@ body::after {
         <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
         Tedarikçiler
       </button>
-      <button class="nav-item" data-view="reports">
-        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M18 17V9M13 17V5M8 17v-4"/></svg>
-        Raporlar
-      </button>
       <button class="nav-item" data-view="shipment">
         <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7h11v10H3z"/><path d="M14 10h4l3 3v4h-7z"/><circle cx="7" cy="19" r="2"/><circle cx="18" cy="19" r="2"/></svg>
         Sevkiyat
@@ -1482,6 +1478,10 @@ body::after {
       <button class="nav-item" data-view="delivery-form">
         <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 3h16v18H4z"/><path d="M8 7h8M8 11h8M8 15h5"/></svg>
         Teslim Formu
+      </button>
+      <button class="nav-item" data-view="reports">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M18 17V9M13 17V5M8 17v-4"/></svg>
+        Raporlar
       </button>
     </nav>
     <button class="nav-item nav-item--settings" data-view="settings">
@@ -2692,6 +2692,18 @@ function sanitizeText(value, maxLen) {
   // Kontrol karakterleri ve görünmez yön değiştirme karakterlerini kaldır
   s = s.replace(/[\u0000-\u001F\u007F\u200B-\u200F\u2028\u2029\u202A-\u202E\uFEFF]/g, "");
   s = s.replace(/[ \t]+/g, " ").trim();
+  const limit = maxLen || MAX_TEXT_LEN;
+  if (s.length > limit) s = s.slice(0, limit);
+  return s;
+}
+
+// Arama alanları için: kullanıcı yazarken sondaki boşluğu silme.
+// Filtreleme sırasında mevcut trim() davranışı aynen korunur.
+function sanitizeSearchText(value, maxLen) {
+  if (value === null || value === undefined) return "";
+  let s = String(value);
+  s = s.replace(/[\u0000-\u001F\u007F\u200B-\u200F\u2028\u2029\u202A-\u202E\uFEFF]/g, "");
+  s = s.replace(/[ \t]+/g, " ");
   const limit = maxLen || MAX_TEXT_LEN;
   if (s.length > limit) s = s.slice(0, limit);
   return s;
@@ -3977,6 +3989,24 @@ const PRONTO_PDF_PREVIEW_STYLES = `
 .print-value{font-size:12px!important;margin-top:3px!important;word-break:break-word!important}
 .print-desc{grid-column:1 / -1!important}
 .print-footer{margin-top:22px!important;padding-top:8px!important;border-top:1px solid #bbb!important;font-size:9px!important;color:#777!important}
+
+/* SEVKİYAT PDF — A4 sabit genişlik */
+.shipment-print-header{display:flex!important;justify-content:space-between!important;align-items:flex-start!important;gap:24px!important;border-bottom:2px solid #111!important;padding-bottom:12px!important;margin-bottom:18px!important;width:100%!important;box-sizing:border-box!important}
+.shipment-print-header>div:first-child{flex:1 1 auto!important;min-width:0!important}
+.shipment-print-header img{display:block!important;max-width:150px!important;max-height:48px!important;width:auto!important;height:auto!important;object-fit:contain!important;margin:0 0 10px!important}
+.shipment-print-title{font-family:Arial,Helvetica,sans-serif!important;font-size:24px!important;line-height:1.15!important;font-weight:800!important;margin:0 0 5px!important;color:#111!important}
+.shipment-print-sub{font-family:Arial,Helvetica,sans-serif!important;margin:0!important;color:#555!important;font-size:12px!important;line-height:1.35!important}
+.shipment-print-city{width:100%!important;box-sizing:border-box!important;page-break-inside:avoid!important;margin:0 0 22px!important}
+.shipment-print-city h2{font-family:Arial,Helvetica,sans-serif!important;font-size:16px!important;line-height:1.2!important;margin:0 0 8px!important;padding:7px 9px!important;background:#eee!important;color:#111!important;font-weight:800!important;box-sizing:border-box!important}
+.shipment-print-table{width:100%!important;table-layout:fixed!important;border-collapse:collapse!important;font-family:Arial,Helvetica,sans-serif!important;font-size:11px!important;color:#111!important}
+.shipment-print-table th,.shipment-print-table td{border:1px solid #bbb!important;padding:7px!important;text-align:left!important;vertical-align:top!important;line-height:1.3!important;box-sizing:border-box!important;word-break:break-word!important;overflow-wrap:anywhere!important}
+.shipment-print-table th{background:#f1f1f1!important;font-weight:800!important}
+.shipment-print-table th:nth-child(1),.shipment-print-table td:nth-child(1){width:23%!important}
+.shipment-print-table th:nth-child(2),.shipment-print-table td:nth-child(2){width:13%!important}
+.shipment-print-table th:nth-child(3),.shipment-print-table td:nth-child(3){width:30%!important}
+.shipment-print-table th:nth-child(4),.shipment-print-table td:nth-child(4){width:14%!important}
+.shipment-print-table th:nth-child(5),.shipment-print-table td:nth-child(5){width:20%!important}
+.shipment-print-footer{margin-top:24px!important;padding-top:10px!important;border-top:1px solid #bbb!important;font-family:Arial,Helvetica,sans-serif!important;font-size:10px!important;color:#666!important}
 `;
 function loadProntoPdfLibraries() {
   if (window.html2canvas && window.jspdf) return Promise.resolve();
@@ -4107,22 +4137,65 @@ async function downloadPrintAreaAsPdf(fileName, previewWindow = null) {
    SİPARİŞ PDF
    ======================================================= */
 
-let pendingPdfOrderId = null;
+let pendingPdfAction = null;
 
 function closePdfActionChoice() {
   const modal = document.getElementById("pdfActionChoiceModal");
   if (!modal) return;
   modal.classList.add("hidden");
   modal.setAttribute("aria-hidden", "true");
-  pendingPdfOrderId = null;
+  pendingPdfAction = null;
 }
 
-function openPdfActionChoice(orderId) {
+function openPdfActionChoice(action) {
   const modal = document.getElementById("pdfActionChoiceModal");
-  if (!modal) return exportOrderPdf(orderId);
-  pendingPdfOrderId = orderId;
+  if (!modal) {
+    if (typeof action === "number" || typeof action === "string") return exportOrderPdf(action);
+    if (action?.type === "shipment") return exportShipmentPdf();
+    if (action?.type === "delivery") return exportDeliveryFormPdf();
+    return;
+  }
+  pendingPdfAction = (typeof action === "number" || typeof action === "string")
+    ? { type: "order", id: action }
+    : action;
   modal.classList.remove("hidden");
   modal.setAttribute("aria-hidden", "false");
+}
+
+async function previewCurrentPrintArea(title) {
+  const modal = document.getElementById("pdfPreviewModal");
+  const body = document.getElementById("pdfPreviewBody");
+  const previewTitle = document.getElementById("pdfPreviewTitle");
+  const source = document.getElementById("printArea");
+  if (!modal || !body || !source) {
+    showToast("PDF ön izleme alanı bulunamadı.");
+    return;
+  }
+  if (previewTitle) previewTitle.textContent = title || "PDF Ön İzleme";
+  body.innerHTML = '<div class="pdf-preview-loading">PDF ön izleme hazırlanıyor…</div>';
+  modal.classList.remove("hidden");
+  modal.setAttribute("aria-hidden", "false");
+
+  const wrapper = document.createElement("div");
+  wrapper.id = "prontoPdfPreviewPage";
+  wrapper.style.cssText = "width:794px;min-height:1123px;margin:18px auto;padding:32px;background:#fff;color:#111;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:1.35;box-sizing:border-box;box-shadow:0 8px 30px rgba(0,0,0,.14);";
+
+  const clone = source.cloneNode(true);
+  clone.removeAttribute("id");
+  clone.style.cssText = "display:block!important;position:static!important;width:100%!important;max-width:none!important;margin:0!important;padding:0!important;background:#fff!important;color:#111!important;box-sizing:border-box!important;";
+  wrapper.appendChild(clone);
+
+  const style = document.createElement("style");
+  style.textContent = PRONTO_PDF_PREVIEW_STYLES + `
+html,body{margin:0;padding:0;background:#ececec}
+@media print{
+  @page{size:A4;margin:0}
+  html,body{background:#fff!important}
+  #prontoPdfPreviewPage{width:794px!important;min-height:1123px!important;margin:0!important;box-shadow:none!important}
+}`;
+  wrapper.appendChild(style);
+  body.innerHTML = "";
+  body.appendChild(wrapper);
 }
 
 function closePdfPreview() {
@@ -4387,15 +4460,21 @@ function bindOrderEvents() {
   document.getElementById("orderSaveBtn").addEventListener("click", () => saveOrderFromForm());
   bindOrderPhotoEvents();
   document.getElementById("pdfDownloadChoiceBtn")?.addEventListener("click", async () => {
-    const id = pendingPdfOrderId;
+    const action = pendingPdfAction;
     closePdfActionChoice();
-    if (id) await exportOrderPdf(id);
+    if (!action) return;
+    if (action.type === "order") await exportOrderPdf(action.id);
+    else if (action.type === "shipment") await exportShipmentPdf(false);
+    else if (action.type === "delivery") await exportDeliveryFormPdf(false);
   });
 
   document.getElementById("pdfPreviewChoiceBtn")?.addEventListener("click", async () => {
-    const id = pendingPdfOrderId;
+    const action = pendingPdfAction;
     closePdfActionChoice();
-    if (id) await previewOrderPdf(id);
+    if (!action) return;
+    if (action.type === "order") await previewOrderPdf(action.id);
+    else if (action.type === "shipment") await exportShipmentPdf(true);
+    else if (action.type === "delivery") await exportDeliveryFormPdf(true);
   });
 
   document.getElementById("pdfActionChoiceModal")?.addEventListener("click", (e) => {
@@ -4408,7 +4487,7 @@ function bindOrderEvents() {
   });
 
   document.getElementById("detailModalClose").addEventListener("click", closeAllModals);
-  document.getElementById("detailPdfBtn").addEventListener("click", () => openPdfActionChoice(currentDetailOrderId));
+  document.getElementById("detailPdfBtn").addEventListener("click", () => openPdfActionChoice({ type: "order", id: currentDetailOrderId }));
 
   document.getElementById("selectAllOrders").addEventListener("change", (e) => {
     const visibleIds = currentPageOrderIds();
@@ -4492,7 +4571,7 @@ function bindOrderEvents() {
   });
 
   document.getElementById("searchInput").addEventListener("input", debounce((e) => {
-    currentSearch = sanitizeText(e.target.value, 100); e.target.value = currentSearch;
+    currentSearch = sanitizeSearchText(e.target.value, 100); e.target.value = currentSearch;
     pageState.orders.page = 1;
     renderOrdersView();
   }, 140));
@@ -4778,9 +4857,9 @@ function bindEntityEvents() {
   document.getElementById("entityForm").addEventListener("submit", (e) => { e.preventDefault(); saveEntityFromForm(); });
   document.getElementById("entityHistoryClose").addEventListener("click", closeAllModals);
 
-  document.getElementById("productSearchInput").addEventListener("input", debounce((e) => { productSearch = sanitizeText(e.target.value, 100); e.target.value = productSearch; pageState.products.page = 1; renderProductsView(); }, 140));
-  document.getElementById("customerSearchInput").addEventListener("input", debounce((e) => { customerSearch = sanitizeText(e.target.value, 100); e.target.value = customerSearch; pageState.customers.page = 1; renderCustomersView(); }, 140));
-  document.getElementById("supplierSearchInput").addEventListener("input", debounce((e) => { supplierSearch = sanitizeText(e.target.value, 100); e.target.value = supplierSearch; pageState.suppliers.page = 1; renderSuppliersView(); }, 140));
+  document.getElementById("productSearchInput").addEventListener("input", debounce((e) => { productSearch = sanitizeSearchText(e.target.value, 100); e.target.value = productSearch; pageState.products.page = 1; renderProductsView(); }, 140));
+  document.getElementById("customerSearchInput").addEventListener("input", debounce((e) => { customerSearch = sanitizeSearchText(e.target.value, 100); e.target.value = customerSearch; pageState.customers.page = 1; renderCustomersView(); }, 140));
+  document.getElementById("supplierSearchInput").addEventListener("input", debounce((e) => { supplierSearch = sanitizeSearchText(e.target.value, 100); e.target.value = supplierSearch; pageState.suppliers.page = 1; renderSuppliersView(); }, 140));
   document.querySelectorAll("[data-customer-sort]").forEach((btn) => btn.addEventListener("click", () => {
     customerSort = btn.dataset.customerSort;
     document.querySelectorAll("[data-customer-sort]").forEach((b) => b.classList.toggle("active", b === btn));
@@ -4793,7 +4872,7 @@ function bindEntityEvents() {
     pageState.suppliers.page = 1;
     renderSuppliersView();
   }));
-  document.getElementById("stockSearchInput").addEventListener("input", debounce((e) => { stockSearch = sanitizeText(e.target.value, 100); e.target.value = stockSearch; pageState.stock.page = 1; renderStockView(); }, 140));
+  document.getElementById("stockSearchInput").addEventListener("input", debounce((e) => { stockSearch = sanitizeSearchText(e.target.value, 100); e.target.value = stockSearch; pageState.stock.page = 1; renderStockView(); }, 140));
 }
 
 /* =======================================================
@@ -5427,7 +5506,7 @@ function renderShipmentView() {
   bindStatusBadges(groups);
 }
 
-async function exportShipmentPdf() {
+async function exportShipmentPdf(previewOnly = false) {
   const groups = buildShipmentGroups();
   const selectedGroups = selectedShipmentGroups(groups).filter((g) => shipmentShowHidden ? g.hasHidden : isShipmentGroupCandidate(g));
   if (!selectedGroups.length) { showToast("Önce sevkiyata çıkacak müşterileri seç."); return; }
@@ -5447,13 +5526,19 @@ async function exportShipmentPdf() {
     <div class="shipment-print-header"><div>${logoSrc ? `<img src="${logoSrc}" style="max-width:150px;max-height:48px;margin-bottom:10px;">` : ""}<h1 class="shipment-print-title">SEVKİYAT LİSTESİ</h1><p class="shipment-print-sub">Hazırlanma tarihi: ${formatDate(todayISO())} · ${selected.length} sevkiyat</p></div><div style="font-size:11px;text-align:right;">OFİSCHİ<br>PRONTO</div></div>
     ${Array.from(byCity.entries()).map(([city, shipmentGroups])=>`<div class="shipment-print-city"><h2>${escapeHtml(city)} — ${shipmentGroups.length} sevkiyat</h2><table class="shipment-print-table"><thead><tr><th>Müşteri / Ünvan</th><th>Telefon</th><th>Adres</th><th>Teslim Tarihi</th><th>Nakliye Durumu</th></tr></thead><tbody>${shipmentGroups.map((g)=>`<tr><td>${escapeHtml(g.customerName)}</td><td>${escapeHtml(g.phone)}</td><td>${escapeHtml(g.address)}</td><td>${g.deliveryDate ? formatDate(g.deliveryDate) : "-"}</td><td>${escapeHtml(g.shipmentType.toUpperCase())}</td></tr>`).join("")}</tbody></table></div>`).join("")}
     <div class="shipment-print-footer">Bu liste PRONTO sipariş takip sisteminden oluşturulmuştur.</div>`;
+
+  if (previewOnly) {
+    await previewCurrentPrintArea(`Sevkiyat Listesi - PDF Ön İzleme`);
+    return;
+  }
+
   await downloadPrintAreaAsPdf(`Ofischi_Sevkiyat_Listesi_${todayISO()}`);
 }
 
 function bindShipmentEvents() {
   document.getElementById("shipmentHiddenToggleBtn").addEventListener("click", () => { shipmentShowHidden = !shipmentShowHidden; shipmentSelectedIds.clear(); renderShipmentView(); });
-  document.getElementById("shipmentPdfBtn").addEventListener("click", exportShipmentPdf);
-  document.getElementById("shipmentSearch").addEventListener("input", (e) => { shipmentSearch = sanitizeText(e.target.value, 100); renderShipmentView(); });
+  document.getElementById("shipmentPdfBtn").addEventListener("click", () => openPdfActionChoice({ type: "shipment" }));
+  document.getElementById("shipmentSearch").addEventListener("input", (e) => { shipmentSearch = sanitizeSearchText(e.target.value, 100); e.target.value = shipmentSearch; renderShipmentView(); });
   document.getElementById("shipmentCityFilter").addEventListener("change", (e) => { shipmentCityFilter = e.target.value; renderShipmentView(); });
   document.getElementById("shipmentTypeFilter").addEventListener("change", (e) => { shipmentTypeFilter = e.target.value; renderShipmentView(); });
   document.getElementById("shipmentSelectAllBtn").addEventListener("click", () => {
@@ -5599,7 +5684,7 @@ function renderDeliveryForm() {
     </div>`;
 }
 
-async function exportDeliveryFormPdf() {
+async function exportDeliveryFormPdf(previewOnly = false) {
   const group = getSelectedDeliveryFormGroup();
   if (!group) {
     showToast("Önce Sevkiyat listesinden bir müşteri seçin.");
@@ -5723,6 +5808,10 @@ async function exportDeliveryFormPdf() {
   </div>`;
 
   printArea.innerHTML = pdfHtml;
+  if (previewOnly) {
+    await previewCurrentPrintArea(`Teslim Formu - PDF Ön İzleme`);
+    return;
+  }
   try {
     await downloadPrintAreaAsPdf(
       `Ofischi_Teslim_Formu_${sanitizeText(group.customerName, 80)}_${currentDate}`
@@ -5746,7 +5835,7 @@ function bindDeliveryFormEvents() {
     if (el) el.addEventListener("input", () => renderDeliveryForm());
   });
 
-  if (pdfBtn) pdfBtn.addEventListener("click", exportDeliveryFormPdf);
+  if (pdfBtn) pdfBtn.addEventListener("click", () => openPdfActionChoice({ type: "delivery" }));
 }
 
 /* =======================================================
