@@ -1397,6 +1397,22 @@ body::after {
   flex:0 0 auto;
   min-width:90px;
 }
+.pdf-preview-print {
+  flex:0 0 auto;
+  min-width:90px;
+}
+.pdf-preview-topbar-actions {
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+.trash-list { display:flex; flex-direction:column; gap:10px; }
+.trash-item { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:12px 14px; border:1px solid var(--color-border); border-radius:12px; background:var(--color-surface-solid); }
+.trash-item-main { min-width:0; }
+.trash-item-name { font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.trash-item-meta { margin-top:4px; font-size:12px; color:var(--color-text-muted); }
+.trash-item-actions { display:flex; gap:8px; flex:0 0 auto; }
+@media (max-width:560px) { .pdf-preview-topbar-actions { gap:6px; } .pdf-preview-print,.pdf-preview-close { min-width:auto; } .trash-item { align-items:flex-start; flex-direction:column; } }
 .pdf-preview-body {
   flex:1 1 auto;
   min-height:0;
@@ -1515,6 +1531,7 @@ body::after {
             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
             Excel'e Aktar
           </button>
+          <button id="orderTrashBtn" class="btn btn-ghost hidden" type="button">🗑 Çöp Kutusu</button>
           <button id="newOrderBtn" class="btn btn-primary">+ Yeni Sipariş</button>
         </div>
       </div>
@@ -1660,7 +1677,7 @@ body::after {
     <section class="view hidden" id="view-products">
       <div class="page-header">
         <div><h1>Ürünler</h1><p class="subtitle">Sipariş formlarında seçilebilecek ürün listesi.</p></div>
-        <div class="header-actions"><button class="btn btn-primary" id="newProductBtn">+ Yeni Ürün</button></div>
+        <div class="header-actions"><button class="btn btn-ghost" id="productTrashBtn">🗑 Çöp Kutusu</button><button class="btn btn-primary" id="newProductBtn">+ Yeni Ürün</button></div>
       </div>
       <div class="toolbar">
         <div class="search-box">
@@ -2020,6 +2037,38 @@ body::after {
   </div>
 </div>
 
+<!-- SİPARİŞ ÇÖP KUTUSU MODALI -->
+<div class="modal-overlay hidden" id="orderTrashModal">
+  <div class="modal modal--detail">
+    <div class="modal-head">
+      <h2>Sipariş Çöp Kutusu</h2>
+      <button class="icon-btn" id="orderTrashClose" aria-label="Kapat">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="orderTrashBody"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" id="orderTrashCloseBtn">Kapat</button>
+    </div>
+  </div>
+</div>
+
+<!-- ÜRÜN ÇÖP KUTUSU MODALI -->
+<div class="modal-overlay hidden" id="productTrashModal">
+  <div class="modal modal--detail">
+    <div class="modal-head">
+      <h2>Ürün Çöp Kutusu</h2>
+      <button class="icon-btn" id="productTrashClose" aria-label="Kapat">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="productTrashBody"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" id="productTrashCloseBtn">Kapat</button>
+    </div>
+  </div>
+</div>
+
 <!-- BASİT KAYIT (Ürün/Müşteri/Tedarikçi) MODAL -->
 <div class="modal-overlay hidden" id="entityModal">
   <div class="modal modal--form">
@@ -2104,7 +2153,10 @@ body::after {
 <div id="pdfPreviewModal" class="pdf-preview-modal hidden" aria-hidden="true">
   <div class="pdf-preview-topbar">
     <div class="pdf-preview-title" id="pdfPreviewTitle">PDF Ön İzleme</div>
-    <button type="button" class="btn btn-ghost pdf-preview-close" id="pdfPreviewCloseBtn">Kapat</button>
+    <div class="pdf-preview-topbar-actions">
+      <button type="button" class="btn btn-primary pdf-preview-print" id="pdfPreviewPrintBtn">Yazdır</button>
+      <button type="button" class="btn btn-ghost pdf-preview-close" id="pdfPreviewCloseBtn">Kapat</button>
+    </div>
   </div>
   <div class="pdf-preview-body" id="pdfPreviewBody"></div>
 </div>
@@ -2505,11 +2557,12 @@ let reservedByProduct = new Map();
 let supplierByProductId = new Map();
 
 function rebuildDerivedIndexes() {
+  const activeOrderRows = allOrders.filter((o) => !isDeletedOrder(o));
   // Tek geçişlerde indeksleri oluştur: büyük veri setlerinde O(ürün*sipariş)
   // taramasını kaldırır. Böylece toplu işlemler sonrası arayüz donmaz.
   reservedByProduct = new Map();
   const latestOrderByProduct = new Map();
-  for (const o of allOrders) {
+  for (const o of activeOrderRows) {
     const key = normName(o.product);
     if (!key) continue;
     if (o.status !== "Teslim Edildi" && o.status !== "İptal") {
@@ -2575,8 +2628,14 @@ function scheduleRemoteRefresh() {
       else upsertLocalStore(c.store, fromRow(c.store, c.row));
     }
     refreshDatalists(true);
-    if (stores.has("orders")) renderOrdersView();
-    if (stores.has("products") && currentView === "products") renderProductsView();
+    if (stores.has("orders")) {
+      cleanupExpiredDeletedOrders().catch(() => {});
+      renderOrdersView();
+    }
+    if (stores.has("products")) {
+      cleanupExpiredDeletedProducts().catch(() => {});
+      if (currentView === "products") renderProductsView();
+    }
     if (stores.has("customers") && currentView === "customers") renderCustomersView();
     if (stores.has("suppliers") && currentView === "suppliers") renderSuppliersView();
     if (stores.has("stockMovements") && currentView === "stock") renderStockView();
@@ -2607,6 +2666,46 @@ function orderNo(order) {
   return "PR-" + String(order.id).padStart(5, "0");
 }
 
+// Ürün çöp kutusu mevcut Supabase şemasını değiştirmeden çalışır.
+// Silinen ürünün açıklamasına gizli bir zaman damgası eklenir.
+// Böylece 10 kullanıcılı ortak sistemde ürün yine Supabase üzerinde kalır;
+// sipariş geçmişleri bozulmaz ve 24 saat içinde geri alınabilir.
+const PRODUCT_TRASH_MARKER_RE = /\[\[COPKUTUSU:(\d+)\]\]/i;
+const ORDER_TRASH_MARKER_RE = /\[\[SIPARISCOP:(\d+)\]\]/i;
+function productTrashTimestamp(product) {
+  const m = String(product?.description || "").match(PRODUCT_TRASH_MARKER_RE);
+  return m ? Number(m[1]) : 0;
+}
+function isDeletedProduct(product) {
+  return productTrashTimestamp(product) > 0;
+}
+function cleanProductDescription(product) {
+  return String(product?.description || "").replace(PRODUCT_TRASH_MARKER_RE, "").replace(/\s{2,}/g, " ").trim();
+}
+function activeProductsList() {
+  return allProducts.filter((p) => !isDeletedProduct(p));
+}
+function deletedProductsList() {
+  return allProducts.filter((p) => isDeletedProduct(p)).sort((a,b) => productTrashTimestamp(b) - productTrashTimestamp(a));
+}
+
+function orderTrashTimestamp(order) {
+  const m = String(order?.description || "").match(ORDER_TRASH_MARKER_RE);
+  return m ? Number(m[1]) : 0;
+}
+function isDeletedOrder(order) {
+  return orderTrashTimestamp(order) > 0;
+}
+function cleanOrderDescription(order) {
+  return String(order?.description || "").replace(ORDER_TRASH_MARKER_RE, "").replace(/\s{2,}/g, " ").trim();
+}
+function activeOrdersList() {
+  return allOrders.filter((o) => !isDeletedOrder(o));
+}
+function deletedOrdersList() {
+  return allOrders.filter((o) => isDeletedOrder(o)).sort((a,b) => orderTrashTimestamp(b) - orderTrashTimestamp(a));
+}
+
 // Yeni sevkiyat alanları mevcut Supabase şemasını değiştirmeden saklanır.
 const SHIPMENT_MARKER_RE = /\[\[SEVKIYAT:(NAKLIYE|OFISCHI|SSH|KENDI)\]\]/i;
 const CITY_MARKER_RE = /\[\[SEHIR:([^\]]+)\]\]/i;
@@ -2617,7 +2716,10 @@ function getShipmentType(order) {
   if (/\[\[SEVKIYAT:NAKLIYE\]\]/i.test(desc)) return "Nakliye";
   return "Ofischi Sevkiyat";
 }
-function getOrderDescription(order) { return stripMarker(order && order.description, SHIPMENT_MARKER_RE); }
+function getOrderDescription(order) {
+  const cleanShipment = stripMarker(order && order.description, SHIPMENT_MARKER_RE);
+  return cleanShipment.replace(ORDER_TRASH_MARKER_RE, "").replace(/\s{2,}/g, " ").trim();
+}
 function setShipmentMarker(description, type) {
   const clean = getOrderDescription({ description });
   const marker = type === "Nakliye" ? "[[SEVKIYAT:NAKLIYE]]" : type === "SSH" ? "[[SEVKIYAT:SSH]]" : "[[SEVKIYAT:OFISCHI]]";
@@ -2976,6 +3078,7 @@ async function seedBundledDataIfNeeded() {
 async function startApp() {
   try {
     await reloadStore("orders");
+    await cleanupExpiredDeletedOrders();
     renderOrdersView();
   } catch (e) {
     const msg = String((e && e.message) || e);
@@ -3008,7 +3111,12 @@ async function startApp() {
 
   // İlk ekranı bekletmeden referans listelerini arka planda getir.
   Promise.all(["products", "customers", "suppliers"].map((store) => reloadStore(store)))
-    .then(() => { refreshDatalists(true); if (currentView === "orders") renderOrdersView(); })
+    .then(async () => {
+      await cleanupExpiredDeletedProducts();
+      await cleanupExpiredDeletedOrders();
+      refreshDatalists(true);
+      if (currentView === "orders") renderOrdersView();
+    })
     .catch((e) => console.error("Arka plan veri yükleme hatası:", e));
 }
 
@@ -3106,7 +3214,7 @@ function hideRowMenu() {
    SİPARİŞLER — FİLTRELEME
    ======================================================= */
 function getFilteredOrders() {
-  let list = sortedOrders;
+  let list = sortedOrders.filter((o) => !isDeletedOrder(o));
 
   if (currentFilter !== "Tümü") {
     list = currentFilter === "Gecikti"
@@ -3284,6 +3392,7 @@ function scrollToTopOfView() {
    SİPARİŞLER — RENDER
    ======================================================= */
 function renderOrdersView() {
+  renderOrderTrashButton();
   renderFilterPills();
   renderSummary();
   refreshDatalists();
@@ -3299,8 +3408,9 @@ function renderOrdersView() {
     document.getElementById("ordersTableBody").innerHTML = "";
     cardsWrap.innerHTML = "";
     document.getElementById("ordersPagination").classList.add("hidden");
-    emptyStateText.textContent = allOrders.length === 0 ? "Henüz sipariş yok." : "Aramanla eşleşen sipariş bulunamadı.";
-    document.getElementById("emptyStateBtn").style.display = allOrders.length === 0 ? "inline-flex" : "none";
+    const activeCount = activeOrdersList().length;
+    emptyStateText.textContent = activeCount === 0 ? "Henüz sipariş yok." : "Aramanla eşleşen sipariş bulunamadı.";
+    document.getElementById("emptyStateBtn").style.display = activeCount === 0 ? "inline-flex" : "none";
     updateBulkBar();
     return;
   }
@@ -3317,11 +3427,12 @@ function renderFilterPills() {
   const wrap = document.getElementById("filterPills");
   wrap.innerHTML = "";
   FILTER_LIST.forEach((f) => {
+    const active = activeOrdersList();
     const count = f === "Tümü"
-      ? allOrders.length
+      ? active.length
       : (f === "Gecikti"
-          ? allOrders.filter((o) => isOverdue(o)).length
-          : allOrders.filter((o) => o.status === f).length);
+          ? active.filter((o) => isOverdue(o)).length
+          : active.filter((o) => o.status === f).length);
     const btn = document.createElement("button");
     btn.className = "pill" + (f === currentFilter ? " active" : "");
     btn.textContent = `${f} ${count}`;
@@ -3335,10 +3446,11 @@ function renderFilterPills() {
 }
 
 function renderSummary() {
-  document.getElementById("statTotal").textContent = allOrders.length;
-  document.getElementById("statPending").textContent = allOrders.filter((o) => o.status === "Beklemede").length;
-  document.getElementById("statDelivered").textContent = allOrders.filter((o) => o.status === "Teslim Edildi").length;
-  document.getElementById("statLate").textContent = allOrders.filter((o) => isOverdue(o)).length;
+  const active = activeOrdersList();
+  document.getElementById("statTotal").textContent = active.length;
+  document.getElementById("statPending").textContent = active.filter((o) => o.status === "Beklemede").length;
+  document.getElementById("statDelivered").textContent = active.filter((o) => o.status === "Teslim Edildi").length;
+  document.getElementById("statLate").textContent = active.filter((o) => isOverdue(o)).length;
 }
 
 function colorFabricText(o) {
@@ -3482,14 +3594,14 @@ let datalistSignature = "";
 function refreshDatalists(force) {
   // 800+ <option> her render'da yeniden kurulursa arama tuş tuş yavaşlar.
   // Yalnızca kaynak veri değiştiğinde yeniden kur.
-  const sig = `${allCustomers.length}|${allProducts.length}|${allSuppliers.length}|${allOrders.length}|${allCustomers.map(c=>c.name||"").join("\u241f")}|${allProducts.map(p=>p.name||"").join("\u241f")}|${allSuppliers.map(s=>s.name||"").join("\u241f")}`;
+  const sig = `${allCustomers.length}|${allProducts.length}|${allSuppliers.length}|${allOrders.length}|${allCustomers.map(c=>c.name||"").join("\u241f")}|${allProducts.map(p=>(p.name||"")+"\u241e"+(p.description||"")).join("\u241f")}|${allSuppliers.map(s=>s.name||"").join("\u241f")}`;
   if (!force && sig === datalistSignature) return;
   datalistSignature = sig;
   buildDatalists();
 }
 function buildDatalists() {
   document.getElementById("dl_customers").innerHTML = allCustomers.map((c) => `<option value="${escapeHtml(c.name)}">`).join("");
-  document.getElementById("dl_products").innerHTML = allProducts.map((p) => `<option value="${escapeHtml(p.name)}">`).join("");
+  document.getElementById("dl_products").innerHTML = activeProductsList().map((p) => `<option value="${escapeHtml(p.name)}">`).join("");
   document.getElementById("dl_suppliers").innerHTML = allSuppliers.map((s) => `<option value="${escapeHtml(s.name)}">`).join("");
 
   const colorSeen = new Map(), fabricSeen = new Map();
@@ -3580,11 +3692,11 @@ function checkDailyDigest() {
   if (localStorage.getItem("prontoDailyDigestDate") === todayKey) return;
   localStorage.setItem("prontoDailyDigestDate", todayKey);
 
-  const lateCount = allOrders.filter((o) => isOverdue(o)).length;
+  const lateCount = activeOrdersList().filter((o) => isOverdue(o)).length;
 
   const in7 = new Date(); in7.setDate(in7.getDate() + 6);
   const in7Iso = `${in7.getFullYear()}-${String(in7.getMonth() + 1).padStart(2, "0")}-${String(in7.getDate()).padStart(2, "0")}`;
-  const upcomingCount = allOrders.filter((o) => o.status !== "Teslim Edildi" && o.status !== "İptal" && o.deliveryDate && o.deliveryDate >= todayKey && o.deliveryDate <= in7Iso).length;
+  const upcomingCount = activeOrdersList().filter((o) => o.status !== "Teslim Edildi" && o.status !== "İptal" && o.deliveryDate && o.deliveryDate >= todayKey && o.deliveryDate <= in7Iso).length;
 
   if (lateCount === 0 && upcomingCount === 0) return;
 
@@ -4198,6 +4310,43 @@ html,body{margin:0;padding:0;background:#ececec}
   body.appendChild(wrapper);
 }
 
+async function printCurrentPdfPreview() {
+  const page = document.getElementById("prontoPdfPreviewPage");
+  if (!page) {
+    showToast("Yazdırılacak PDF ön izlemesi bulunamadı.");
+    return;
+  }
+
+  const images = Array.from(page.querySelectorAll("img"));
+  await Promise.all(images.map((img) => new Promise((resolve) => {
+    if (img.complete && img.naturalWidth > 0) return resolve();
+    img.addEventListener("load", resolve, { once: true });
+    img.addEventListener("error", resolve, { once: true });
+    setTimeout(resolve, 3000);
+  })));
+
+  const printWindow = window.open("", "_blank", "width=900,height=1200");
+  if (!printWindow) {
+    showToast("Yazdırma penceresi açılamadı. Tarayıcı açılır pencere iznini kontrol edin.");
+    return;
+  }
+  printWindow.document.open();
+  printWindow.document.write(`<!doctype html><html lang="tr"><head><meta charset="UTF-8"><title>${escapeHtml(document.getElementById("pdfPreviewTitle")?.textContent || "PRONTO PDF")}</title><style>
+    ${PRONTO_PDF_PREVIEW_STYLES}
+    html,body{margin:0;padding:0;background:#fff!important;}
+    @page{size:A4;margin:0;}
+    body{font-family:Arial,Helvetica,sans-serif;}
+    #prontoPdfPreviewPage{width:794px!important;min-height:1123px!important;margin:0!important;padding:32px!important;box-shadow:none!important;background:#fff!important;color:#111!important;box-sizing:border-box!important;}
+    *{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  </style></head><body>${page.outerHTML}</body></html>`);
+  printWindow.document.close();
+  printWindow.focus();
+  printWindow.onafterprint = () => {
+    setTimeout(() => { try { printWindow.close(); } catch (_) {} }, 300);
+  };
+  setTimeout(() => printWindow.print(), 250);
+}
+
 function closePdfPreview() {
   const modal = document.getElementById("pdfPreviewModal");
   const body = document.getElementById("pdfPreviewBody");
@@ -4364,13 +4513,98 @@ function confirmMarkDelivered(id) {
     showToast("Sipariş teslim edildi olarak işaretlendi.");
   });
 }
+async function moveOrderToTrash(id) {
+  const order = allOrders.find((o) => o.id === id);
+  if (!order || isDeletedOrder(order)) return;
+  const cleanDesc = cleanOrderDescription(order);
+  order.description = `${cleanDesc}${cleanDesc ? " " : ""}[[SIPARISCOP:${Date.now()}]]`;
+  await dbPut("orders", order);
+}
+
+async function cleanupExpiredDeletedOrders() {
+  const cutoff = Date.now() - 24 * 60 * 60 * 1000;
+  const expired = deletedOrdersList().filter((o) => orderTrashTimestamp(o) > 0 && orderTrashTimestamp(o) <= cutoff);
+  if (!expired.length) return;
+  for (const order of expired) {
+    try {
+      await deleteOrderPhoto(order.id);
+      await dbDelete("orders", order.id);
+    } catch (e) { console.warn("Süresi dolan sipariş kalıcı silinemedi:", e); }
+  }
+}
+
+function renderOrderTrashButton() {
+  const btn = document.getElementById("orderTrashBtn");
+  if (!btn) return;
+  btn.classList.toggle("hidden", deletedOrdersList().length === 0);
+}
+
+function renderOrderTrash() {
+  const body = document.getElementById("orderTrashBody");
+  if (!body) return;
+  const list = deletedOrdersList();
+  renderOrderTrashButton();
+  if (!list.length) {
+    body.innerHTML = `<div class="empty-state" style="padding:30px 10px;"><p>Çöp kutusu boş.</p></div>`;
+    return;
+  }
+  body.innerHTML = `<div class="trash-list">${list.map((o) => {
+    const ts = orderTrashTimestamp(o);
+    return `<div class="trash-item" data-id="${o.id}">
+      <div class="trash-item-main">
+        <div class="trash-item-name">${escapeHtml(orderNo(o))} · ${escapeHtml(o.customer || "Müşteri yok")}</div>
+        <div class="trash-item-meta">${escapeHtml(o.product || "Ürün yok")} · ${formatTrashRemaining(ts)}</div>
+      </div>
+      <div class="trash-item-actions">
+        <button type="button" class="btn btn-ghost order-trash-restore" data-id="${o.id}">Geri Yükle</button>
+        <button type="button" class="btn btn-danger order-trash-permanent" data-id="${o.id}">Kalıcı Sil</button>
+      </div>
+    </div>`;
+  }).join("")}</div>`;
+
+  body.querySelectorAll(".order-trash-restore").forEach((btn) => btn.addEventListener("click", async () => {
+    const id = Number(btn.dataset.id);
+    const order = allOrders.find((o) => o.id === id);
+    if (!order) return;
+    order.description = cleanOrderDescription(order);
+    await dbPut("orders", order);
+    await reloadAll();
+    renderOrderTrash();
+    renderOrdersView();
+    showToast("Sipariş geri yüklendi.");
+  }));
+
+  body.querySelectorAll(".order-trash-permanent").forEach((btn) => btn.addEventListener("click", () => {
+    const id = Number(btn.dataset.id);
+    const order = allOrders.find((o) => o.id === id);
+    if (!order) return;
+    showConfirm(`“${orderNo(order)}” siparişi kalıcı olarak silinsin mi? Bu işlem geri alınamaz.`, async () => {
+      await deleteOrderPhoto(id);
+      await dbDelete("orders", id);
+      await reloadAll();
+      renderOrderTrash();
+      renderOrdersView();
+      showToast("Sipariş kalıcı olarak silindi.");
+    });
+  }));
+}
+
+function openOrderTrash() {
+  renderOrderTrash();
+  closeAllModals();
+  const modal = document.getElementById("orderTrashModal");
+  if (modal) modal.classList.remove("hidden");
+}
+
 function confirmDeleteOrder(id) {
-  showConfirm("Bu sipariş kalıcı olarak silinsin mi? Bu işlem geri alınamaz.", async () => {
-    await dbDelete("orders", id);
+  const order = allOrders.find((o) => o.id === id);
+  if (!order || isDeletedOrder(order)) return;
+  showConfirm(`“${orderNo(order)}” siparişi çöp kutusuna taşınsın mı? 24 saat içinde geri yükleyebilirsin.`, async () => {
+    await moveOrderToTrash(id);
     await reloadAll();
     closeAllModals();
     renderOrdersView();
-    showToast("Sipariş silindi.");
+    showToast("Sipariş çöp kutusuna taşındı.");
   });
 }
 
@@ -4392,6 +4626,8 @@ function closeAllModals() {
   document.getElementById("entityModal").classList.add("hidden");
   document.getElementById("entityHistoryModal").classList.add("hidden");
   document.getElementById("stockInModal").classList.add("hidden");
+  document.getElementById("productTrashModal")?.classList.add("hidden");
+  document.getElementById("orderTrashModal")?.classList.add("hidden");
   document.getElementById("confirmModal").classList.add("hidden");
   pendingConfirmAction = null;
   hideRowMenu();
@@ -4425,7 +4661,7 @@ async function exportToExcel() {
   if (exportBusy) return;
   exportBusy = true;
   try { await ensureXlsx(); } catch (_) { exportBusy = false; showToast("Excel modülü yüklenemedi."); return; }
-  const rows = allOrders.slice().sort((a, b) => a.id - b.id).map((o) => ({
+  const rows = activeOrdersList().slice().sort((a, b) => a.id - b.id).map((o) => ({
     "Sipariş No": orderNo(o), "Müşteri": o.customer, "Tedarikçi": o.supplier, "Ürün": o.product,
     "Adet": o.quantity, "Sipariş Tarihi": formatDate(o.orderDate), "Teslim Tarihi": formatDate(o.deliveryDate),
     "Renk Kodu": o.colorCode || "", "Kumaş Kodu": o.fabricCode || "", "Açıklama": getOrderDescription(o) || "",
@@ -4481,10 +4717,16 @@ function bindOrderEvents() {
     if (e.target.id === "pdfActionChoiceModal") closePdfActionChoice();
   });
 
+  document.getElementById("pdfPreviewPrintBtn")?.addEventListener("click", printCurrentPdfPreview);
   document.getElementById("pdfPreviewCloseBtn")?.addEventListener("click", closePdfPreview);
   document.getElementById("pdfPreviewModal")?.addEventListener("click", (e) => {
     if (e.target.id === "pdfPreviewModal") closePdfPreview();
   });
+
+  document.getElementById("orderTrashBtn")?.addEventListener("click", openOrderTrash);
+  document.getElementById("orderTrashClose")?.addEventListener("click", closeAllModals);
+  document.getElementById("orderTrashCloseBtn")?.addEventListener("click", closeAllModals);
+  document.getElementById("orderTrashModal")?.addEventListener("click", (e) => { if (e.target.id === "orderTrashModal") closeAllModals(); });
 
   document.getElementById("detailModalClose").addEventListener("click", closeAllModals);
   document.getElementById("detailPdfBtn").addEventListener("click", () => openPdfActionChoice({ type: "order", id: currentDetailOrderId }));
@@ -4635,7 +4877,7 @@ function openEntityModal(type, id) {
 
   const grid = document.getElementById("entityFormGrid");
   grid.innerHTML = config.fields.map((f) => {
-    const rawVal = entity ? (f.virtual && type === "customer" && f.id === "city" ? getCustomerCity(entity) : (f.id === "notes" && type === "customer" ? getCustomerNotes(entity) : entity[f.id])) : "";
+    const rawVal = entity ? (f.virtual && type === "customer" && f.id === "city" ? getCustomerCity(entity) : (f.id === "notes" && type === "customer" ? getCustomerNotes(entity) : (type === "product" && f.id === "description" ? cleanProductDescription(entity) : entity[f.id]))) : "";
     const val = escapeHtml(rawVal || "");
     const wideClass = f.wide ? " form-field--wide" : "";
     if (f.type === "select") {
@@ -4796,6 +5038,7 @@ async function saveEntityFromForm() {
       obj[f.id] = sanitizeNumber(el.value, { min: 0, max: 100000000, integer: f.id === "stock", allowNull: true });
     } else {
       obj[f.id] = sanitizeText(el.value, f.type === "textarea" ? MAX_NOTE_LEN : MAX_TEXT_LEN);
+      if (type === "product" && f.id === "description") obj[f.id] = obj[f.id].replace(PRODUCT_TRASH_MARKER_RE, "").replace(/\s{2,}/g, " ").trim();
     }
   });
 
@@ -4826,9 +5069,106 @@ async function saveEntityFromForm() {
   renderSuppliersView();
 }
 
+async function moveProductToTrash(id) {
+  const product = allProducts.find((p) => p.id === id);
+  if (!product || isDeletedProduct(product)) return;
+  const cleanDesc = cleanProductDescription(product);
+  product.description = `${cleanDesc}${cleanDesc ? " " : ""}[[COPKUTUSU:${Date.now()}]]`;
+  await dbPut("products", product);
+}
+
+async function cleanupExpiredDeletedProducts() {
+  const cutoff = Date.now() - 24 * 60 * 60 * 1000;
+  const expired = deletedProductsList().filter((p) => productTrashTimestamp(p) > 0 && productTrashTimestamp(p) <= cutoff);
+  if (!expired.length) return;
+  for (const product of expired) {
+    try { await dbDelete("products", product.id); } catch (e) { console.warn("Süresi dolan ürün kalıcı silinemedi:", e); }
+  }
+}
+
+function formatTrashRemaining(ts) {
+  const remaining = Math.max(0, 24 * 60 * 60 * 1000 - (Date.now() - ts));
+  const hours = Math.floor(remaining / 3600000);
+  const mins = Math.floor((remaining % 3600000) / 60000);
+  return `${hours}s ${mins}dk kaldı`;
+}
+
+function renderProductTrash() {
+  const body = document.getElementById("productTrashBody");
+  if (!body) return;
+  const list = deletedProductsList();
+  if (!list.length) {
+    body.innerHTML = `<div class="empty-state" style="padding:30px 10px;"><p>Çöp kutusu boş.</p></div>`;
+    return;
+  }
+  body.innerHTML = `<div class="trash-list">${list.map((p) => {
+    const ts = productTrashTimestamp(p);
+    return `<div class="trash-item" data-id="${p.id}">
+      <div class="trash-item-main">
+        <div class="trash-item-name">${escapeHtml(p.name)}</div>
+        <div class="trash-item-meta">${escapeHtml(p.category || "Kategori yok")} · ${formatTrashRemaining(ts)}</div>
+      </div>
+      <div class="trash-item-actions">
+        <button type="button" class="btn btn-ghost trash-restore" data-id="${p.id}">Geri Yükle</button>
+        <button type="button" class="btn btn-danger trash-permanent" data-id="${p.id}">Kalıcı Sil</button>
+      </div>
+    </div>`;
+  }).join("")}</div>`;
+
+  body.querySelectorAll(".trash-restore").forEach((btn) => btn.addEventListener("click", async () => {
+    const id = Number(btn.dataset.id);
+    const product = allProducts.find((p) => p.id === id);
+    if (!product) return;
+    product.description = cleanProductDescription(product);
+    await dbPut("products", product);
+    await reloadAll();
+    renderProductTrash();
+    renderProductsView();
+    renderStockView();
+    refreshDatalists(true);
+    showToast("Ürün geri yüklendi.");
+  }));
+
+  body.querySelectorAll(".trash-permanent").forEach((btn) => btn.addEventListener("click", () => {
+    const id = Number(btn.dataset.id);
+    const product = allProducts.find((p) => p.id === id);
+    if (!product) return;
+    showConfirm(`“${product.name}” ürünü kalıcı olarak silinsin mi? Bu işlem geri alınamaz.`, async () => {
+      await dbDelete("products", id);
+      await reloadAll();
+      renderProductTrash();
+      renderProductsView();
+      renderStockView();
+      refreshDatalists(true);
+      showToast("Ürün kalıcı olarak silindi.");
+    });
+  }));
+}
+
+function openProductTrash() {
+  renderProductTrash();
+  closeAllModals();
+  const modal = document.getElementById("productTrashModal");
+  if (modal) modal.classList.remove("hidden");
+}
+
 function confirmDeleteEntity(type, id) {
   const config = ENTITY_CONFIG[type];
   const labelMap = { product: "ürün", customer: "müşteri", supplier: "tedarikçi" };
+  if (type === "product") {
+    const product = allProducts.find((p) => p.id === id);
+    if (!product) return;
+    showConfirm(`“${product.name}” ürünü çöp kutusuna taşınsın mı? 24 saat içinde geri yükleyebilirsin.`, async () => {
+      await moveProductToTrash(id);
+      await reloadAll();
+      closeAllModals();
+      renderProductsView();
+      renderStockView();
+      refreshDatalists(true);
+      showToast("Ürün çöp kutusuna taşındı.");
+    });
+    return;
+  }
   showConfirm(`Bu ${labelMap[type]} kalıcı olarak silinsin mi?`, async () => {
     await dbDelete(config.store, id);
     await reloadAll();
@@ -4843,6 +5183,10 @@ function confirmDeleteEntity(type, id) {
 
 function bindEntityEvents() {
   document.getElementById("newProductBtn").addEventListener("click", () => openEntityModal("product", null));
+  document.getElementById("productTrashBtn")?.addEventListener("click", openProductTrash);
+  document.getElementById("productTrashClose")?.addEventListener("click", closeAllModals);
+  document.getElementById("productTrashCloseBtn")?.addEventListener("click", closeAllModals);
+  document.getElementById("productTrashModal")?.addEventListener("click", (e) => { if (e.target.id === "productTrashModal") closeAllModals(); });
   document.getElementById("productsEmptyBtn").addEventListener("click", () => openEntityModal("product", null));
   document.getElementById("newCustomerBtn").addEventListener("click", () => openEntityModal("customer", null));
   document.getElementById("customersEmptyBtn").addEventListener("click", () => openEntityModal("customer", null));
@@ -4880,7 +5224,7 @@ function bindEntityEvents() {
    ======================================================= */
 function renderProductsView() {
   const q = productSearch.trim().toLocaleLowerCase("tr");
-  let list = allProducts.slice().sort((a, b) => b.id - a.id);
+  let list = activeProductsList().slice().sort((a, b) => b.id - a.id);
   if (q) list = list.filter((p) => (p.name || "").toLocaleLowerCase("tr").includes(q) || (p.category || "").toLocaleLowerCase("tr").includes(q));
 
   const empty = document.getElementById("productsEmptyState");
@@ -4889,8 +5233,8 @@ function renderProductsView() {
     document.getElementById("productsTableBody").innerHTML = "";
     document.getElementById("productsCardsWrap").innerHTML = "";
     document.getElementById("productsPagination").classList.add("hidden");
-    empty.querySelector("p").textContent = allProducts.length === 0 ? "Henüz ürün eklenmedi." : "Aramanla eşleşen ürün bulunamadı.";
-    document.getElementById("productsEmptyBtn").style.display = allProducts.length === 0 ? "inline-flex" : "none";
+    empty.querySelector("p").textContent = activeProductsList().length === 0 ? "Henüz ürün eklenmedi." : "Aramanla eşleşen ürün bulunamadı.";
+    document.getElementById("productsEmptyBtn").style.display = activeProductsList().length === 0 ? "inline-flex" : "none";
     return;
   }
   empty.classList.add("hidden");
@@ -4952,12 +5296,12 @@ function reservedQtyForProduct(name) {
 
 function renderStockView() {
   const q = stockSearch.trim().toLocaleLowerCase("tr");
-  let list = allProducts.slice().sort((a, b) => (a.name || "").localeCompare(b.name || "", "tr"));
+  let list = activeProductsList().slice().sort((a, b) => (a.name || "").localeCompare(b.name || "", "tr"));
   if (q) list = list.filter((p) => (p.name || "").toLocaleLowerCase("tr").includes(q) || (p.category || "").toLocaleLowerCase("tr").includes(q));
 
   // Özet kartlar (tüm ürünler üzerinden, aramadan bağımsız)
   let trackedCount = 0, totalReserved = 0;
-  allProducts.forEach((p) => {
+  activeProductsList().forEach((p) => {
     if (typeof p.stock === "number") trackedCount++;
     totalReserved += reservedQtyForProduct(p.name);
   });
@@ -4970,7 +5314,7 @@ function renderStockView() {
     document.getElementById("stockTableBody").innerHTML = "";
     document.getElementById("stockCardsWrap").innerHTML = "";
     document.getElementById("stockPagination").classList.add("hidden");
-    empty.querySelector("p").textContent = allProducts.length === 0
+    empty.querySelector("p").textContent = activeProductsList().length === 0
       ? "Henüz ürün yok. Önce Ürünler sayfasından ürün ekle."
       : "Aramanla eşleşen ürün bulunamadı.";
     return;
@@ -5843,7 +6187,7 @@ function bindDeliveryFormEvents() {
    ======================================================= */
 function renderReportsView() {
   const grid = document.getElementById("reportGrid");
-  if (allOrders.length === 0) {
+  if (activeOrdersList().length === 0) {
     grid.innerHTML = `<div class="report-card report-card--wide"><div class="report-empty">Rapor oluşturmak için henüz yeterli sipariş verisi yok.</div></div>`;
     return;
   }
@@ -5851,7 +6195,7 @@ function renderReportsView() {
   // Durum dağılımı
   const statusCounts = {};
   FILTER_LIST.filter((f) => f !== "Tümü").forEach((s) => { statusCounts[s] = 0; });
-  allOrders.forEach((o) => {
+  activeOrdersList().forEach((o) => {
     statusCounts[o.status] = (statusCounts[o.status] || 0) + 1;
     if (isOverdue(o)) statusCounts["Gecikti"] = (statusCounts["Gecikti"] || 0) + 1;
   });
@@ -5866,17 +6210,17 @@ function renderReportsView() {
 
   // En çok sipariş veren müşteriler
   const custCounts = {};
-  allOrders.forEach((o) => { if (o.customer) custCounts[o.customer] = (custCounts[o.customer] || 0) + 1; });
+  activeOrdersList().forEach((o) => { if (o.customer) custCounts[o.customer] = (custCounts[o.customer] || 0) + 1; });
   const topCustomers = Object.entries(custCounts).sort((a, b) => b[1] - a[1]).slice(0, 5);
 
   // En çok kullanılan tedarikçiler
   const supCounts = {};
-  allOrders.forEach((o) => { if (o.supplier) supCounts[o.supplier] = (supCounts[o.supplier] || 0) + 1; });
+  activeOrdersList().forEach((o) => { if (o.supplier) supCounts[o.supplier] = (supCounts[o.supplier] || 0) + 1; });
   const topSuppliers = Object.entries(supCounts).sort((a, b) => b[1] - a[1]).slice(0, 5);
 
   // Tedarikçi performansı — ortalama teslim süresi (gün)
   const supplierDays = {};
-  allOrders.forEach((o) => {
+  activeOrdersList().forEach((o) => {
     if (o.status === "Teslim Edildi" && o.supplier && o.orderDate && o.deliveryDate) {
       const d1 = new Date(o.orderDate), d2 = new Date(o.deliveryDate);
       const days = Math.round((d2 - d1) / 86400000);
@@ -5894,7 +6238,7 @@ function renderReportsView() {
 
   // Stok hareket hızı — en çok/az tüketilen ürünler (teslim edilen adetlere göre)
   const consumption = {};
-  allOrders.forEach((o) => {
+  activeOrdersList().forEach((o) => {
     if (o.status === "Teslim Edildi" && o.product) {
       const key = o.product.trim();
       consumption[key] = (consumption[key] || 0) + (o.quantity || 0);
@@ -5911,7 +6255,7 @@ function renderReportsView() {
     const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
     months.push({ key: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`, label: d.toLocaleDateString("tr-TR", { month: "short" }) });
   }
-  const monthCounts = months.map((m) => allOrders.filter((o) => (o.orderDate || "").startsWith(m.key)).length);
+  const monthCounts = months.map((m) => activeOrdersList().filter((o) => (o.orderDate || "").startsWith(m.key)).length);
   const maxMonth = Math.max(1, ...monthCounts);
 
   grid.innerHTML = `
@@ -6186,7 +6530,7 @@ function bindSettingsEvents() {
   });
 
   document.getElementById("backupBtn").addEventListener("click", async () => {
-    const data = { orders: allOrders, products: allProducts, customers: allCustomers, suppliers: allSuppliers, stockMovements: allStockMovements, exportedAt: new Date().toISOString() };
+    const data = { orders: allOrders, products: activeProductsList(), customers: allCustomers, suppliers: allSuppliers, stockMovements: allStockMovements, exportedAt: new Date().toISOString() };
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -6336,8 +6680,9 @@ function bindGlobalEvents() {
 
   document.getElementById("confirmCancelBtn").addEventListener("click", closeConfirmModal);
   document.getElementById("confirmOkBtn").addEventListener("click", () => {
-    if (pendingConfirmAction) pendingConfirmAction();
-    pendingConfirmAction = null;
+    const action = pendingConfirmAction;
+    closeConfirmModal();
+    if (action) action();
   });
 
   document.getElementById("orderModal").addEventListener("click", (e) => { if (e.target.id === "orderModal") attemptCloseOrderModal(); });
