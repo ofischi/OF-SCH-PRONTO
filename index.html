@@ -4301,9 +4301,17 @@ async function previewCurrentPrintArea(title) {
   style.textContent = PRONTO_PDF_PREVIEW_STYLES + `
 html,body{margin:0;padding:0;background:#ececec}
 @media print{
-  @page{size:A4;margin:0}
-  html,body{background:#fff!important}
-  #prontoPdfPreviewPage{width:794px!important;min-height:1123px!important;margin:0!important;box-shadow:none!important}
+  @page{size:A4 portrait;margin:7mm!important;}
+  html,body{background:#fff!important;width:auto!important;min-width:0!important;margin:0!important;padding:0!important;}
+  #prontoPdfPreviewPage{
+    width:196mm!important;
+    min-height:283mm!important;
+    margin:0 auto!important;
+    padding:7.9mm!important;
+    box-shadow:none!important;
+    background:#fff!important;
+    box-sizing:border-box!important;
+  }
 }`;
   wrapper.appendChild(style);
   body.innerHTML = "";
@@ -4325,26 +4333,44 @@ async function printCurrentPdfPreview() {
     setTimeout(resolve, 3000);
   })));
 
-  const printWindow = window.open("", "_blank", "width=900,height=1200");
-  if (!printWindow) {
-    showToast("Yazdırma penceresi açılamadı. Tarayıcı açılır pencere iznini kontrol edin.");
-    return;
-  }
-  printWindow.document.open();
-  printWindow.document.write(`<!doctype html><html lang="tr"><head><meta charset="UTF-8"><title>${escapeHtml(document.getElementById("pdfPreviewTitle")?.textContent || "PRONTO PDF")}</title><style>
-    ${PRONTO_PDF_PREVIEW_STYLES}
-    html,body{margin:0;padding:0;background:#fff!important;}
-    @page{size:A4;margin:0;}
-    body{font-family:Arial,Helvetica,sans-serif;}
-    #prontoPdfPreviewPage{width:794px!important;min-height:1123px!important;margin:0!important;padding:32px!important;box-shadow:none!important;background:#fff!important;color:#111!important;box-sizing:border-box!important;}
-    *{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
-  </style></head><body>${page.outerHTML}</body></html>`);
-  printWindow.document.close();
-  printWindow.focus();
-  printWindow.onafterprint = () => {
-    setTimeout(() => { try { printWindow.close(); } catch (_) {} }, 300);
+  // Electron'da window.open() ile oluşturulan alt pencere bazı sürümlerde
+  // yazdırma diyaloğunu tetiklemeyebiliyor. Bu nedenle yazdırmayı doğrudan
+  // mevcut renderer penceresinde yapıyoruz. Uygulamanın ekran görünümü
+  // yazdırma bittikten sonra aynen geri yüklenir.
+  const printStyle = document.createElement("style");
+  printStyle.id = "prontoDirectPrintStyle";
+  printStyle.textContent = `
+    @page{size:A4 portrait;margin:7mm!important;}
+    html,body{background:#fff!important;width:auto!important;min-width:0!important;margin:0!important;padding:0!important;}
+    body > *:not(#pdfPreviewModal){display:none!important;}
+    #pdfPreviewModal{display:block!important;position:static!important;inset:auto!important;background:#fff!important;overflow:visible!important;}
+    #pdfPreviewModal *{visibility:visible!important;}
+    #pdfPreviewBody{display:block!important;position:static!important;width:100%!important;height:auto!important;overflow:visible!important;padding:0!important;background:#fff!important;}
+    #prontoPdfPreviewPage{width:196mm!important;min-height:283mm!important;margin:0 auto!important;padding:7.9mm!important;box-shadow:none!important;background:#fff!important;color:#111!important;box-sizing:border-box!important;}
+    .pdf-preview-topbar,.pdf-preview-close,.pdf-preview-print{display:none!important;}
+    *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}
+  `;
+  document.head.appendChild(printStyle);
+
+  const previousOverflow = document.body.style.overflow;
+  document.body.style.overflow = "visible";
+
+  const restore = () => {
+    document.body.style.overflow = previousOverflow;
+    printStyle.remove();
   };
-  setTimeout(() => printWindow.print(), 250);
+
+  window.addEventListener("afterprint", restore, { once: true });
+  setTimeout(() => {
+    try {
+      window.focus();
+      window.print();
+    } catch (err) {
+      restore();
+      showToast("Yazdırma başlatılamadı.");
+      console.error("PRONTO yazdırma hatası:", err);
+    }
+  }, 150);
 }
 
 function closePdfPreview() {
@@ -4456,9 +4482,17 @@ async function exportOrderPdf(id, previewWindow = null, fastPreview = false, inA
     style.textContent = PRONTO_PDF_PREVIEW_STYLES + `
 html,body{margin:0;padding:0;background:#ececec}
 @media print{
-  @page{size:A4;margin:0}
-  html,body{background:#fff!important}
-  #prontoPdfPreviewPage{width:794px!important;min-height:1123px!important;margin:0!important;box-shadow:none!important}
+  @page{size:A4 portrait;margin:7mm!important;}
+  html,body{background:#fff!important;width:auto!important;min-width:0!important;margin:0!important;padding:0!important;}
+  #prontoPdfPreviewPage{
+    width:196mm!important;
+    min-height:283mm!important;
+    margin:0 auto!important;
+    padding:7.9mm!important;
+    box-shadow:none!important;
+    background:#fff!important;
+    box-sizing:border-box!important;
+  }
 }`;
     wrapper.appendChild(style);
 
