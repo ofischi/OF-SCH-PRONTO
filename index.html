@@ -384,6 +384,21 @@ input, select, textarea { font-family: inherit; }
   font-size: 14.5px; color: var(--color-text); width: 100%;
 }
 .form-field textarea { resize: vertical; font-family: inherit; }
+.modal--order-form{max-width:820px;width:min(820px,calc(100vw - 40px));}
+.shipment-condition-wrap{grid-column:1 / -1;margin-top:2px;padding:12px 14px;border:1px solid var(--color-border);border-radius:12px;background:var(--color-surface-soft);}
+.shipment-condition-title{display:block;margin-bottom:10px;font-size:13px;font-weight:700;color:var(--color-text-muted);}
+.shipment-condition-list{display:flex;flex-wrap:wrap;gap:9px;}
+.shipment-condition-btn{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--color-border);background:var(--color-surface);color:var(--color-text);border-radius:999px;padding:8px 12px;font-size:12px;font-weight:700;cursor:pointer;}
+.shipment-condition-btn .condition-dot{width:15px;height:15px;border-radius:50%;border:2px solid #aaa;display:inline-block;background:transparent;box-sizing:border-box;}
+.shipment-condition-btn.active{border-color:var(--color-accent);background:rgba(230,178,42,.12);}
+.shipment-condition-btn.active .condition-dot{border-color:var(--color-accent);background:var(--color-accent);box-shadow:inset 0 0 0 3px var(--color-surface);}
+.price-summary-box{grid-column:1 / -1;display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding:14px;border:1px solid var(--color-border);border-radius:12px;background:var(--color-surface-soft);}
+.price-summary-item{display:flex;flex-direction:column;gap:4px;}
+.price-summary-item span{font-size:11px;color:var(--color-text-muted);font-weight:700;}
+.price-summary-item strong{font-size:14px;color:var(--color-text);}
+.price-rate-note{grid-column:1 / -1;font-size:11px;color:var(--color-text-muted);margin-top:-3px;}
+@media(max-width:700px){.modal--order-form{width:100%;}.price-summary-box{grid-template-columns:1fr 1fr;}.shipment-condition-list{gap:7px;}}
+
 .form-field input:focus, .form-field select:focus, .form-field textarea:focus {
   outline: none; border-color: var(--color-accent); box-shadow: 0 0 0 3px rgba(230,178,42,0.18);
 }
@@ -391,6 +406,11 @@ input, select, textarea { font-family: inherit; }
 .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 .detail-item { display: flex; flex-direction: column; gap: 4px; }
 .detail-item--wide { grid-column: 1 / -1; }
+.detail-pricing-block { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 4px; padding-top: 16px; border-top: 1px solid var(--color-border); }
+.detail-pricing-block .detail-item { min-width: 0; }
+@media (max-width: 600px) {
+  .detail-pricing-block { grid-template-columns: 1fr; }
+}
 .detail-label { font-size: 12px; font-weight: 700; color: var(--color-text-muted); text-transform: none; }
 .detail-value { font-size: 15px; }
 
@@ -1364,6 +1384,46 @@ body::after {
   .pdf-action-choice-buttons { grid-template-columns:1fr; }
 }
 
+/* entityHistoryPdfStyles */
+.entity-report-print{width:100%;box-sizing:border-box}
+.entity-report-page{width:100%;min-height:1069px;box-sizing:border-box;display:flex;flex-direction:column}
+.entity-report-page + .entity-report-page{padding-top:24px}
+.entity-report-page .entity-report-table-wrap{flex:0 0 auto}
+.entity-report-page .entity-report-totals{margin-top:auto}
+.entity-report-page .print-footer{margin-top:14px}
+.entity-report-table-wrap{margin-top:14px;width:100%;overflow:visible}
+.entity-report-table{width:100%;border-collapse:collapse;font-size:9.5px;table-layout:fixed}
+.entity-report-table td.customer-cell{min-width:0;white-space:normal;overflow-wrap:anywhere;word-break:break-word;}
+.entity-report-table th,.entity-report-table td{border:1px solid #bfc3c7;padding:5px 5px;text-align:left;vertical-align:middle;word-break:normal;overflow-wrap:anywhere;line-height:1.25;box-sizing:border-box}
+.entity-report-table th{background:#f1f1f1;font-weight:800;white-space:nowrap}
+/* 8 sütunun toplamı tam %100 — durum sütununun dikey taşmasını engeller. */
+.entity-report-table th:nth-child(1),.entity-report-table td:nth-child(1){width:12%}
+.entity-report-table th:nth-child(2),.entity-report-table td:nth-child(2){width:10%}
+.entity-report-table th:nth-child(3),.entity-report-table td:nth-child(3){width:22%}
+.entity-report-table th:nth-child(4),.entity-report-table td:nth-child(4){width:6%}
+.entity-report-table th:nth-child(5),.entity-report-table td:nth-child(5){width:15%}
+.entity-report-table th:nth-child(6),.entity-report-table td:nth-child(6){width:12%}
+.entity-report-table th:nth-child(7),.entity-report-table td:nth-child(7){width:11%}
+.entity-report-table th:nth-child(8),.entity-report-table td:nth-child(8){width:12%}
+.entity-report-table tbody tr{break-inside:avoid;page-break-inside:avoid}
+.entity-report-table thead{display:table-header-group}
+.entity-report-table .num{text-align:right;white-space:nowrap}.entity-report-table .empty{text-align:center;padding:18px}
+.entity-report-totals{width:300px;max-width:100%;margin:14px 0 0 auto;border-top:1px solid #aaa}
+.entity-report-totals>div{display:flex;justify-content:space-between;gap:18px;padding:5px 0;border-bottom:1px solid #ddd;font-size:10px}
+.entity-report-totals .grand{font-size:12px;border-top:2px solid #111;border-bottom:0;padding-top:8px}
+
+/* Müşteri raporu 9 sütun: Alış TL + SATIŞ TL + Teslim + Durum. */
+.entity-report-table.customer-report-table th:nth-child(1),.entity-report-table.customer-report-table td:nth-child(1){width:10%}
+.entity-report-table.customer-report-table th:nth-child(2),.entity-report-table.customer-report-table td:nth-child(2){width:9%}
+.entity-report-table.customer-report-table th:nth-child(3),.entity-report-table.customer-report-table td:nth-child(3){width:19%}
+.entity-report-table.customer-report-table th:nth-child(4),.entity-report-table.customer-report-table td:nth-child(4){width:5%}
+.entity-report-table.customer-report-table th:nth-child(5),.entity-report-table.customer-report-table td:nth-child(5){width:15%}
+.entity-report-table.customer-report-table th:nth-child(6),.entity-report-table.customer-report-table td:nth-child(6){width:12%}
+.entity-report-table.customer-report-table th:nth-child(7),.entity-report-table.customer-report-table td:nth-child(7){width:12%}
+.entity-report-table.customer-report-table th:nth-child(8),.entity-report-table.customer-report-table td:nth-child(8){width:9%}
+.entity-report-table.customer-report-table th:nth-child(9),.entity-report-table.customer-report-table td:nth-child(9){width:9%}
+@media print{.entity-report-table{font-size:9px}.entity-report-table th,.entity-report-table td{padding:4px}.entity-report-totals{page-break-inside:avoid}}
+
 /* ===================== UYGULAMA İÇİ PDF ÖN İZLEME ===================== */
 .pdf-preview-modal {
   position:fixed;
@@ -1908,7 +1968,7 @@ body::after {
 
 <!-- YENİ / DÜZENLE SİPARİŞ MODAL -->
 <div class="modal-overlay hidden" id="orderModal">
-  <div class="modal modal--form">
+  <div class="modal modal--form modal--order-form">
     <div class="modal-head">
       <h2 id="orderModalTitle">Yeni Sipariş</h2>
       <button class="icon-btn" id="orderModalClose" aria-label="Kapat">✕</button>
@@ -1964,6 +2024,25 @@ body::after {
             <option value="SSH">SSH</option>
           </select>
         </label>
+        <label class="form-field">
+          <span>Satış Birim Fiyatı</span>
+          <input type="number" id="f_salePrice" min="0" step="0.01" placeholder="Satış fiyatı">
+        </label>
+        <label class="form-field">
+          <span>KDV Oranı (%)</span>
+          <input type="number" id="f_vatRate" min="0" max="100" step="0.01" value="10" placeholder="Örn. 10">
+        </label>
+        <label class="form-field">
+          <span>Tedarikçi Alış Fiyatı (TL)</span>
+          <input type="number" id="f_purchasePrice" min="0" step="0.01" placeholder="Tedarikçiden alış fiyatı">
+        </label>
+        <div class="price-summary-box" id="orderPriceSummary">
+          <div class="price-summary-item"><span>Satış Tutarı</span><strong id="priceSummarySale">0,00 TL</strong></div>
+          <div class="price-summary-item"><span>KDV</span><strong id="priceSummaryVat">0,00 TL</strong></div>
+          <div class="price-summary-item"><span>Genel Toplam</span><strong id="priceSummaryGrand">0,00 TL</strong></div>
+          <div class="price-summary-item"><span>Alış Toplamı</span><strong id="priceSummaryPurchase">0,00 TL</strong></div>
+          <div class="price-rate-note" id="priceRateNote">KDV oranı: %10 · Tüm satış fiyatları TL</div>
+        </div>
         <label class="form-field">
           <span>Durum</span>
           <select id="f_status">
@@ -2033,6 +2112,7 @@ body::after {
     <div class="modal-body" id="entityHistoryBody"></div>
     <div class="modal-foot">
       <button class="btn btn-ghost" id="entityHistoryEditBtn">Düzenle</button>
+      <button class="btn btn-primary" id="entityHistoryPdfBtn">PDF</button>
     </div>
   </div>
 </div>
@@ -2709,7 +2789,48 @@ function deletedOrdersList() {
 // Yeni sevkiyat alanları mevcut Supabase şemasını değiştirmeden saklanır.
 const SHIPMENT_MARKER_RE = /\[\[SEVKIYAT:(NAKLIYE|OFISCHI|SSH|KENDI)\]\]/i;
 const CITY_MARKER_RE = /\[\[SEHIR:([^\]]+)\]\]/i;
+const ORDER_PRICE_MARKER_RE = /\[\[PRONTOFIYAT:([^\]]+)\]\]/i;
+const ORDER_CONDITION_MARKER_RE = /\[\[SEVKDURUM:([^\]]*)\]\]/i;
+const DELIVERED_AT_MARKER_RE = /\[\[TESLIMEDILDI:(\d{4}-\d{2}-\d{2})\]\]/i;
+const DEFAULT_VAT_RATE = 0.10;
 function stripMarker(text, re) { return String(text || "").replace(re, "").replace(/\s{2,}/g, " ").trim(); }
+function getOrderPricing(order){
+  const raw=String(order?.description||"").match(ORDER_PRICE_MARKER_RE);
+  if(!raw) return {salePrice:0,currency:"TRY",rate:1,vatIncluded:false,vatRate:DEFAULT_VAT_RATE,purchasePrice:0};
+  try {
+    const data=JSON.parse(decodeURIComponent(raw[1]));
+    return {salePrice:Number(data.salePrice)||0,currency:"TRY",rate:1,vatIncluded:Boolean(data.vatIncluded),vatRate:Number.isFinite(Number(data.vatRate)) ? Math.max(0, Number(data.vatRate)) : DEFAULT_VAT_RATE,purchasePrice:Number(data.purchasePrice)||0};
+  } catch(_) { return {salePrice:0,currency:"TRY",rate:1,vatIncluded:false,vatRate:DEFAULT_VAT_RATE,purchasePrice:0}; }
+}
+function getOrderConditions(order){
+  const m=String(order?.description||"").match(ORDER_CONDITION_MARKER_RE);
+  if(!m) return [];
+  return m[1].split("|").map(x=>x.trim()).filter(Boolean);
+}
+function getDeliveredAt(order){
+  const m=String(order?.description||"").match(DELIVERED_AT_MARKER_RE);
+  return m ? m[1] : "";
+}
+function withOrderMetadata(description, shipmentType, pricing, conditions, deliveredAt){
+  let clean=String(description||"").replace(SHIPMENT_MARKER_RE,"").replace(ORDER_TRASH_MARKER_RE,"").replace(ORDER_PRICE_MARKER_RE,"").replace(ORDER_CONDITION_MARKER_RE,"").replace(DELIVERED_AT_MARKER_RE,"").replace(/\s{2,}/g," ").trim();
+  const ship=shipmentType === "Nakliye" ? "[[SEVKIYAT:NAKLIYE]]" : shipmentType === "SSH" ? "[[SEVKIYAT:SSH]]" : "[[SEVKIYAT:OFISCHI]]";
+  const priceToken=encodeURIComponent(JSON.stringify(pricing||{}));
+  const conditionToken=(conditions||[]).join("|");
+  return `${clean}${clean?" ":""}${ship} [[PRONTOFIYAT:${priceToken}]]${conditionToken?` [[SEVKDURUM:${conditionToken}]]`:""}${deliveredAt?` [[TESLIMEDILDI:${deliveredAt}]]`:""}`;
+}
+function pricingTotals(order){
+  const p=getOrderPricing(order), qty=Number(order?.quantity)||0, total=p.salePrice*qty;
+  const vatRate=Math.max(0, Number.isFinite(Number(p.vatRate)) ? Number(p.vatRate) : DEFAULT_VAT_RATE) / 100;
+  // Yeni sistemde satış fiyatı KDV hariç girilir; KDV oranı kullanıcı tarafından
+  // rakam olarak girilir ve toplamın üzerine ayrıca hesaplanır.
+  const net=total;
+  const vat=total*vatRate;
+  const grand=total+vat;
+  return {...p,vatRate:vatRate*100,qty,total,net,vat,grand,tlTotal:total*(p.currency==="TRY"?1:p.rate),tlGrand:grand*(p.currency==="TRY"?1:p.rate),purchaseTotal:p.purchasePrice*qty};
+}
+function currencyLabel(c){return c==="USD"?"USD":c==="EUR"?"EUR":"TL";}
+function moneyCurrency(v,c){return new Intl.NumberFormat("tr-TR",{minimumFractionDigits:2,maximumFractionDigits:2}).format(Number(v)||0)+" "+currencyLabel(c);}
+function formatActualDelivery(order){ return order?.status === "Teslim Edildi" && getDeliveredAt(order) ? formatDate(getDeliveredAt(order)) : "-"; }
 function getShipmentType(order) {
   const desc = order && order.description || "";
   if (/\[\[SEVKIYAT:SSH\]\]/i.test(desc)) return "SSH";
@@ -2718,7 +2839,7 @@ function getShipmentType(order) {
 }
 function getOrderDescription(order) {
   const cleanShipment = stripMarker(order && order.description, SHIPMENT_MARKER_RE);
-  return cleanShipment.replace(ORDER_TRASH_MARKER_RE, "").replace(/\s{2,}/g, " ").trim();
+  return cleanShipment.replace(ORDER_TRASH_MARKER_RE, "").replace(ORDER_PRICE_MARKER_RE, "").replace(ORDER_CONDITION_MARKER_RE, "").replace(DELIVERED_AT_MARKER_RE, "").replace(/\s{2,}/g, " ").trim();
 }
 function setShipmentMarker(description, type) {
   const clean = getOrderDescription({ description });
@@ -3271,6 +3392,9 @@ async function updateOrderStatus(id, status) {
 
   // Önce RAM'de güncelle: kullanıcı sonucu anında görür.
   order.status = status;
+  if(status === "Teslim Edildi" && oldStatus !== "Teslim Edildi"){
+    const p=getOrderPricing(order); order.description=withOrderMetadata(getOrderDescription(order),getShipmentType(order),p,getOrderConditions(order),todayISO());
+  }
   const becameDelivered = status === "Teslim Edildi" && oldStatus !== "Teslim Edildi";
   const leftDelivered = oldStatus === "Teslim Edildi" && status !== "Teslim Edildi";
   if (product && typeof product.stock === "number") {
@@ -3937,6 +4061,34 @@ async function loadOrderPhotoIntoDetail(orderId) {
 }
 
 
+function selectedShipmentConditions(){ return Array.from(document.querySelectorAll("#shipmentConditionList .shipment-condition-btn.active")).map(b=>b.dataset.condition); }
+function setShipmentConditionButtons(values){ const set=new Set(values||[]); document.querySelectorAll("#shipmentConditionList .shipment-condition-btn").forEach(b=>b.classList.toggle("active",set.has(b.dataset.condition))); }
+function renderOrderPriceSummary(){
+  const qty=Number(document.getElementById("f_quantity")?.value)||0, sale=Number(document.getElementById("f_salePrice")?.value)||0, purchase=Number(document.getElementById("f_purchasePrice")?.value)||0;
+  const vatRateRaw=Number(document.getElementById("f_vatRate")?.value);
+  const vatRate=Number.isFinite(vatRateRaw) ? Math.max(0, vatRateRaw)/100 : DEFAULT_VAT_RATE;
+  const total=sale*qty; const vat=total*vatRate; const grand=total+vat;
+  const fmt=v=>new Intl.NumberFormat("tr-TR",{minimumFractionDigits:2,maximumFractionDigits:2}).format(Number(v)||0)+" TL";
+  document.getElementById("priceSummarySale").textContent=fmt(total);
+  document.getElementById("priceSummaryVat").textContent=fmt(vat);
+  document.getElementById("priceSummaryGrand").textContent=fmt(grand);
+  document.getElementById("priceSummaryPurchase").textContent=fmt(purchase*qty);
+  const note=document.getElementById("priceRateNote");
+  if(note) note.textContent=`KDV oranı: %${vatRate*100} · KDV ayrıca hesaplanır · Tüm satış fiyatları TL`;
+}
+function bindOrderPricingEvents(){
+  ["f_quantity","f_salePrice","f_purchasePrice","f_vatRate"].forEach(id=>{
+    document.getElementById(id)?.addEventListener("input",renderOrderPriceSummary);
+    document.getElementById(id)?.addEventListener("change",renderOrderPriceSummary);
+  });
+  document.getElementById("f_product")?.addEventListener("change",()=>{
+    const p=allProducts.find(x=>normName(x.name)===normName(document.getElementById("f_product").value));
+    const sale=document.getElementById("f_salePrice");
+    if(p && sale && !sale.value) sale.value=Number(p.price)||"";
+    renderOrderPriceSummary();
+  });
+}
+
 function openOrderModal(id) {
   const modal = document.getElementById("orderModal");
   const form = document.getElementById("orderForm");
@@ -3960,10 +4112,14 @@ function openOrderModal(id) {
   document.getElementById("f_description").value = order ? getOrderDescription(order) : "";
   document.getElementById("f_shipmentType").value = order ? getShipmentType(order) : "Ofischi Sevkiyat";
   document.getElementById("f_status").value = order ? order.status : "Beklemede";
-
+  const pricing = order ? getOrderPricing(order) : {salePrice:"",currency:"TRY",rate:1,vatIncluded:false,vatRate:10,purchasePrice:""};
+  document.getElementById("f_salePrice").value = pricing.salePrice || "";
+  document.getElementById("f_vatRate").value = Number.isFinite(Number(pricing.vatRate)) ? Number(pricing.vatRate) : 10;
+  document.getElementById("f_purchasePrice").value = pricing.purchasePrice || "";
   closeAllModals();
   modal.classList.remove("hidden");
   orderFormDirty = false;
+  renderOrderPriceSummary();
   if (order) loadOrderPhotoIntoForm(order.id);
 }
 
@@ -3982,9 +4138,15 @@ async function saveOrderFromForm() {
     deliveryDate: sanitizeDate(document.getElementById("f_deliveryDate").value),
     colorCode: sanitizeText(document.getElementById("f_colorCode").value, 60),
     fabricCode: sanitizeText(document.getElementById("f_fabricCode").value, 60),
-    description: setShipmentMarker(sanitizeText(document.getElementById("f_description").value, MAX_NOTE_LEN), document.getElementById("f_shipmentType").value),
+    description: "",
     status: sanitizeStatus(document.getElementById("f_status").value)
   });
+  const enteredVatRate=Number(document.getElementById("f_vatRate").value);
+  const vatRate=Number.isFinite(enteredVatRate) ? Math.max(0, Math.min(100, enteredVatRate)) : DEFAULT_VAT_RATE*100;
+  const pricingMeta={salePrice:Number(document.getElementById("f_salePrice").value)||0,currency:"TRY",rate:1,vatIncluded:false,vatRate,purchasePrice:Number(document.getElementById("f_purchasePrice").value)||0};
+  const oldDeliveredAt=oldOrder ? getDeliveredAt(oldOrder) : "";
+  const deliveredAt=(order.status==="Teslim Edildi" && (!oldOrder || oldOrder.status!=="Teslim Edildi")) ? todayISO() : oldDeliveredAt;
+  order.description=withOrderMetadata(sanitizeText(document.getElementById("f_description").value, MAX_NOTE_LEN),document.getElementById("f_shipmentType").value,pricingMeta,oldOrder ? getOrderConditions(oldOrder) : [],deliveredAt);
 
   if (!order.customer || !order.product) {
     showToast("Müşteri ve ürün alanları boş bırakılamaz.");
@@ -4054,12 +4216,19 @@ function openDetailModal(id) {
       <div class="detail-item"><span class="detail-label">Ürün</span><span class="detail-value">${escapeHtml(order.product)}</span></div>
       <div class="detail-item"><span class="detail-label">Adet</span><span class="detail-value">${escapeHtml(order.quantity)}</span></div>
       <div class="detail-item"><span class="detail-label">Sipariş Tarihi</span><span class="detail-value">${formatDate(order.orderDate)}</span></div>
-      <div class="detail-item"><span class="detail-label">Teslim Tarihi</span><span class="detail-value">${formatDate(order.deliveryDate)}</span></div>
+      <div class="detail-item"><span class="detail-label">Planlanan Teslim Tarihi</span><span class="detail-value">${formatDate(order.deliveryDate)}</span></div>
+      <div class="detail-item"><span class="detail-label">Teslim Edildiği Tarih</span><span class="detail-value">${order.status === "Teslim Edildi" ? (getDeliveredAt(order) ? formatDate(getDeliveredAt(order)) : "Kayıtlı değil") : "-"}</span></div>
       <div class="detail-item"><span class="detail-label">Renk Kodu</span><span class="detail-value">${escapeHtml(order.colorCode) || "-"}</span></div>
       <div class="detail-item"><span class="detail-label">Kumaş Kodu</span><span class="detail-value">${escapeHtml(order.fabricCode) || "-"}</span></div>
       <div class="detail-item detail-item--wide"><span class="detail-label">Açıklama</span><span class="detail-value">${escapeHtml(getOrderDescription(order)) || "-"}</span></div>
       <div class="detail-item"><span class="detail-label">Durum</span><span class="detail-value">${statusBadgeHtml(order)}</span></div>
       <div class="detail-item detail-item--wide"><span class="detail-label">Sipariş Fotoğrafı</span><div id="detailOrderPhotoHost" class="order-photo-loading">Fotoğraf kontrol ediliyor…</div></div>
+      <div class="detail-pricing-block">
+        <div class="detail-item"><span class="detail-label">Satış Fiyatı</span><span class="detail-value">${moneyCurrency(pricingTotals(order).salePrice, pricingTotals(order).currency)} / adet</span></div>
+        <div class="detail-item"><span class="detail-label">Satış Toplamı</span><span class="detail-value">${moneyCurrency(pricingTotals(order).grand, pricingTotals(order).currency)}</span></div>
+        <div class="detail-item"><span class="detail-label">KDV</span><span class="detail-value">%${pricingTotals(order).vatRate.toLocaleString("tr-TR")} · ${moneyCurrency(pricingTotals(order).vat, pricingTotals(order).currency)}</span></div>
+        <div class="detail-item"><span class="detail-label">Tedarikçi Alış Fiyatı</span><span class="detail-value">${moneyCurrency(pricingTotals(order).purchasePrice,"TRY")} / adet · Toplam ${moneyCurrency(pricingTotals(order).purchaseTotal,"TRY")}</span></div>
+      </div>
     </div>
   `;
 
@@ -4448,10 +4617,14 @@ async function exportOrderPdf(id, previewWindow = null, fastPreview = false, inA
       <div class="print-item"><span class="print-label">Ürün</span><span class="print-value">${escapeHtml(order.product)}</span></div>
       <div class="print-item"><span class="print-label">Adet</span><span class="print-value">${escapeHtml(order.quantity)}</span></div>
       <div class="print-item"><span class="print-label">Sipariş Tarihi</span><span class="print-value">${formatDate(order.orderDate)}</span></div>
-      <div class="print-item"><span class="print-label">Teslim Tarihi</span><span class="print-value">${formatDate(order.deliveryDate)}</span></div>
+      <div class="print-item"><span class="print-label">Planlanan Teslim Tarihi</span><span class="print-value">${formatDate(order.deliveryDate)}</span></div>
+      <div class="print-item"><span class="print-label">Teslim Edildiği Tarih</span><span class="print-value">${order.status === "Teslim Edildi" && getDeliveredAt(order) ? formatDate(getDeliveredAt(order)) : "-"}</span></div>
       <div class="print-item"><span class="print-label">Renk Kodu</span><span class="print-value">${escapeHtml(order.colorCode) || "-"}</span></div>
       <div class="print-item"><span class="print-label">Kumaş Kodu</span><span class="print-value">${escapeHtml(order.fabricCode) || "-"}</span></div>
       <div class="print-item"><span class="print-label">Durum</span><span class="print-value">${escapeHtml(order.status)}${isOverdue(order) ? " (Gecikti)" : ""}</span></div>
+      <div class="print-item"><span class="print-label">Satış</span><span class="print-value">${moneyCurrency(pricingTotals(order).salePrice,pricingTotals(order).currency)} / adet · ${moneyCurrency(pricingTotals(order).grand,pricingTotals(order).currency)} toplam</span></div>
+      <div class="print-item"><span class="print-label">Alış</span><span class="print-value">${moneyCurrency(pricingTotals(order).purchasePrice,"TRY")} / adet · ${moneyCurrency(pricingTotals(order).purchaseTotal,"TRY")} toplam</span></div>
+      <div class="print-item"><span class="print-label">KDV</span><span class="print-value">%${pricingTotals(order).vatRate.toLocaleString("tr-TR")} · ${moneyCurrency(pricingTotals(order).vat, pricingTotals(order).currency)}</span></div>
       <div class="print-item print-desc"><span class="print-label">Açıklama</span><span class="print-value">${escapeHtml(getOrderDescription(order)) || "-"}</span></div>
     </div>
 
@@ -4539,6 +4712,7 @@ function confirmMarkDelivered(id) {
     const order = allOrders.find((o) => o.id === id);
     const oldStatus = order.status;
     order.status = "Teslim Edildi";
+    const p=getOrderPricing(order); order.description=withOrderMetadata(getOrderDescription(order),getShipmentType(order),p,getOrderConditions(order),todayISO());
     await applyStockForStatusChange(order, oldStatus, "Teslim Edildi");
     await dbPut("orders", order);
     await reloadAll();
@@ -4729,6 +4903,7 @@ function bindOrderEvents() {
   document.getElementById("orderForm").addEventListener("submit", (e) => { e.preventDefault(); saveOrderFromForm(); });
   document.getElementById("orderSaveBtn").addEventListener("click", () => saveOrderFromForm());
   bindOrderPhotoEvents();
+  bindOrderPricingEvents();
   document.getElementById("pdfDownloadChoiceBtn")?.addEventListener("click", async () => {
     const action = pendingPdfAction;
     closePdfActionChoice();
@@ -4736,6 +4911,7 @@ function bindOrderEvents() {
     if (action.type === "order") await exportOrderPdf(action.id);
     else if (action.type === "shipment") await exportShipmentPdf(false);
     else if (action.type === "delivery") await exportDeliveryFormPdf(false);
+    else if (action.type === "entityHistory") await exportEntityHistoryPdf(action.entityType, action.id, false);
   });
 
   document.getElementById("pdfPreviewChoiceBtn")?.addEventListener("click", async () => {
@@ -4745,6 +4921,7 @@ function bindOrderEvents() {
     if (action.type === "order") await previewOrderPdf(action.id);
     else if (action.type === "shipment") await exportShipmentPdf(true);
     else if (action.type === "delivery") await exportDeliveryFormPdf(true);
+    else if (action.type === "entityHistory") await exportEntityHistoryPdf(action.entityType, action.id, true);
   });
 
   document.getElementById("pdfActionChoiceModal")?.addEventListener("click", (e) => {
@@ -4810,6 +4987,7 @@ function bindOrderEvents() {
           changedProducts.set(product.id, product);
           stockMovements.push({ productId: product.id, productName: product.name, delta: back, resultingStock: product.stock, type: "delivery", note: `Sipariş ${orderNo(order)} durumu geri alındı`, supplier: "", date: todayISO(), createdAt: new Date().toISOString() });
         }
+        if(newStatus === "Teslim Edildi" && oldStatus !== "Teslim Edildi"){ const p=getOrderPricing(order); order.description=withOrderMetadata(getOrderDescription(order),getShipmentType(order),p,getOrderConditions(order),todayISO()); }
         order.status = newStatus;
       }
 
@@ -4993,7 +5171,7 @@ function openEntityHistory(type, id) {
   currentHistoryEntity = { type, id };
 
   const orderField = { product: "product", customer: "customer", supplier: "supplier" }[type];
-  const relatedOrders = allOrders
+  const relatedOrders = activeOrdersList()
     .filter((o) => normName(o[orderField]) === normName(entity.name))
     .sort((a, b) => b.id - a.id);
 
@@ -5050,11 +5228,80 @@ function openEntityHistory(type, id) {
   });
   bindStatusBadgeClicks(document.getElementById("entityHistoryBody"));
   document.getElementById("entityHistoryEditBtn").onclick = () => openEntityModal(type, id);
+  document.getElementById("entityHistoryPdfBtn").onclick = () => openPdfActionChoice({ type: "entityHistory", entityType: type, id });
 
   closeAllModals();
   document.getElementById("entityHistoryModal").classList.remove("hidden");
 }
 
+async function exportEntityHistoryPdf(type, id, previewOnly = false) {
+  const config = ENTITY_CONFIG[type];
+  const list = { customer: allCustomers, supplier: allSuppliers }[type];
+  const entity = list?.find((x) => x.id === Number(id));
+  if (!entity || !config || !document.getElementById("printArea")) return;
+
+  const orderField = type === "customer" ? "customer" : "supplier";
+  const relatedOrders = activeOrdersList().filter((o) => normName(o[orderField]) === normName(entity.name)).sort((a,b)=>b.id-a.id);
+  const rows=relatedOrders.map(o=>{const t=pricingTotals(o);return {o,t};});
+  const saleNetTL=rows.reduce((s,r)=>s+r.t.net*(r.t.currency==="TRY"?1:r.t.rate),0), saleVatTL=rows.reduce((s,r)=>s+r.t.vat*(r.t.currency==="TRY"?1:r.t.rate),0);
+  const purchaseTotal=rows.reduce((s,r)=>s+r.t.purchaseTotal,0);
+  const saleGrandTL=rows.reduce((s,r)=>s+r.t.tlGrand,0), purchaseTL=purchaseTotal, marginTL=saleGrandTL-purchaseTL;
+  const money=(v,c="TRY")=>moneyCurrency(v,c);
+  const title=type==="customer"?"MÜŞTERİ SİPARİŞ RAPORU":"TEDARİKÇİ SİPARİŞ RAPORU";
+  const contact=[entity.phone,entity.email].filter(Boolean).join(" · ");
+  // Tedarikçi raporunda 5. sütun yalnızca "Müşteri"; müşteri raporunda 5. sütun "Tedarikçi"dir.
+  // Tedarikçi raporunda satış fiyatı gösterilmez; müşteri raporunda SATIŞ TL gösterilir.
+  const tableHeader=type==="supplier"
+    ? `<thead><tr><th>Sipariş No</th><th>Sipariş</th><th>Ürün</th><th>Adet</th><th>Müşteri</th><th>Alış TL</th><th>Teslim Edildi</th><th>Durum</th></tr></thead>`
+    : `<thead><tr><th>Sipariş No</th><th>Sipariş</th><th>Ürün</th><th>Adet</th><th>Tedarikçi</th><th>Alış TL</th><th>SATIŞ TL</th><th>Teslim Edildi</th><th>Durum</th></tr></thead>`;
+  const rowHtml=rows.map(({o,t})=>{
+    const saleCell=type==="supplier"
+      ? `<td class="customer-cell">${escapeHtml(o.customer||"-")}</td>`
+      : `<td class="customer-cell">${escapeHtml(o.supplier||"-")}</td>`;
+    if(type==="supplier") return `<tr><td>${escapeHtml(orderNo(o))}</td><td>${formatDate(o.orderDate)}</td><td>${escapeHtml(o.product||"-")}</td><td class="num">${t.qty}</td>${saleCell}<td class="num">${money(t.purchaseTotal,"TRY")}</td><td>${o.status==="Teslim Edildi"&&getDeliveredAt(o)?formatDate(getDeliveredAt(o)):"-"}</td><td>${escapeHtml(o.status||"-")}</td></tr>`;
+    return `<tr><td>${escapeHtml(orderNo(o))}</td><td>${formatDate(o.orderDate)}</td><td>${escapeHtml(o.product||"-")}</td><td class="num">${t.qty}</td>${saleCell}<td class="num">${money(t.purchaseTotal,"TRY")}</td><td class="num">${money(t.tlGrand,"TRY")}</td><td>${o.status==="Teslim Edildi"&&getDeliveredAt(o)?formatDate(getDeliveredAt(o)):"-"}</td><td>${escapeHtml(o.status||"-")}</td></tr>`;
+  });
+
+  // Her A4 sayfaya sabit bir içerik alanı verilir. Satır sayısı arttığında
+  // yeni sayfaya geçer; tablo başlığı her sayfada tekrar eder.
+  const rowsPerPage=7;
+  const chunks=[];
+  if(!rowHtml.length) chunks.push([]);
+  else for(let i=0;i<rowHtml.length;i+=rowsPerPage) chunks.push(rowHtml.slice(i,i+rowsPerPage));
+
+  const infoHtml=`
+    <div class="print-order-header"><div class="print-order-header-left">${LOGO_SRC?`<img src="${LOGO_SRC}" class="print-logo" alt="Ofischi Logo">`:""}<h1 class="print-title">${title}</h1><p class="print-sub">${escapeHtml(entity.name)} · Rapor tarihi: ${formatDate(todayISO())}</p></div></div>
+    <div class="print-grid entity-report-info">
+      <div class="print-item"><span class="print-label">${type==="customer"?"Müşteri":"Tedarikçi"}</span><span class="print-value">${escapeHtml(entity.name)}</span></div>
+      <div class="print-item"><span class="print-label">Sipariş Sayısı</span><span class="print-value">${rows.length}</span></div>
+      ${contact?`<div class="print-item"><span class="print-label">İletişim</span><span class="print-value">${escapeHtml(contact)}</span></div>`:""}
+      ${entity.address?`<div class="print-item print-desc"><span class="print-label">Adres</span><span class="print-value">${escapeHtml(entity.address)}</span></div>`:""}
+    </div>`;
+
+  const totalsHtml=type==="supplier"
+    ? `<div class="entity-report-totals">
+        <div class="grand"><span>TEDARİKÇİ ALIŞ TOPLAMI</span><strong>${money(purchaseTL,"TRY")}</strong></div>
+      </div>`
+    : `<div class="entity-report-totals">
+        <div><span>Satış Net Toplam</span><strong>${money(saleNetTL,"TRY")}</strong></div>
+        <div><span>KDV Toplamı</span><strong>${money(saleVatTL,"TRY")}</strong></div>
+        <div class="grand"><span>SATIŞ GENEL TOPLAM</span><strong>${money(saleGrandTL,"TRY")}</strong></div>
+        <div><span>Tedarikçi Alış Toplamı</span><strong>${money(purchaseTL,"TRY")}</strong></div>
+        <div class="grand"><span>SATIŞ - ALIŞ FARKI</span><strong>${money(marginTL,"TRY")}</strong></div>
+      </div>`;
+
+  document.getElementById("printArea").innerHTML=`
+    <div class="entity-report-print">
+      ${chunks.map((chunk,idx)=>`<section class="entity-report-page">
+        ${idx===0?infoHtml:`<div class="print-sub" style="margin:0 0 12px;font-weight:700">${title} — devam</div>`}
+        <div class="entity-report-table-wrap"><table class="entity-report-table ${type==="customer"?"customer-report-table":"supplier-report-table"}">${tableHeader}<tbody>${chunk.length?chunk.join(""):`<tr><td colspan="8" class="empty">Bu kayıtla ilişkili aktif sipariş bulunmuyor.</td></tr>`}</tbody></table></div>
+        ${idx===chunks.length-1?totalsHtml:""}
+        ${idx===chunks.length-1?`<div class="print-footer">PRONTO — Ofischi Premium için hazırlandı</div>`:""}
+      </section>`).join("")}
+    </div>`;
+  if(previewOnly) await previewCurrentPrintArea(`${title} — ${escapeHtml(entity.name)}`);
+  else await downloadPrintAreaAsPdf(`Siparis_Raporu_${entity.name}`);
+}
 async function saveEntityFromForm() {
   const form = document.getElementById("entityForm");
   if (!form.reportValidity()) return;
@@ -6132,10 +6379,6 @@ async function exportDeliveryFormPdf(previewOnly = false) {
         <div>
           <div style="font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:#777;">Telefon</div>
           <div style="margin-top:5px;font-size:14px;">${escapeHtml(customer?.phone || group.phone || "-")}</div>
-        </div>
-        <div>
-          <div style="font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:#777;">Sevkiyat Durumu</div>
-          <div style="margin-top:5px;font-size:14px;font-weight:700;">${escapeHtml(group.shipmentType || "-")}</div>
         </div>
         <div style="grid-column:1 / -1;">
           <div style="font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:#777;">Teslimat Adresi</div>
