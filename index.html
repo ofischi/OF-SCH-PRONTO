@@ -1529,16 +1529,27 @@ body::after {
 .entity-report-totals>div{display:flex;justify-content:space-between;gap:18px;padding:5px 0;border-bottom:1px solid #ddd;font-size:10px}
 .entity-report-totals .grand{font-size:12px;border-top:2px solid #111;border-bottom:0;padding-top:8px}
 
-/* Müşteri raporu 9 sütun: Alış TL + SATIŞ TL + Teslim + Durum. */
+/* Rapor tabloları: sipariş rengi eklendi; mevcut A4 düzeni korunur. */
+.entity-report-table.supplier-report-table th:nth-child(1),.entity-report-table.supplier-report-table td:nth-child(1){width:9%}
+.entity-report-table.supplier-report-table th:nth-child(2),.entity-report-table.supplier-report-table td:nth-child(2){width:9%}
+.entity-report-table.supplier-report-table th:nth-child(3),.entity-report-table.supplier-report-table td:nth-child(3){width:18%}
+.entity-report-table.supplier-report-table th:nth-child(4),.entity-report-table.supplier-report-table td:nth-child(4){width:11%}
+.entity-report-table.supplier-report-table th:nth-child(5),.entity-report-table.supplier-report-table td:nth-child(5){width:5%}
+.entity-report-table.supplier-report-table th:nth-child(6),.entity-report-table.supplier-report-table td:nth-child(6){width:17%}
+.entity-report-table.supplier-report-table th:nth-child(7),.entity-report-table.supplier-report-table td:nth-child(7){width:12%}
+.entity-report-table.supplier-report-table th:nth-child(8),.entity-report-table.supplier-report-table td:nth-child(8){width:9%}
+.entity-report-table.supplier-report-table th:nth-child(9),.entity-report-table.supplier-report-table td:nth-child(9){width:10%}
 .entity-report-table.customer-report-table th:nth-child(1),.entity-report-table.customer-report-table td:nth-child(1){width:10%}
 .entity-report-table.customer-report-table th:nth-child(2),.entity-report-table.customer-report-table td:nth-child(2){width:9%}
-.entity-report-table.customer-report-table th:nth-child(3),.entity-report-table.customer-report-table td:nth-child(3){width:19%}
-.entity-report-table.customer-report-table th:nth-child(4),.entity-report-table.customer-report-table td:nth-child(4){width:5%}
-.entity-report-table.customer-report-table th:nth-child(5),.entity-report-table.customer-report-table td:nth-child(5){width:15%}
-.entity-report-table.customer-report-table th:nth-child(6),.entity-report-table.customer-report-table td:nth-child(6){width:12%}
-.entity-report-table.customer-report-table th:nth-child(7),.entity-report-table.customer-report-table td:nth-child(7){width:12%}
-.entity-report-table.customer-report-table th:nth-child(8),.entity-report-table.customer-report-table td:nth-child(8){width:9%}
-.entity-report-table.customer-report-table th:nth-child(9),.entity-report-table.customer-report-table td:nth-child(9){width:9%}
+.entity-report-table.customer-report-table th:nth-child(3),.entity-report-table.customer-report-table td:nth-child(3){width:17%}
+.entity-report-table.customer-report-table th:nth-child(4),.entity-report-table.customer-report-table td:nth-child(4){width:11%}
+.entity-report-table.customer-report-table th:nth-child(5),.entity-report-table.customer-report-table td:nth-child(5){width:5%}
+.entity-report-table.customer-report-table th:nth-child(6),.entity-report-table.customer-report-table td:nth-child(6){width:14%}
+.entity-report-table.customer-report-table th:nth-child(7),.entity-report-table.customer-report-table td:nth-child(7){width:11%}
+.entity-report-table.customer-report-table th:nth-child(8),.entity-report-table.customer-report-table td:nth-child(8){width:10%}
+.entity-report-table.customer-report-table th:nth-child(9),.entity-report-table.customer-report-table td:nth-child(9){width:7%}
+.entity-report-table.customer-report-table th:nth-child(10),.entity-report-table.customer-report-table td:nth-child(10){width:6%}
+.entity-report-table .color-cell{white-space:normal;overflow-wrap:anywhere}
 @media print{.entity-report-page{border:1px solid #9ea3a8;padding:24px 24px 22px;box-sizing:border-box}.entity-report-table{font-size:9px}.entity-report-table th,.entity-report-table td{padding:4px}.entity-report-totals{page-break-inside:avoid}}
 
 /* ===================== UYGULAMA İÇİ PDF ÖN İZLEME ===================== */
@@ -5904,14 +5915,15 @@ async function exportEntityHistoryPdf(type, id, previewOnly = false) {
   const title=type==="customer"?"MÜŞTERİ SİPARİŞ RAPORU":"TEDARİKÇİ SİPARİŞ RAPORU";
   const contact=[entity.phone,entity.email].filter(Boolean).join(" · ");
   const tableHeader=type==="supplier"
-    ? `<thead><tr><th>Sipariş No</th><th>Sipariş</th><th>Ürün</th><th>Adet</th><th>Müşteri</th><th>Alış TL</th><th>Teslim Edildi</th><th>Durum</th></tr></thead>`
-    : `<thead><tr><th>Sipariş No</th><th>Sipariş</th><th>Ürün</th><th>Adet</th><th>Tedarikçi</th><th>Alış TL</th><th>SATIŞ TL</th><th>Teslim Edildi</th><th>Durum</th></tr></thead>`;
+    ? `<thead><tr><th>Sipariş No</th><th>Sipariş</th><th>Ürün</th><th>Renk</th><th>Adet</th><th>Müşteri</th><th>Alış TL</th><th>Teslim Edildi</th><th>Durum</th></tr></thead>`
+    : `<thead><tr><th>Sipariş No</th><th>Sipariş</th><th>Ürün</th><th>Renk</th><th>Adet</th><th>Tedarikçi</th><th>Alış TL</th><th>SATIŞ TL</th><th>Teslim Edildi</th><th>Durum</th></tr></thead>`;
   const rowHtml=rows.map(({o,t})=>{
     const saleCell=type==="supplier"
       ? `<td class="customer-cell">${escapeHtml(o.customer||"-")}</td>`
       : `<td class="customer-cell">${escapeHtml(o.supplier||"-")}</td>`;
-    if(type==="supplier") return `<tr><td>${escapeHtml(orderNo(o))}</td><td>${formatDate(o.orderDate)}</td><td>${escapeHtml(o.product||"-")}</td><td class="num">${t.qty}</td>${saleCell}<td class="num">${money(t.purchaseTotal,"TRY")}</td><td>${o.status==="Teslim Edildi"&&getDeliveredAt(o)?formatDate(getDeliveredAt(o)):"-"}</td><td>${escapeHtml(o.status||"-")}</td></tr>`;
-    return `<tr><td>${escapeHtml(orderNo(o))}</td><td>${formatDate(o.orderDate)}</td><td>${escapeHtml(o.product||"-")}</td><td class="num">${t.qty}</td>${saleCell}<td class="num">${money(t.purchaseTotal,"TRY")}</td><td class="num">${money(t.tlGrand,"TRY")}</td><td>${o.status==="Teslim Edildi"&&getDeliveredAt(o)?formatDate(getDeliveredAt(o)):"-"}</td><td>${escapeHtml(o.status||"-")}</td></tr>`;
+    const colorCell=`<td class="color-cell">${escapeHtml(o.colorCode||"-")}</td>`;
+    if(type==="supplier") return `<tr><td>${escapeHtml(orderNo(o))}</td><td>${formatDate(o.orderDate)}</td><td>${escapeHtml(o.product||"-")}</td>${colorCell}<td class="num">${t.qty}</td>${saleCell}<td class="num">${money(t.purchaseTotal,"TRY")}</td><td>${o.status==="Teslim Edildi"&&getDeliveredAt(o)?formatDate(getDeliveredAt(o)):"-"}</td><td>${escapeHtml(o.status||"-")}</td></tr>`;
+    return `<tr><td>${escapeHtml(orderNo(o))}</td><td>${formatDate(o.orderDate)}</td><td>${escapeHtml(o.product||"-")}</td>${colorCell}<td class="num">${t.qty}</td>${saleCell}<td class="num">${money(t.purchaseTotal,"TRY")}</td><td class="num">${money(t.tlGrand,"TRY")}</td><td>${o.status==="Teslim Edildi"&&getDeliveredAt(o)?formatDate(getDeliveredAt(o)):"-"}</td><td>${escapeHtml(o.status||"-")}</td></tr>`;
   });
 
   const infoHtml=`
@@ -5935,7 +5947,7 @@ async function exportEntityHistoryPdf(type, id, previewOnly = false) {
 
   // Önce tek bir A4 akışı oluşturulur. Eski sabit "7 satır = 1 sayfa" yaklaşımı
   // kaldırıldı; satırların gerçek yüksekliği ölçülerek sayfa sonları hesaplanır.
-  const allRowsHtml = rowHtml.length ? rowHtml.join("") : `<tr><td colspan="${type==="customer"?9:8}" class="empty">Bu kayıtla ilişkili aktif sipariş bulunmuyor.</td></tr>`;
+  const allRowsHtml = rowHtml.length ? rowHtml.join("") : `<tr><td colspan="${type==="customer"?10:9}" class="empty">Bu kayıtla ilişkili aktif sipariş bulunmuyor.</td></tr>`;
   document.getElementById("printArea").innerHTML=`
     <div class="entity-report-print entity-report-flow">
       ${infoHtml}
