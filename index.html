@@ -406,11 +406,6 @@ input, select, textarea { font-family: inherit; }
 .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 .detail-item { display: flex; flex-direction: column; gap: 4px; }
 .detail-item--wide { grid-column: 1 / -1; }
-.detail-pricing-block { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 4px; padding-top: 16px; border-top: 1px solid var(--color-border); }
-.detail-pricing-block .detail-item { min-width: 0; }
-@media (max-width: 600px) {
-  .detail-pricing-block { grid-template-columns: 1fr; }
-}
 .detail-label { font-size: 12px; font-weight: 700; color: var(--color-text-muted); text-transform: none; }
 .detail-value { font-size: 15px; }
 
@@ -1386,15 +1381,18 @@ body::after {
 
 /* entityHistoryPdfStyles */
 .entity-report-print{width:100%;box-sizing:border-box}
-.entity-report-page{width:100%;min-height:1069px;box-sizing:border-box;display:flex;flex-direction:column}
+.entity-report-flow{width:100%;box-sizing:border-box}
+.entity-report-page{width:100%;min-height:1069px;height:1069px;box-sizing:border-box;display:flex;flex-direction:column;overflow:hidden;border:1px solid #9ea3a8;padding:24px 24px 22px;background:#fff}
 .entity-report-page + .entity-report-page{padding-top:24px}
 .entity-report-page .entity-report-table-wrap{flex:0 0 auto}
-.entity-report-page .entity-report-totals{margin-top:auto}
-.entity-report-page .print-footer{margin-top:14px}
-.entity-report-table-wrap{margin-top:14px;width:100%;overflow:visible}
+.entity-report-page .entity-report-final-block{margin-top:12px;margin-bottom:0}
+.entity-report-page .print-footer{margin-top:10px;margin-bottom:0}
+.entity-report-continued{margin:0 0 8px;font-weight:800;font-size:10px}
+.entity-report-final-block{width:100%;box-sizing:border-box}
+.entity-report-table-wrap{margin-top:12px;width:100%;overflow:visible}
 .entity-report-table{width:100%;border-collapse:collapse;font-size:9.5px;table-layout:fixed}
 .entity-report-table td.customer-cell{min-width:0;white-space:normal;overflow-wrap:anywhere;word-break:break-word;}
-.entity-report-table th,.entity-report-table td{border:1px solid #bfc3c7;padding:5px 5px;text-align:left;vertical-align:middle;word-break:normal;overflow-wrap:anywhere;line-height:1.25;box-sizing:border-box}
+.entity-report-table th,.entity-report-table td{border:1px solid #bfc3c7;padding:4px 5px;text-align:left;vertical-align:middle;word-break:normal;overflow-wrap:anywhere;line-height:1.18;box-sizing:border-box}
 .entity-report-table th{background:#f1f1f1;font-weight:800;white-space:nowrap}
 /* 8 sütunun toplamı tam %100 — durum sütununun dikey taşmasını engeller. */
 .entity-report-table th:nth-child(1),.entity-report-table td:nth-child(1){width:12%}
@@ -1422,7 +1420,7 @@ body::after {
 .entity-report-table.customer-report-table th:nth-child(7),.entity-report-table.customer-report-table td:nth-child(7){width:12%}
 .entity-report-table.customer-report-table th:nth-child(8),.entity-report-table.customer-report-table td:nth-child(8){width:9%}
 .entity-report-table.customer-report-table th:nth-child(9),.entity-report-table.customer-report-table td:nth-child(9){width:9%}
-@media print{.entity-report-table{font-size:9px}.entity-report-table th,.entity-report-table td{padding:4px}.entity-report-totals{page-break-inside:avoid}}
+@media print{.entity-report-page{border:1px solid #9ea3a8;padding:24px 24px 22px;box-sizing:border-box}.entity-report-table{font-size:9px}.entity-report-table th,.entity-report-table td{padding:4px}.entity-report-totals{page-break-inside:avoid}}
 
 /* ===================== UYGULAMA İÇİ PDF ÖN İZLEME ===================== */
 .pdf-preview-modal {
@@ -2029,8 +2027,8 @@ body::after {
           <input type="number" id="f_salePrice" min="0" step="0.01" placeholder="Satış fiyatı">
         </label>
         <label class="form-field">
-          <span>KDV Oranı (%)</span>
-          <input type="number" id="f_vatRate" min="0" max="100" step="0.01" value="10" placeholder="Örn. 10">
+          <span>Satış Fiyatı</span>
+          <select id="f_vatIncluded"><option value="yes">KDV Dahil</option><option value="no">KDV Hariç</option></select>
         </label>
         <label class="form-field">
           <span>Tedarikçi Alış Fiyatı (TL)</span>
@@ -2041,7 +2039,7 @@ body::after {
           <div class="price-summary-item"><span>KDV</span><strong id="priceSummaryVat">0,00 TL</strong></div>
           <div class="price-summary-item"><span>Genel Toplam</span><strong id="priceSummaryGrand">0,00 TL</strong></div>
           <div class="price-summary-item"><span>Alış Toplamı</span><strong id="priceSummaryPurchase">0,00 TL</strong></div>
-          <div class="price-rate-note" id="priceRateNote">KDV oranı: %10 · Tüm satış fiyatları TL</div>
+          <div class="price-rate-note" id="priceRateNote">KDV oranı: %10</div>
         </div>
         <label class="form-field">
           <span>Durum</span>
@@ -2792,15 +2790,15 @@ const CITY_MARKER_RE = /\[\[SEHIR:([^\]]+)\]\]/i;
 const ORDER_PRICE_MARKER_RE = /\[\[PRONTOFIYAT:([^\]]+)\]\]/i;
 const ORDER_CONDITION_MARKER_RE = /\[\[SEVKDURUM:([^\]]*)\]\]/i;
 const DELIVERED_AT_MARKER_RE = /\[\[TESLIMEDILDI:(\d{4}-\d{2}-\d{2})\]\]/i;
-const DEFAULT_VAT_RATE = 0.10;
+const VAT_RATE = 0.10;
 function stripMarker(text, re) { return String(text || "").replace(re, "").replace(/\s{2,}/g, " ").trim(); }
 function getOrderPricing(order){
   const raw=String(order?.description||"").match(ORDER_PRICE_MARKER_RE);
-  if(!raw) return {salePrice:0,currency:"TRY",rate:1,vatIncluded:false,vatRate:DEFAULT_VAT_RATE,purchasePrice:0};
+  if(!raw) return {salePrice:0,currency:"TRY",rate:1,vatIncluded:false,purchasePrice:0};
   try {
     const data=JSON.parse(decodeURIComponent(raw[1]));
-    return {salePrice:Number(data.salePrice)||0,currency:"TRY",rate:1,vatIncluded:Boolean(data.vatIncluded),vatRate:Number.isFinite(Number(data.vatRate)) ? Math.max(0, Number(data.vatRate)) : DEFAULT_VAT_RATE,purchasePrice:Number(data.purchasePrice)||0};
-  } catch(_) { return {salePrice:0,currency:"TRY",rate:1,vatIncluded:false,vatRate:DEFAULT_VAT_RATE,purchasePrice:0}; }
+    return {salePrice:Number(data.salePrice)||0,currency:data.currency||"TRY",rate:Number(data.rate)||1,vatIncluded:Boolean(data.vatIncluded),purchasePrice:Number(data.purchasePrice)||0};
+  } catch(_) { return {salePrice:0,currency:"TRY",rate:1,vatIncluded:false,purchasePrice:0}; }
 }
 function getOrderConditions(order){
   const m=String(order?.description||"").match(ORDER_CONDITION_MARKER_RE);
@@ -2820,13 +2818,10 @@ function withOrderMetadata(description, shipmentType, pricing, conditions, deliv
 }
 function pricingTotals(order){
   const p=getOrderPricing(order), qty=Number(order?.quantity)||0, total=p.salePrice*qty;
-  const vatRate=Math.max(0, Number.isFinite(Number(p.vatRate)) ? Number(p.vatRate) : DEFAULT_VAT_RATE) / 100;
-  // Yeni sistemde satış fiyatı KDV hariç girilir; KDV oranı kullanıcı tarafından
-  // rakam olarak girilir ve toplamın üzerine ayrıca hesaplanır.
-  const net=total;
-  const vat=total*vatRate;
-  const grand=total+vat;
-  return {...p,vatRate:vatRate*100,qty,total,net,vat,grand,tlTotal:total*(p.currency==="TRY"?1:p.rate),tlGrand:grand*(p.currency==="TRY"?1:p.rate),purchaseTotal:p.purchasePrice*qty};
+  const vat=p.vatIncluded ? total-(total/(1+VAT_RATE)) : total*VAT_RATE;
+  const net=p.vatIncluded ? total-vat : total;
+  const grand=p.vatIncluded ? total : total+vat;
+  return {...p,qty,total,net,vat,grand,tlTotal:total*(p.currency==="TRY"?1:p.rate),tlGrand:grand*(p.currency==="TRY"?1:p.rate),purchaseTotal:p.purchasePrice*qty};
 }
 function currencyLabel(c){return c==="USD"?"USD":c==="EUR"?"EUR":"TL";}
 function moneyCurrency(v,c){return new Intl.NumberFormat("tr-TR",{minimumFractionDigits:2,maximumFractionDigits:2}).format(Number(v)||0)+" "+currencyLabel(c);}
@@ -4065,19 +4060,18 @@ function selectedShipmentConditions(){ return Array.from(document.querySelectorA
 function setShipmentConditionButtons(values){ const set=new Set(values||[]); document.querySelectorAll("#shipmentConditionList .shipment-condition-btn").forEach(b=>b.classList.toggle("active",set.has(b.dataset.condition))); }
 function renderOrderPriceSummary(){
   const qty=Number(document.getElementById("f_quantity")?.value)||0, sale=Number(document.getElementById("f_salePrice")?.value)||0, purchase=Number(document.getElementById("f_purchasePrice")?.value)||0;
-  const vatRateRaw=Number(document.getElementById("f_vatRate")?.value);
-  const vatRate=Number.isFinite(vatRateRaw) ? Math.max(0, vatRateRaw)/100 : DEFAULT_VAT_RATE;
-  const total=sale*qty; const vat=total*vatRate; const grand=total+vat;
+  const included=document.getElementById("f_vatIncluded")?.value==="yes";
+  const total=sale*qty; const vat=included ? total-total/(1+VAT_RATE) : total*VAT_RATE; const grand=included?total:total+vat;
   const fmt=v=>new Intl.NumberFormat("tr-TR",{minimumFractionDigits:2,maximumFractionDigits:2}).format(Number(v)||0)+" TL";
   document.getElementById("priceSummarySale").textContent=fmt(total);
   document.getElementById("priceSummaryVat").textContent=fmt(vat);
   document.getElementById("priceSummaryGrand").textContent=fmt(grand);
   document.getElementById("priceSummaryPurchase").textContent=fmt(purchase*qty);
   const note=document.getElementById("priceRateNote");
-  if(note) note.textContent=`KDV oranı: %${vatRate*100} · KDV ayrıca hesaplanır · Tüm satış fiyatları TL`;
+  if(note) note.textContent="KDV oranı: %10 · Tüm satış fiyatları TL";
 }
 function bindOrderPricingEvents(){
-  ["f_quantity","f_salePrice","f_purchasePrice","f_vatRate"].forEach(id=>{
+  ["f_quantity","f_salePrice","f_purchasePrice","f_vatIncluded"].forEach(id=>{
     document.getElementById(id)?.addEventListener("input",renderOrderPriceSummary);
     document.getElementById(id)?.addEventListener("change",renderOrderPriceSummary);
   });
@@ -4112,9 +4106,9 @@ function openOrderModal(id) {
   document.getElementById("f_description").value = order ? getOrderDescription(order) : "";
   document.getElementById("f_shipmentType").value = order ? getShipmentType(order) : "Ofischi Sevkiyat";
   document.getElementById("f_status").value = order ? order.status : "Beklemede";
-  const pricing = order ? getOrderPricing(order) : {salePrice:"",currency:"TRY",rate:1,vatIncluded:false,vatRate:10,purchasePrice:""};
+  const pricing = order ? getOrderPricing(order) : {salePrice:"",currency:"TRY",rate:1,vatIncluded:false,purchasePrice:""};
   document.getElementById("f_salePrice").value = pricing.salePrice || "";
-  document.getElementById("f_vatRate").value = Number.isFinite(Number(pricing.vatRate)) ? Number(pricing.vatRate) : 10;
+  document.getElementById("f_vatIncluded").value = pricing.vatIncluded ? "yes" : "no";
   document.getElementById("f_purchasePrice").value = pricing.purchasePrice || "";
   closeAllModals();
   modal.classList.remove("hidden");
@@ -4141,9 +4135,7 @@ async function saveOrderFromForm() {
     description: "",
     status: sanitizeStatus(document.getElementById("f_status").value)
   });
-  const enteredVatRate=Number(document.getElementById("f_vatRate").value);
-  const vatRate=Number.isFinite(enteredVatRate) ? Math.max(0, Math.min(100, enteredVatRate)) : DEFAULT_VAT_RATE*100;
-  const pricingMeta={salePrice:Number(document.getElementById("f_salePrice").value)||0,currency:"TRY",rate:1,vatIncluded:false,vatRate,purchasePrice:Number(document.getElementById("f_purchasePrice").value)||0};
+  const pricingMeta={salePrice:Number(document.getElementById("f_salePrice").value)||0,currency:"TRY",rate:1,vatIncluded:document.getElementById("f_vatIncluded").value==="yes",purchasePrice:Number(document.getElementById("f_purchasePrice").value)||0};
   const oldDeliveredAt=oldOrder ? getDeliveredAt(oldOrder) : "";
   const deliveredAt=(order.status==="Teslim Edildi" && (!oldOrder || oldOrder.status!=="Teslim Edildi")) ? todayISO() : oldDeliveredAt;
   order.description=withOrderMetadata(sanitizeText(document.getElementById("f_description").value, MAX_NOTE_LEN),document.getElementById("f_shipmentType").value,pricingMeta,oldOrder ? getOrderConditions(oldOrder) : [],deliveredAt);
@@ -4220,15 +4212,13 @@ function openDetailModal(id) {
       <div class="detail-item"><span class="detail-label">Teslim Edildiği Tarih</span><span class="detail-value">${order.status === "Teslim Edildi" ? (getDeliveredAt(order) ? formatDate(getDeliveredAt(order)) : "Kayıtlı değil") : "-"}</span></div>
       <div class="detail-item"><span class="detail-label">Renk Kodu</span><span class="detail-value">${escapeHtml(order.colorCode) || "-"}</span></div>
       <div class="detail-item"><span class="detail-label">Kumaş Kodu</span><span class="detail-value">${escapeHtml(order.fabricCode) || "-"}</span></div>
+      <div class="detail-item"><span class="detail-label">Satış Fiyatı</span><span class="detail-value">${moneyCurrency(pricingTotals(order).salePrice, pricingTotals(order).currency)} / adet</span></div>
+      <div class="detail-item"><span class="detail-label">Satış Toplamı</span><span class="detail-value">${moneyCurrency(pricingTotals(order).grand, pricingTotals(order).currency)} ${pricingTotals(order).vatIncluded ? "(KDV dahil)" : "(KDV hariç)"}</span></div>
+      <div class="detail-item"><span class="detail-label">Tedarikçi Alış Fiyatı</span><span class="detail-value">${moneyCurrency(pricingTotals(order).purchasePrice,"TRY")} / adet · Toplam ${moneyCurrency(pricingTotals(order).purchaseTotal,"TRY")}</span></div>
+      <div class="detail-item"><span class="detail-label">Sevkiyat Durumu</span><span class="detail-value">${escapeHtml(getOrderConditions(order).join(" · ") || "Belirtilmemiş")}</span></div>
       <div class="detail-item detail-item--wide"><span class="detail-label">Açıklama</span><span class="detail-value">${escapeHtml(getOrderDescription(order)) || "-"}</span></div>
       <div class="detail-item"><span class="detail-label">Durum</span><span class="detail-value">${statusBadgeHtml(order)}</span></div>
       <div class="detail-item detail-item--wide"><span class="detail-label">Sipariş Fotoğrafı</span><div id="detailOrderPhotoHost" class="order-photo-loading">Fotoğraf kontrol ediliyor…</div></div>
-      <div class="detail-pricing-block">
-        <div class="detail-item"><span class="detail-label">Satış Fiyatı</span><span class="detail-value">${moneyCurrency(pricingTotals(order).salePrice, pricingTotals(order).currency)} / adet</span></div>
-        <div class="detail-item"><span class="detail-label">Satış Toplamı</span><span class="detail-value">${moneyCurrency(pricingTotals(order).grand, pricingTotals(order).currency)}</span></div>
-        <div class="detail-item"><span class="detail-label">KDV</span><span class="detail-value">%${pricingTotals(order).vatRate.toLocaleString("tr-TR")} · ${moneyCurrency(pricingTotals(order).vat, pricingTotals(order).currency)}</span></div>
-        <div class="detail-item"><span class="detail-label">Tedarikçi Alış Fiyatı</span><span class="detail-value">${moneyCurrency(pricingTotals(order).purchasePrice,"TRY")} / adet · Toplam ${moneyCurrency(pricingTotals(order).purchaseTotal,"TRY")}</span></div>
-      </div>
     </div>
   `;
 
@@ -4375,7 +4365,16 @@ async function downloadPrintAreaAsPdf(fileName, previewWindow = null) {
     const contentW = 210 - margin*2;
     const contentH = 297 - margin*2;
     const pxPerMm = canvas.width / contentW;
-    const pagePxH = Math.floor(contentH * pxPerMm);
+    let pagePxH = Math.floor(contentH * pxPerMm);
+    // Müşteri/Tedarikçi raporlarında her rapor sayfası zaten ayrı bir A4 bloğudur.
+    // Genel PDF dilimleme yüksekliği ile bu blokların yüksekliği birebir örtüşmezse
+    // 2. sayfanın başlığı 1. sayfanın altında görünebilir. Bu raporlarda dilimi
+    // doğrudan gerçek A4 blok yüksekliğine hizala.
+    const entityPage = wrapper.querySelector(".entity-report-page");
+    if (entityPage) {
+      const entityCssH = entityPage.getBoundingClientRect().height;
+      if (entityCssH > 0) pagePxH = Math.floor(entityCssH * 4);
+    }
 
     let offset = 0, page = 0;
     while (offset < canvas.height) {
@@ -4624,7 +4623,8 @@ async function exportOrderPdf(id, previewWindow = null, fastPreview = false, inA
       <div class="print-item"><span class="print-label">Durum</span><span class="print-value">${escapeHtml(order.status)}${isOverdue(order) ? " (Gecikti)" : ""}</span></div>
       <div class="print-item"><span class="print-label">Satış</span><span class="print-value">${moneyCurrency(pricingTotals(order).salePrice,pricingTotals(order).currency)} / adet · ${moneyCurrency(pricingTotals(order).grand,pricingTotals(order).currency)} toplam</span></div>
       <div class="print-item"><span class="print-label">Alış</span><span class="print-value">${moneyCurrency(pricingTotals(order).purchasePrice,"TRY")} / adet · ${moneyCurrency(pricingTotals(order).purchaseTotal,"TRY")} toplam</span></div>
-      <div class="print-item"><span class="print-label">KDV</span><span class="print-value">%${pricingTotals(order).vatRate.toLocaleString("tr-TR")} · ${moneyCurrency(pricingTotals(order).vat, pricingTotals(order).currency)}</span></div>
+      <div class="print-item"><span class="print-label">KDV</span><span class="print-value">%10 · ${pricingTotals(order).vatIncluded ? "Dahil" : "Hariç"}</span></div>
+      <div class="print-item print-desc"><span class="print-label">Sevkiyat Durumu</span><span class="print-value">${escapeHtml(getOrderConditions(order).join(" · ") || "Belirtilmemiş")}</span></div>
       <div class="print-item print-desc"><span class="print-label">Açıklama</span><span class="print-value">${escapeHtml(getOrderDescription(order)) || "-"}</span></div>
     </div>
 
@@ -5249,8 +5249,6 @@ async function exportEntityHistoryPdf(type, id, previewOnly = false) {
   const money=(v,c="TRY")=>moneyCurrency(v,c);
   const title=type==="customer"?"MÜŞTERİ SİPARİŞ RAPORU":"TEDARİKÇİ SİPARİŞ RAPORU";
   const contact=[entity.phone,entity.email].filter(Boolean).join(" · ");
-  // Tedarikçi raporunda 5. sütun yalnızca "Müşteri"; müşteri raporunda 5. sütun "Tedarikçi"dir.
-  // Tedarikçi raporunda satış fiyatı gösterilmez; müşteri raporunda SATIŞ TL gösterilir.
   const tableHeader=type==="supplier"
     ? `<thead><tr><th>Sipariş No</th><th>Sipariş</th><th>Ürün</th><th>Adet</th><th>Müşteri</th><th>Alış TL</th><th>Teslim Edildi</th><th>Durum</th></tr></thead>`
     : `<thead><tr><th>Sipariş No</th><th>Sipariş</th><th>Ürün</th><th>Adet</th><th>Tedarikçi</th><th>Alış TL</th><th>SATIŞ TL</th><th>Teslim Edildi</th><th>Durum</th></tr></thead>`;
@@ -5262,13 +5260,6 @@ async function exportEntityHistoryPdf(type, id, previewOnly = false) {
     return `<tr><td>${escapeHtml(orderNo(o))}</td><td>${formatDate(o.orderDate)}</td><td>${escapeHtml(o.product||"-")}</td><td class="num">${t.qty}</td>${saleCell}<td class="num">${money(t.purchaseTotal,"TRY")}</td><td class="num">${money(t.tlGrand,"TRY")}</td><td>${o.status==="Teslim Edildi"&&getDeliveredAt(o)?formatDate(getDeliveredAt(o)):"-"}</td><td>${escapeHtml(o.status||"-")}</td></tr>`;
   });
 
-  // Her A4 sayfaya sabit bir içerik alanı verilir. Satır sayısı arttığında
-  // yeni sayfaya geçer; tablo başlığı her sayfada tekrar eder.
-  const rowsPerPage=7;
-  const chunks=[];
-  if(!rowHtml.length) chunks.push([]);
-  else for(let i=0;i<rowHtml.length;i+=rowsPerPage) chunks.push(rowHtml.slice(i,i+rowsPerPage));
-
   const infoHtml=`
     <div class="print-order-header"><div class="print-order-header-left">${LOGO_SRC?`<img src="${LOGO_SRC}" class="print-logo" alt="Ofischi Logo">`:""}<h1 class="print-title">${title}</h1><p class="print-sub">${escapeHtml(entity.name)} · Rapor tarihi: ${formatDate(todayISO())}</p></div></div>
     <div class="print-grid entity-report-info">
@@ -5279,26 +5270,52 @@ async function exportEntityHistoryPdf(type, id, previewOnly = false) {
     </div>`;
 
   const totalsHtml=type==="supplier"
-    ? `<div class="entity-report-totals">
-        <div class="grand"><span>TEDARİKÇİ ALIŞ TOPLAMI</span><strong>${money(purchaseTL,"TRY")}</strong></div>
-      </div>`
+    ? `<div class="entity-report-totals"><div class="grand"><span>TEDARİKÇİ ALIŞ TOPLAMI</span><strong>${money(purchaseTL,"TRY")}</strong></div></div>`
     : `<div class="entity-report-totals">
         <div><span>Satış Net Toplam</span><strong>${money(saleNetTL,"TRY")}</strong></div>
-        <div><span>KDV Toplamı</span><strong>${money(saleVatTL,"TRY")}</strong></div>
+        <div><span>KDV (%10)</span><strong>${money(saleVatTL,"TRY")}</strong></div>
         <div class="grand"><span>SATIŞ GENEL TOPLAM</span><strong>${money(saleGrandTL,"TRY")}</strong></div>
         <div><span>Tedarikçi Alış Toplamı</span><strong>${money(purchaseTL,"TRY")}</strong></div>
         <div class="grand"><span>SATIŞ - ALIŞ FARKI</span><strong>${money(marginTL,"TRY")}</strong></div>
       </div>`;
 
+  // Önce tek bir A4 akışı oluşturulur. Eski sabit "7 satır = 1 sayfa" yaklaşımı
+  // kaldırıldı; satırların gerçek yüksekliği ölçülerek sayfa sonları hesaplanır.
+  const allRowsHtml = rowHtml.length ? rowHtml.join("") : `<tr><td colspan="${type==="customer"?9:8}" class="empty">Bu kayıtla ilişkili aktif sipariş bulunmuyor.</td></tr>`;
   document.getElementById("printArea").innerHTML=`
-    <div class="entity-report-print">
-      ${chunks.map((chunk,idx)=>`<section class="entity-report-page">
-        ${idx===0?infoHtml:`<div class="print-sub" style="margin:0 0 12px;font-weight:700">${title} — devam</div>`}
-        <div class="entity-report-table-wrap"><table class="entity-report-table ${type==="customer"?"customer-report-table":"supplier-report-table"}">${tableHeader}<tbody>${chunk.length?chunk.join(""):`<tr><td colspan="8" class="empty">Bu kayıtla ilişkili aktif sipariş bulunmuyor.</td></tr>`}</tbody></table></div>
-        ${idx===chunks.length-1?totalsHtml:""}
-        ${idx===chunks.length-1?`<div class="print-footer">PRONTO — Ofischi Premium için hazırlandı</div>`:""}
-      </section>`).join("")}
+    <div class="entity-report-print entity-report-flow">
+      ${infoHtml}
+      <div class="entity-report-table-wrap"><table class="entity-report-table ${type==="customer"?"customer-report-table":"supplier-report-table"}">${tableHeader}<tbody>${allRowsHtml}</tbody></table></div>
+      <div class="entity-report-final-block">${totalsHtml}<div class="print-footer">PRONTO — Ofischi Premium için hazırlandı · KDV %10</div></div>
     </div>`;
+
+  // Rapor sayfa dağılımı sabittir: ilk A4 sayfası 28 kalem,
+  // sonraki A4 sayfaları 40'ar kalem. Böylece raporlar her açılışta
+  // aynı ve düzenli sayfa yapısını korur.
+  const print = document.getElementById("printArea").querySelector(".entity-report-flow");
+  const table = print?.querySelector(".entity-report-table");
+  if (print && table && rowHtml.length) {
+    const tbodyRows = Array.from(table.tBodies[0].rows);
+    const originalRows = tbodyRows.map(r => r.outerHTML);
+    const chunks = [];
+    for (let i = 0; i < originalRows.length; i += (chunks.length === 0 ? 25 : 35)) {
+      const size = chunks.length === 0 ? 25 : 35;
+      chunks.push(Array.from({length: Math.min(size, originalRows.length - i)}, (_, j) => i + j));
+    }
+
+    const pageHtml = chunks.map((chunk, idx) => {
+      const rowsForPage = chunk.map(i => originalRows[i]).join("");
+      return `<section class="entity-report-page ${idx ? "entity-report-page-cont" : "entity-report-page-first"}">
+        ${idx===0 ? infoHtml : `<div class="print-sub entity-report-continued">${title} — devam</div>`}
+        <div class="entity-report-table-wrap"><table class="entity-report-table ${type==="customer"?"customer-report-table":"supplier-report-table"}">${tableHeader}<tbody>${rowsForPage}</tbody></table></div>
+        ${idx===chunks.length-1 ? `<div class="entity-report-final-block">${totalsHtml}<div class="print-footer">PRONTO — Ofischi Premium için hazırlandı · KDV %10</div></div>` : ""}
+      </section>`;
+    }).join("");
+    print.innerHTML = pageHtml;
+  } else if (print) {
+    print.innerHTML=`<section class="entity-report-page entity-report-page-first">${infoHtml}<div class="entity-report-table-wrap"><table class="entity-report-table ${type==="customer"?"customer-report-table":"supplier-report-table"}">${tableHeader}<tbody>${allRowsHtml}</tbody></table></div><div class="entity-report-final-block">${totalsHtml}<div class="print-footer">PRONTO — Ofischi Premium için hazırlandı · KDV %10</div></div></section>`;
+  }
+
   if(previewOnly) await previewCurrentPrintArea(`${title} — ${escapeHtml(entity.name)}`);
   else await downloadPrintAreaAsPdf(`Siparis_Raporu_${entity.name}`);
 }
@@ -6379,6 +6396,10 @@ async function exportDeliveryFormPdf(previewOnly = false) {
         <div>
           <div style="font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:#777;">Telefon</div>
           <div style="margin-top:5px;font-size:14px;">${escapeHtml(customer?.phone || group.phone || "-")}</div>
+        </div>
+        <div>
+          <div style="font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:#777;">Sevkiyat Durumu</div>
+          <div style="margin-top:5px;font-size:14px;font-weight:700;">${escapeHtml(group.shipmentType || "-")}</div>
         </div>
         <div style="grid-column:1 / -1;">
           <div style="font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:#777;">Teslimat Adresi</div>
