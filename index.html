@@ -330,7 +330,29 @@ input, select, textarea { font-family: inherit; }
 .order-group-qty{font-weight:800;text-align:center;}
 .order-group-count{display:block;margin-top:2px;font-size:10px;color:var(--color-text-muted);font-weight:600;}
 .order-group-status-mixed{display:inline-block;padding:3px 10px;border-radius:999px;font-size:11.5px;font-weight:700;white-space:nowrap;background:var(--color-row-alt);color:var(--color-text-muted);border:1px solid var(--color-border);}
-.order-group-modal{max-width:1750px !important;width:min(98vw,1750px) !important;max-height:94vh !important;}
+.order-group-modal{max-width:1750px !important;width:min(98vw,1750px) !important;max-height:94vh !important;border-radius:20px !important;box-shadow:0 28px 90px rgba(0,0,0,.28) !important;}
+.order-group-modal .modal-head{padding:18px 22px !important;background:linear-gradient(180deg,var(--color-surface,#fff),var(--color-row-alt,#fafafa));}
+.order-group-modal .modal-foot{padding:12px 18px !important;background:var(--color-surface,#fff);position:sticky;bottom:0;z-index:3;border-top:1px solid var(--color-border,#ddd);}
+.order-group-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;width:100%;}
+.order-group-actions .group-bulk-status{min-width:170px;}
+.order-group-actions .group-action-spacer{flex:1 1 auto;}
+.order-group-pdf-btn{font-weight:700;}
+.order-group-table-wrap{overflow-x:hidden !important;overflow-y:auto;max-height:calc(94vh - 190px);border:1px solid var(--color-border,#ddd);border-radius:12px;}
+.order-group-table{width:100% !important;table-layout:fixed;}
+.order-group-table th,.order-group-table td{white-space:normal;overflow-wrap:anywhere;}
+.order-group-table th:nth-child(1),.order-group-table td:nth-child(1){width:42px;}
+.order-group-table th:nth-child(2),.order-group-table td:nth-child(2){width:100px;}
+.order-group-table th:nth-child(3),.order-group-table td:nth-child(3){width:150px;}
+.order-group-table th:nth-child(4),.order-group-table td:nth-child(4){width:20%;}
+.order-group-table th:nth-child(5),.order-group-table td:nth-child(5){width:12%;}
+.order-group-table th:nth-child(6),.order-group-table td:nth-child(6){width:20%;}
+.order-group-table th:nth-child(7),.order-group-table td:nth-child(7){width:65px;}
+.order-group-table th:nth-child(8),.order-group-table td:nth-child(8){width:105px;}
+.order-group-table th:nth-child(9),.order-group-table td:nth-child(9){width:110px;}
+.order-group-table th:nth-child(10),.order-group-table td:nth-child(10){width:55px;}
+.order-group-select,.group-order-select,#groupSelectAll{position:relative;z-index:5;pointer-events:auto;}
+.order-group-modal .modal-body{overscroll-behavior:contain;}
+@media(max-width:900px){.order-group-table{table-layout:auto}.order-group-table-wrap{overflow-x:auto}.order-group-table{min-width:980px}.order-group-actions .group-action-spacer{display:none}}
 .order-group-modal .modal-body{padding:16px;overflow-x:hidden;overflow-y:auto;}
 .order-group-summary{display:flex;flex-wrap:wrap;gap:8px 18px;margin-bottom:14px;padding:11px 13px;border:1px solid var(--color-border);border-radius:10px;background:var(--color-row-alt);font-size:12px;color:var(--color-text-muted);}
 .order-group-summary strong{color:var(--color-text);}
@@ -1087,6 +1109,10 @@ body::after {
   backdrop-filter: blur(3px);
 }
 
+/* Sipariş grubu açıkken sipariş kartı üst katmanda açılır; alt pencere kapanmaz. */
+#detailModal { z-index: 220; }
+#detailModal .modal { position: relative; z-index: 221; }
+
 .lock-card {
   background: var(--glass-bg-strong);
   -webkit-backdrop-filter: blur(26px) saturate(180%);
@@ -1588,6 +1614,7 @@ body::after {
   }
 }
 
+.pronto-modal-lock{overflow:hidden!important;}
 </style>
 
 <style id="pronto-global-full-width">
@@ -1630,6 +1657,38 @@ body::after {
     max-width: none !important;
   }
 }
+
+/* PRONTO V25 — sipariş grubu modalı: tek dikey kaydırma, daha zarif ölçü */
+.order-group-modal{
+  width:min(94vw,1550px)!important;
+  max-width:1550px!important;
+  max-height:90vh!important;
+  border-radius:18px!important;
+}
+.order-group-modal .modal-head{padding:16px 20px!important}
+.order-group-modal .modal-body{
+  padding:14px!important;
+  overflow:hidden!important;
+  overscroll-behavior:contain;
+}
+.order-group-modal .modal-foot{
+  padding:10px 14px!important;
+}
+.order-group-table-wrap{
+  width:100%!important;
+  max-width:100%!important;
+  max-height:calc(90vh - 205px)!important;
+  overflow-x:hidden!important;
+  overflow-y:auto!important;
+  scrollbar-gutter:stable;
+}
+.order-group-table{width:100%!important;min-width:0!important;table-layout:fixed!important}
+@media(max-width:900px){
+ .order-group-modal{width:96vw!important;max-width:96vw!important;max-height:92vh!important}
+ .order-group-modal .modal-body{overflow:hidden!important}
+ .order-group-table-wrap{max-height:calc(92vh - 205px)!important;overflow-x:auto!important;overflow-y:auto!important}
+}
+
 </style>
 </head>
 <body>
@@ -2252,7 +2311,25 @@ body::after {
   <div class="modal order-group-modal">
     <div class="modal-head"><h2 id="orderGroupModalTitle">Sipariş Grubu</h2><button class="icon-btn" id="orderGroupModalClose" aria-label="Kapat">✕</button></div>
     <div class="modal-body" id="orderGroupModalBody"></div>
-    <div class="modal-foot"><button class="btn btn-ghost" id="orderGroupModalCloseBtn">Kapat</button></div>
+    <div class="modal-foot">
+      <div class="order-group-actions">
+        <span id="orderGroupSelectionCount" class="muted-text">0 seçili</span>
+        <select class="page-size-select group-bulk-status" id="orderGroupBulkStatus" aria-label="Seçili sipariş durumunu değiştir">
+          <option value="">Durum seç…</option>
+          <option value="Beklemede">Beklemede</option>
+          <option value="Üretimde">Üretimde</option>
+          <option value="Sevkiyata Hazır">Sevkiyata Hazır</option>
+          <option value="Teslim Edildi">Teslim Edildi</option>
+          <option value="İptal">İptal</option>
+        </select>
+        <button class="btn btn-secondary" id="orderGroupBulkStatusBtn" type="button">Durumu Uygula</button>
+        <button class="btn btn-danger" id="orderGroupBulkDeleteBtn" type="button">Seçilenleri Sil</button>
+        <button class="btn btn-ghost" id="orderGroupBulkClearBtn" type="button">Seçimi Temizle</button>
+        <span class="group-action-spacer"></span>
+        <button class="btn btn-primary order-group-pdf-btn" id="orderGroupPdfBtn" type="button">PDF</button>
+        <button class="btn btn-ghost" id="orderGroupModalCloseBtn">Kapat</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -3789,17 +3866,80 @@ function renderOrdersCards(groups) {
   wrap.querySelectorAll(".order-card").forEach(card=>card.addEventListener("click",e=>{if(e.target.closest(".group-select"))return;openOrderGroupModal(card.dataset.groupKey);}));
   wrap.querySelectorAll(".group-select").forEach(cb=>{cb.addEventListener("click",e=>e.stopPropagation());cb.addEventListener("change",()=>{const g=groups.find(x=>x.key===cb.dataset.groupKey);if(!g)return;g.ids.forEach(id=>cb.checked?selectedOrderIds.add(id):selectedOrderIds.delete(id));updateBulkBar();updateSelectAllState();});});
 }
+function updateOrderGroupSelectionUi(group) {
+  const count = group ? group.orders.filter(o => selectedOrderIds.has(o.id)).length : 0;
+  const el = document.getElementById("orderGroupSelectionCount");
+  if (el) el.textContent = `${count} seçili`;
+  const master = document.getElementById("groupSelectAll");
+  if (master && group) {
+    const selected = group.orders.filter(o => selectedOrderIds.has(o.id)).length;
+    master.checked = selected > 0 && selected === group.orders.length;
+    master.indeterminate = selected > 0 && selected < group.orders.length;
+  }
+}
+
 function openOrderGroupModal(groupKey) {
-  const group=buildOrderGroups(getFilteredOrders()).find(g=>g.key===groupKey); if(!group)return;
-  document.getElementById("orderGroupModalTitle").textContent=`${group.customer} · ${group.lineCount} kalem`;
-  document.getElementById("orderGroupModalBody").innerHTML=`<div class="order-group-summary"><span>Müşteri: <strong>${escapeHtml(group.customer)}</strong></span><span>SİP Adet: <strong>${escapeHtml(group.totalQuantity)}</strong></span><span>Kalem: <strong>${group.lineCount}</strong></span><span>Teslim: <strong>${formatDate(group.deliveryDate)}</strong></span></div><div class="order-group-table-wrap"><table class="order-group-table"><thead><tr><th class="col-check"><input type="checkbox" id="groupSelectAll"></th><th>Sipariş No</th><th>Müşteri</th><th>Ürün</th><th>Tedarikçi</th><th>Renk/Kumaş</th><th>Adet</th><th>Teslim</th><th>Durum</th><th>⋯</th></tr></thead><tbody>${group.orders.map(o=>`<tr data-id="${o.id}"><td class="col-check"><input type="checkbox" class="group-order-select" data-id="${o.id}" ${selectedOrderIds.has(o.id)?"checked":""}></td><td class="order-no">${escapeHtml(orderNo(o))}</td><td>${escapeHtml(o.customer)}</td><td class="order-group-product">${escapeHtml(o.product)}</td><td>${escapeHtml(o.supplier)}</td><td>${colorFabricText(o)}</td><td>${escapeHtml(o.quantity)}</td><td>${formatDate(o.deliveryDate)}</td><td>${statusBadgeHtml(o)}</td><td class="col-actions"><button class="menu-trigger group-order-menu" data-id="${o.id}">⋯</button></td></tr>`).join("")}</tbody></table></div>`;
-  closeAllModals(); document.getElementById("orderGroupModal").classList.remove("hidden");
-  const body=document.getElementById("orderGroupModalBody");
-  body.querySelectorAll("tbody tr").forEach(tr=>tr.addEventListener("click",e=>{if(e.target.closest(".group-order-menu")||e.target.closest(".group-order-select")||e.target.closest(".status-badge-btn"))return;openDetailModal(Number(tr.dataset.id));}));
-  body.querySelectorAll(".group-order-select").forEach(cb=>{cb.addEventListener("click",e=>e.stopPropagation());cb.addEventListener("change",()=>{const id=Number(cb.dataset.id);if(cb.checked)selectedOrderIds.add(id);else selectedOrderIds.delete(id);updateBulkBar();const m=document.getElementById("groupSelectAll");if(m)m.checked=group.orders.every(o=>selectedOrderIds.has(o.id));});});
-  const master=document.getElementById("groupSelectAll"); if(master){master.checked=group.orders.every(o=>selectedOrderIds.has(o.id));master.addEventListener("change",()=>{group.orders.forEach(o=>master.checked?selectedOrderIds.add(o.id):selectedOrderIds.delete(o.id));body.querySelectorAll(".group-order-select").forEach(cb=>cb.checked=master.checked);updateBulkBar();updateSelectAllState();});}
-  body.querySelectorAll(".group-order-menu").forEach(btn=>btn.addEventListener("click",e=>{e.stopPropagation();const id=Number(btn.dataset.id);showRowMenu(btn,[{label:"Sipariş Kartı",onClick:()=>openDetailModal(id)},{label:"Düzenle",onClick:()=>openOrderModal(id)},{label:"Sil",danger:true,onClick:()=>confirmDeleteOrder(id)}]);}));
+  const group = buildOrderGroups(getFilteredOrders()).find(g => g.key === groupKey);
+  if (!group) return;
+  document.getElementById("orderGroupModalTitle").textContent = `${group.customer} · ${group.lineCount} kalem`;
+  document.getElementById("orderGroupModalBody").innerHTML = `<div class="order-group-summary"><span>Müşteri: <strong>${escapeHtml(group.customer)}</strong></span><span>SİP Adet: <strong>${escapeHtml(group.totalQuantity)}</strong></span><span>Kalem: <strong>${group.lineCount}</strong></span><span>Teslim: <strong>${formatDate(group.deliveryDate)}</strong></span></div><div class="order-group-table-wrap"><table class="order-group-table"><thead><tr><th class="col-check"><input type="checkbox" id="groupSelectAll" aria-label="Tümünü seç"></th><th>Sipariş No</th><th>Müşteri</th><th>Ürün</th><th>Tedarikçi</th><th>Renk/Kumaş</th><th>Adet</th><th>Teslim</th><th>Durum</th><th>⋯</th></tr></thead><tbody>${group.orders.map(o=>`<tr data-id="${o.id}"><td class="col-check"><input type="checkbox" class="group-order-select" data-id="${o.id}" aria-label="${escapeHtml(orderNo(o))}" ${selectedOrderIds.has(o.id)?"checked":""}></td><td class="order-no">${escapeHtml(orderNo(o))}</td><td>${escapeHtml(o.customer)}</td><td class="order-group-product">${escapeHtml(o.product)}</td><td>${escapeHtml(o.supplier)}</td><td>${colorFabricText(o)}</td><td>${escapeHtml(o.quantity)}</td><td>${formatDate(o.deliveryDate)}</td><td>${statusBadgeHtml(o)}</td><td class="col-actions"><button class="menu-trigger group-order-menu" data-id="${o.id}" type="button">⋯</button></td></tr>`).join("")}</tbody></table></div>`;
+  closeAllModals();
+  document.getElementById("orderGroupModal").classList.remove("hidden");
+  document.body.classList.add("pronto-modal-lock");
+  const body = document.getElementById("orderGroupModalBody");
+  body.querySelectorAll("tbody tr").forEach(tr => tr.addEventListener("click", e => {
+    if (e.target.closest(".group-order-menu,.group-order-select,.status-badge-btn")) return;
+    openDetailModal(Number(tr.dataset.id));
+  }));
+  body.querySelectorAll(".group-order-select").forEach(cb => cb.addEventListener("click", e => e.stopPropagation()));
+  body.querySelectorAll(".group-order-select").forEach(cb => cb.addEventListener("change", () => {
+    const id = Number(cb.dataset.id);
+    if (cb.checked) selectedOrderIds.add(id); else selectedOrderIds.delete(id);
+    updateOrderGroupSelectionUi(group);
+    updateBulkBar();
+    updateSelectAllState();
+  }));
+  const master = document.getElementById("groupSelectAll");
+  if (master) master.addEventListener("click", e => e.stopPropagation());
+  if (master) master.addEventListener("change", () => {
+    group.orders.forEach(o => master.checked ? selectedOrderIds.add(o.id) : selectedOrderIds.delete(o.id));
+    body.querySelectorAll(".group-order-select").forEach(cb => cb.checked = master.checked);
+    updateOrderGroupSelectionUi(group); updateBulkBar(); updateSelectAllState();
+  });
+  body.querySelectorAll(".group-order-menu").forEach(btn => btn.addEventListener("click", e => {
+    e.stopPropagation(); const id = Number(btn.dataset.id);
+    showRowMenu(btn,[{label:"Sipariş Kartı",onClick:()=>openDetailModal(id)},{label:"Düzenle",onClick:()=>openOrderModal(id)},{label:"PDF",onClick:()=>openPdfActionChoice(id)},{label:"Sil",danger:true,onClick:()=>confirmDeleteOrder(id)}]);
+  }));
   bindStatusBadgeClicks(body);
+  updateOrderGroupSelectionUi(group);
+
+  const statusBtn = document.getElementById("orderGroupBulkStatusBtn");
+  const deleteBtn = document.getElementById("orderGroupBulkDeleteBtn");
+  const clearBtn = document.getElementById("orderGroupBulkClearBtn");
+  const statusSelect = document.getElementById("orderGroupBulkStatus");
+  const pdfBtn = document.getElementById("orderGroupPdfBtn");
+  if (statusBtn) statusBtn.onclick = () => {
+    const ids = group.orders.filter(o => selectedOrderIds.has(o.id)).map(o => o.id);
+    const status = statusSelect?.value || "";
+    if (!ids.length) return showToast("Önce sipariş seçin.");
+    if (!status) return showToast("Önce durum seçin.");
+    closeAllModals();
+    const mainSelect = document.getElementById("bulkStatusSelect");
+    if (mainSelect) mainSelect.value = status;
+    document.getElementById("bulkStatusBtn")?.click();
+  };
+  if (deleteBtn) deleteBtn.onclick = () => {
+    const ids = group.orders.filter(o => selectedOrderIds.has(o.id)).map(o => o.id);
+    if (!ids.length) return showToast("Önce sipariş seçin.");
+    closeAllModals();
+    document.getElementById("bulkDeleteBtn")?.click();
+  };
+  if (clearBtn) clearBtn.onclick = () => {
+    group.orders.forEach(o => selectedOrderIds.delete(o.id));
+    body.querySelectorAll(".group-order-select").forEach(cb => cb.checked = false);
+    updateOrderGroupSelectionUi(group); updateBulkBar(); updateSelectAllState();
+  };
+  if (pdfBtn) pdfBtn.onclick = () => openPdfActionChoice({type:"orderGroup",groupKey});
 }
 
 
@@ -4669,8 +4809,17 @@ function openDetailModal(id) {
   bindStatusBadgeClicks(document.getElementById("detailModalBody"));
   loadOrderPhotoIntoDetail(order.id);
 
-  closeAllModals();
+  /* Sipariş grubu penceresi açıksa onu kapatma; detay kartını üst katmanda aç. */
   document.getElementById("detailModal").classList.remove("hidden");
+  document.body.classList.add("pronto-modal-lock");
+}
+
+function closeDetailModal() {
+  document.getElementById("detailModal").classList.add("hidden");
+  const groupOpen = !document.getElementById("orderGroupModal")?.classList.contains("hidden");
+  const historyOpen = !document.getElementById("entityHistoryModal")?.classList.contains("hidden");
+  const otherModalOpen = !document.getElementById("orderModal")?.classList.contains("hidden") || !document.getElementById("entityModal")?.classList.contains("hidden");
+  if (!groupOpen && !historyOpen && !otherModalOpen) document.body.classList.remove("pronto-modal-lock");
 }
 
 /* =======================================================
@@ -4872,6 +5021,7 @@ function openPdfActionChoice(action) {
     if (typeof action === "number" || typeof action === "string") return exportOrderPdf(action);
     if (action?.type === "shipment") return exportShipmentPdf();
     if (action?.type === "delivery") return exportDeliveryFormPdf();
+    if (action?.type === "orderGroup") return exportOrderGroupPdf(action.groupKey);
     return;
   }
   pendingPdfAction = (typeof action === "number" || typeof action === "string")
@@ -4988,6 +5138,43 @@ function closePdfPreview() {
     modal.setAttribute("aria-hidden", "true");
   }
   if (body) body.innerHTML = "";
+}
+
+async function previewOrderGroupPdf(groupKey) {
+  const group = buildOrderGroups(getFilteredOrders()).find(g => g.key === groupKey);
+  if (!group) return;
+  const modal = document.getElementById("pdfPreviewModal");
+  const body = document.getElementById("pdfPreviewBody");
+  const title = document.getElementById("pdfPreviewTitle");
+  if (!modal || !body) { showToast("PDF ön izleme alanı bulunamadı."); return; }
+  if (title) title.textContent = `${group.customer} · ${group.lineCount} kalem - PDF Ön İzleme`;
+  body.innerHTML = '<div class="pdf-preview-loading">PDF ön izleme hazırlanıyor…</div>';
+  modal.classList.remove("hidden"); modal.setAttribute("aria-hidden", "false");
+  try { await exportOrderGroupPdf(groupKey, true); }
+  catch(e){ console.error(e); closePdfPreview(); showToast(e.message || "PDF ön izleme oluşturulamadı."); }
+}
+
+async function exportOrderGroupPdf(groupKey, previewOnly=false) {
+  const group = buildOrderGroups(getFilteredOrders()).find(g => g.key === groupKey);
+  if (!group) return;
+  const logoSrc = LOGO_SRC || "";
+  const rows = group.orders.map(o => `<tr>
+    <td>${escapeHtml(orderNo(o))}</td><td>${escapeHtml(o.customer)}</td><td>${escapeHtml(o.product)}</td>
+    <td>${escapeHtml(o.supplier)}</td><td>${colorFabricText(o)}</td><td>${escapeHtml(o.quantity)}</td>
+    <td>${formatDate(o.deliveryDate)}</td><td>${escapeHtml(o.status)}</td>
+  </tr>`).join("");
+  document.getElementById("printArea").innerHTML = `<div class="print-order-header">
+    <div class="print-order-header-left">${logoSrc ? `<img src="${logoSrc}" class="print-logo" alt="Logo">` : ""}
+      <h1 class="print-title">${escapeHtml(group.customer)} · ${group.lineCount} kalem</h1>
+      <p class="print-sub">Teslim: ${formatDate(group.deliveryDate)} · SİP Adet: ${escapeHtml(group.totalQuantity)}</p>
+    </div></div>
+    <div style="margin:16px 0 10px;font-weight:800;font-size:14px;">Sipariş Kalemleri</div>
+    <table style="width:100%;border-collapse:collapse;font-size:10px;table-layout:fixed;">
+      <thead><tr>${["Sipariş No","Müşteri","Ürün","Tedarikçi","Renk/Kumaş","Adet","Teslim","Durum"].map(h=>`<th style="border:1px solid #d9d9d9;padding:7px;text-align:left;background:#f3f3f3;">${h}</th>`).join("")}</tr></thead>
+      <tbody>${rows}</tbody></table>
+    <div class="print-footer">PRONTO — Ofischi Premium için hazırlandı</div>`;
+  if (previewOnly) { await previewCurrentPrintArea(`${group.customer} · ${group.lineCount} kalem - PDF Ön İzleme`); return; }
+  await downloadPrintAreaAsPdf(`Siparis_Grubu_${safePdfFileName(group.customer)}`);
 }
 
 async function previewOrderPdf(id) {
@@ -5277,6 +5464,7 @@ function closeAllModals() {
   document.getElementById("orderTrashModal")?.classList.add("hidden");
   document.getElementById("confirmModal").classList.add("hidden");
   pendingConfirmAction = null;
+  document.body.classList.remove("pronto-modal-lock");
   hideRowMenu();
 }
 function attemptCloseOrderModal() {
@@ -5367,6 +5555,7 @@ function bindOrderEvents() {
     else if (action.type === "shipment") await exportShipmentPdf(false);
     else if (action.type === "delivery") await exportDeliveryFormPdf(false);
     else if (action.type === "entityHistory") await exportEntityHistoryPdf(action.entityType, action.id, false);
+    else if (action.type === "orderGroup") await exportOrderGroupPdf(action.groupKey, false);
   });
 
   document.getElementById("pdfPreviewChoiceBtn")?.addEventListener("click", async () => {
@@ -5377,6 +5566,7 @@ function bindOrderEvents() {
     else if (action.type === "shipment") await exportShipmentPdf(true);
     else if (action.type === "delivery") await exportDeliveryFormPdf(true);
     else if (action.type === "entityHistory") await exportEntityHistoryPdf(action.entityType, action.id, true);
+    else if (action.type === "orderGroup") await previewOrderGroupPdf(action.groupKey);
   });
 
   document.getElementById("pdfActionChoiceModal")?.addEventListener("click", (e) => {
@@ -5394,7 +5584,7 @@ function bindOrderEvents() {
   document.getElementById("orderTrashCloseBtn")?.addEventListener("click", closeAllModals);
   document.getElementById("orderTrashModal")?.addEventListener("click", (e) => { if (e.target.id === "orderTrashModal") closeAllModals(); });
 
-  document.getElementById("detailModalClose").addEventListener("click", closeAllModals);
+  document.getElementById("detailModalClose").addEventListener("click", closeDetailModal);
   document.getElementById("orderGroupModalClose").addEventListener("click", closeAllModals);
   document.getElementById("orderGroupModalCloseBtn").addEventListener("click", closeAllModals);
   document.getElementById("orderGroupModal").addEventListener("click", (e) => { if (e.target.id === "orderGroupModal") closeAllModals(); });
@@ -5681,7 +5871,13 @@ function openEntityHistory(type, id) {
   document.querySelectorAll("#entityHistoryBody .history-item").forEach((el) => {
     el.addEventListener("click", (e) => {
       if (e.target.closest(".status-badge-btn")) return;
-      closeAllModals(); openDetailModal(Number(el.dataset.id));
+      if (type === "supplier") {
+        // Tedarikçi geçmişi açık kalsın; sipariş kartı üst katmanda açılsın.
+        openDetailModal(Number(el.dataset.id));
+        return;
+      }
+      closeAllModals();
+      openDetailModal(Number(el.dataset.id));
     });
   });
   bindStatusBadgeClicks(document.getElementById("entityHistoryBody"));
@@ -7498,10 +7694,8 @@ function bindGlobalEvents() {
 
   document.getElementById("orderModal").addEventListener("click", (e) => { if (e.target.id === "orderModal") attemptCloseOrderModal(); });
   document.getElementById("entityModal").addEventListener("click", (e) => { if (e.target.id === "entityModal") attemptCloseEntityModal(); });
-  [document.getElementById("detailModal"), document.getElementById("entityHistoryModal")]
-    .forEach((overlayEl) => {
-      overlayEl.addEventListener("click", (e) => { if (e.target === overlayEl) closeAllModals(); });
-    });
+  document.getElementById("detailModal").addEventListener("click", (e) => { if (e.target === e.currentTarget) closeDetailModal(); });
+  document.getElementById("entityHistoryModal").addEventListener("click", (e) => { if (e.target === e.currentTarget) closeAllModals(); });
   document.getElementById("confirmModal").addEventListener("click", (e) => {
     if (e.target === e.currentTarget) closeConfirmModal();
   });
