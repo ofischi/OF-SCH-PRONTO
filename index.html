@@ -3979,42 +3979,67 @@ function clearSelection() {
   renderOrdersView();
 }
 
+let supplierProductIndex = null;
+let supplierProductIndexSignature = "";
+
+function rebuildSupplierProductIndex() {
+  const sig = `${allProducts.length}|${allOrders.length}|${allStockMovements.length}|${allSuppliers.length}|${supplierByProductId.size}`;
+  if (supplierProductIndex && supplierProductIndexSignature === sig) return;
+  supplierProductIndexSignature = sig;
+  const index = new Map();
+  const add = (productName, supplierName) => {
+    const productKey = normName(productName || "");
+    const supplierKey = normName(supplierName || "");
+    if (!productKey || !supplierKey) return;
+    if (!index.has(productKey)) index.set(productKey, new Set());
+    index.get(productKey).add(supplierKey);
+  };
+  allProducts.forEach(p => {
+    const direct = supplierByProductId.get(p.id);
+    if (direct) add(p.name, direct);
+  });
+  allOrders.forEach(o => add(o.product, o.supplier));
+  allStockMovements.forEach(m => {
+    if (m.type === "stock-in") add(m.productName, m.supplier);
+  });
+  supplierProductIndex = index;
+}
+
 function productsForSupplierInput(supplierValue) {
   const value = normName(supplierValue || "");
   const products = activeProductsList();
   if (!value) return products;
 
-  // Tedarikçi adı tam yazılmasa bile eşleşen tedarikçileri bul.
+  // Her tuşta tüm siparişleri × tüm ürünleri tekrar taramak yerine hazır indeks kullan.
+  rebuildSupplierProductIndex();
   const matchingSuppliers = allSuppliers
-    .filter(s => normName(s.name || "").includes(value))
     .map(s => normName(s.name || ""))
-    .filter(Boolean);
-
-  const allowed = new Set(matchingSuppliers);
-  // Sipariş ve stok girişlerinden ürün -> tedarikçi ilişkisini oluştur.
-  allOrders.forEach(o => {
-    const supplier = normName(o.supplier || "");
-    const product = normName(o.product || "");
-    if (!supplier || !product) return;
-    if (!allowed.size || matchingSuppliers.some(name => name === supplier || name.includes(value))) {
-      allowed.add(supplier);
-    }
-  });
+    .filter(Boolean)
+    .filter(name => name.includes(value));
+  if (!matchingSuppliers.length) return [];
+  const matches = new Set(matchingSuppliers);
 
   return products.filter(p => {
     const productKey = normName(p.name || "");
-    if (!productKey) return false;
-    const suppliers = new Set();
-    const direct = supplierByProductId.get(p.id);
-    if (direct) suppliers.add(normName(direct));
-    allOrders.forEach(o => {
-      if (normName(o.product || "") === productKey && o.supplier) suppliers.add(normName(o.supplier));
-    });
-    allStockMovements.forEach(m => {
-      if (m.type === "stock-in" && normName(m.productName || "") === productKey && m.supplier) suppliers.add(normName(m.supplier));
-    });
-    return Array.from(suppliers).some(s => matchingSuppliers.some(ms => s === ms || s.includes(value) || ms.includes(s)));
+    const suppliers = supplierProductIndex.get(productKey);
+    if (!suppliers) return false;
+    for (const supplier of suppliers) {
+      for (const selected of matches) {
+        if (supplier === selected || supplier.includes(value) || selected.includes(supplier)) return true;
+      }
+    }
+    return false;
   });
+}
+
+let supplierProductRefreshFrame = 0;
+let supplierProductRefreshTimer = 0;
+function scheduleOrderProductDatalistRefresh() {
+  clearTimeout(supplierProductRefreshTimer);
+  supplierProductRefreshTimer = setTimeout(() => {
+    cancelAnimationFrame(supplierProductRefreshFrame);
+    supplierProductRefreshFrame = requestAnimationFrame(() => refreshOrderProductDatalist());
+  }, 35);
 }
 
 function refreshOrderProductDatalist() {
@@ -4398,7 +4423,7 @@ function bindOrderPricingEvents(){
   });
   const supplierInput = document.getElementById("f_supplier");
   supplierInput?.addEventListener("input", () => {
-    refreshOrderProductDatalist();
+    scheduleOrderProductDatalistRefresh();
   });
   supplierInput?.addEventListener("change", () => {
     refreshOrderProductDatalist();
@@ -4898,9 +4923,10 @@ function loadProntoPdfLibraries() {
       script.onerror = () => reject(new Error("PDF kütüphanesi yüklenemedi."));
       document.head.appendChild(script);
     };
-    loadScript("https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js", () => {
-      loadScript("https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js", resolve);
-    });
+    Promise.all([
+      new Promise((res, rej) => loadScript("https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js", res)),
+      new Promise((res, rej) => loadScript("https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js", res))
+    ]).then(resolve).catch(reject);
   }).catch(err => {
     prontoPdfLibPromise = null;
     throw err;
@@ -4946,8 +4972,9 @@ async function downloadPrintAreaAsPdf(fileName, previewWindow = null) {
   try {
     await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
     if (document.fonts && document.fonts.ready) await document.fonts.ready;
+    const renderScale = 2.2;
     const canvas = await window.html2canvas(wrapper, {
-      scale: 4,
+      scale: renderScale,
       useCORS: true,
       allowTaint: false,
       backgroundColor: "#ffffff",
@@ -4972,7 +4999,7 @@ async function downloadPrintAreaAsPdf(fileName, previewWindow = null) {
     const entityPage = wrapper.querySelector(".entity-report-page");
     if (entityPage) {
       const entityCssH = entityPage.getBoundingClientRect().height;
-      if (entityCssH > 0) pagePxH = Math.floor(entityCssH * 4);
+      if (entityCssH > 0) pagePxH = Math.floor(entityCssH * renderScale);
     }
 
     let offset = 0, page = 0;
@@ -4986,7 +5013,7 @@ async function downloadPrintAreaAsPdf(fileName, previewWindow = null) {
       ctx.fillRect(0,0,slice.width,slice.height);
       ctx.drawImage(canvas,0,offset,canvas.width,h,0,0,canvas.width,h);
       if (page++) pdf.addPage();
-      pdf.addImage(slice.toDataURL("image/png"),"PNG",margin,margin,contentW,h/pxPerMm);
+      pdf.addImage(slice.toDataURL("image/jpeg",0.92),"JPEG",margin,margin,contentW,h/pxPerMm,undefined,"FAST");
       offset += h;
     }
     if (previewWindow) {
@@ -5964,8 +5991,8 @@ async function exportEntityHistoryPdf(type, id, previewOnly = false) {
     const tbodyRows = Array.from(table.tBodies[0].rows);
     const originalRows = tbodyRows.map(r => r.outerHTML);
     const chunks = [];
-    for (let i = 0; i < originalRows.length; i += (chunks.length === 0 ? 25 : 35)) {
-      const size = chunks.length === 0 ? 25 : 35;
+    for (let i = 0; i < originalRows.length; i += (chunks.length === 0 ? 25 : 30)) {
+      const size = chunks.length === 0 ? 25 : 30;
       chunks.push(Array.from({length: Math.min(size, originalRows.length - i)}, (_, j) => i + j));
     }
 
