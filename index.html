@@ -1869,6 +1869,7 @@ body::after {
               <th>No</th>
               <th>Müşteri</th>
               <th>SİP Adet</th>
+              <th>Sipariş Tarihi</th>
               <th>Teslim</th>
               <th>Durum</th>
               <th></th>
@@ -3855,8 +3856,9 @@ function buildOrderGroups(list) {
     const statuses = Array.from(new Set(sorted.map(o => o.status || "Beklemede")));
     const statusCounts = new Map();
     sorted.forEach(o => statusCounts.set(o.status || "Beklemede", (statusCounts.get(o.status || "Beklemede") || 0) + 1));
-    return {key,orders:sorted,ids:sorted.map(o=>o.id),first,customer:first.customer||"-",deliveryDate:first.deliveryDate||"",totalQuantity,lineCount:sorted.length,statuses,statusCounts};
-  }).sort((a,b) => (b.deliveryDate||"").localeCompare(a.deliveryDate||"") || normName(a.customer).localeCompare(normName(b.customer),"tr"));
+    const orderDate = sorted.reduce((latest, o) => (o.orderDate && o.orderDate > latest ? o.orderDate : latest), "");
+    return {key,orders:sorted,ids:sorted.map(o=>o.id),first,customer:first.customer||"-",orderDate,deliveryDate:first.deliveryDate||"",totalQuantity,lineCount:sorted.length,statuses,statusCounts};
+  }).sort((a,b) => (b.orderDate||"").localeCompare(a.orderDate||"") || normName(a.customer).localeCompare(normName(b.customer),"tr"));
 }
 function groupStatusHtml(group) {
   if (!group || !group.orders.length) return "-";
@@ -3866,7 +3868,7 @@ function groupStatusHtml(group) {
 }
 function renderOrdersTable(groups) {
   const tbody=document.getElementById("ordersTableBody");
-  tbody.innerHTML=groups.map(g=>`<tr data-group-key="${escapeHtml(g.key)}"><td class="col-check"><input type="checkbox" class="group-select" data-group-key="${escapeHtml(g.key)}" ${g.ids.length&&g.ids.every(id=>selectedOrderIds.has(id))?"checked":""}></td><td class="order-group-no">${escapeHtml(orderNo(g.first))}<span class="order-group-count">${g.lineCount} kalem</span></td><td class="order-group-customer">${escapeHtml(g.customer)}</td><td class="order-group-qty" title="${g.lineCount} sipariş kalemi">${escapeHtml(g.totalQuantity)}</td><td>${formatDate(g.deliveryDate)}</td><td>${groupStatusHtml(g)}</td><td class="col-actions"><button class="menu-trigger group-menu-trigger" data-group-key="${escapeHtml(g.key)}">⋯</button></td></tr>`).join("");
+  tbody.innerHTML=groups.map(g=>`<tr data-group-key="${escapeHtml(g.key)}"><td class="col-check"><input type="checkbox" class="group-select" data-group-key="${escapeHtml(g.key)}" ${g.ids.length&&g.ids.every(id=>selectedOrderIds.has(id))?"checked":""}></td><td class="order-group-no">${escapeHtml(orderNo(g.first))}<span class="order-group-count">${g.lineCount} kalem</span></td><td class="order-group-customer">${escapeHtml(g.customer)}</td><td class="order-group-qty" title="${g.lineCount} sipariş kalemi">${escapeHtml(g.totalQuantity)}</td><td>${formatDate(g.orderDate)}</td><td>${formatDate(g.deliveryDate)}</td><td>${groupStatusHtml(g)}</td><td class="col-actions"><button class="menu-trigger group-menu-trigger" data-group-key="${escapeHtml(g.key)}">⋯</button></td></tr>`).join("");
   tbody.querySelectorAll("tr").forEach(tr=>tr.addEventListener("click",e=>{if(e.target.closest(".group-menu-trigger")||e.target.closest(".group-select")||e.target.closest(".status-badge-btn"))return;openOrderGroupModal(tr.dataset.groupKey);}));
   tbody.querySelectorAll(".group-select").forEach(cb=>{cb.addEventListener("click",e=>e.stopPropagation());cb.addEventListener("change",()=>{const g=groups.find(x=>x.key===cb.dataset.groupKey);if(!g)return;g.ids.forEach(id=>cb.checked?selectedOrderIds.add(id):selectedOrderIds.delete(id));updateBulkBar();updateSelectAllState();});});
   tbody.querySelectorAll(".group-menu-trigger").forEach(btn=>btn.addEventListener("click",e=>{e.stopPropagation();const g=groups.find(x=>x.key===btn.dataset.groupKey);if(!g)return;showRowMenu(btn,[{label:"Siparişleri Aç",onClick:()=>openOrderGroupModal(g.key)},{label:"İlk Sipariş Kartı",onClick:()=>openDetailModal(g.first.id)}]);}));
