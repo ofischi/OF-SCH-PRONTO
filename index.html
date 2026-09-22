@@ -1488,6 +1488,7 @@ body::after {
   color:var(--color-text-muted);
   margin-bottom:20px;
 }
+.pdf-entity-date-range{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0}.pdf-entity-date-range label{display:flex;flex-direction:column;gap:5px;font-size:12px;font-weight:700}.pdf-entity-date-range input{width:100%;padding:8px 9px;border:1px solid var(--color-border);border-radius:8px;background:var(--color-surface);color:var(--color-text);box-sizing:border-box}
 .pdf-action-choice-buttons {
   display:grid;
   grid-template-columns:1fr 1fr;
@@ -5062,6 +5063,12 @@ function openPdfActionChoice(action) {
     if (action?.type === "orderGroup") return exportOrderGroupPdf(action.groupKey);
     return;
   }
+  const isEntityHistoryPdf = action?.type === "entityHistory";
+  const dateRange = document.getElementById("entityPdfDateRange");
+  const subtitle = document.getElementById("pdfActionChoiceSubtitle");
+  if (dateRange) dateRange.classList.toggle("hidden", !isEntityHistoryPdf);
+  if (subtitle) subtitle.textContent = isEntityHistoryPdf ? "Tarih aralığı seçin. Yalnızca o tarihlerdeki siparişler PDF ve ön izlemede gösterilir." : "PDF için yapmak istediğiniz işlemi seçin.";
+  if (isEntityHistoryPdf) { const start=document.getElementById("entityPdfStartDate"), end=document.getElementById("entityPdfEndDate"); if(start)start.value=""; if(end)end.value=""; }
   pendingPdfAction = (typeof action === "number" || typeof action === "string")
     ? { type: "order", id: action }
     : action;
@@ -5592,7 +5599,7 @@ function bindOrderEvents() {
     if (action.type === "order") await exportOrderPdf(action.id);
     else if (action.type === "shipment") await exportShipmentPdf(false);
     else if (action.type === "delivery") await exportDeliveryFormPdf(false);
-    else if (action.type === "entityHistory") await exportEntityHistoryPdf(action.entityType, action.id, false);
+    else if (action.type === "entityHistory") { const start=document.getElementById("entityPdfStartDate")?.value||"", end=document.getElementById("entityPdfEndDate")?.value||""; if(start&&end&&start>end){showToast("Başlangıç tarihi, bitiş tarihinden sonra olamaz.");return;} await exportEntityHistoryPdf(action.entityType, action.id, false, start, end); }
     else if (action.type === "orderGroup") await exportOrderGroupPdf(action.groupKey, false);
   });
 
@@ -5603,7 +5610,7 @@ function bindOrderEvents() {
     if (action.type === "order") await previewOrderPdf(action.id);
     else if (action.type === "shipment") await exportShipmentPdf(true);
     else if (action.type === "delivery") await exportDeliveryFormPdf(true);
-    else if (action.type === "entityHistory") await exportEntityHistoryPdf(action.entityType, action.id, true);
+    else if (action.type === "entityHistory") { const start=document.getElementById("entityPdfStartDate")?.value||"", end=document.getElementById("entityPdfEndDate")?.value||""; if(start&&end&&start>end){showToast("Başlangıç tarihi, bitiş tarihinden sonra olamaz.");return;} await exportEntityHistoryPdf(action.entityType, action.id, true, start, end); }
     else if (action.type === "orderGroup") await previewOrderGroupPdf(action.groupKey);
   });
 
@@ -5926,14 +5933,20 @@ function openEntityHistory(type, id) {
   document.getElementById("entityHistoryModal").classList.remove("hidden");
 }
 
-async function exportEntityHistoryPdf(type, id, previewOnly = false) {
+async function exportEntityHistoryPdf(type, id, previewOnly = false, startDate = "", endDate = "") {
   const config = ENTITY_CONFIG[type];
   const list = { customer: allCustomers, supplier: allSuppliers }[type];
   const entity = list?.find((x) => x.id === Number(id));
   if (!entity || !config || !document.getElementById("printArea")) return;
 
   const orderField = type === "customer" ? "customer" : "supplier";
-  const relatedOrders = activeOrdersList().filter((o) => normName(o[orderField]) === normName(entity.name)).sort((a,b)=>b.id-a.id);
+  const relatedOrders = activeOrdersList().filter((o) => {
+    if (normName(o[orderField]) !== normName(entity.name)) return false;
+    const orderDate = String(o.orderDate || "").slice(0, 10);
+    if (startDate && (!orderDate || orderDate < startDate)) return false;
+    if (endDate && (!orderDate || orderDate > endDate)) return false;
+    return true;
+  }).sort((a,b)=>b.id-a.id);
   const rows=relatedOrders.map(o=>{const t=pricingTotals(o);return {o,t};});
   const saleNetTL=rows.reduce((s,r)=>s+r.t.net*(r.t.currency==="TRY"?1:r.t.rate),0), saleVatTL=rows.reduce((s,r)=>s+r.t.vat*(r.t.currency==="TRY"?1:r.t.rate),0);
   const purchaseTotal=rows.reduce((s,r)=>s+r.t.purchaseTotal,0);
@@ -5958,6 +5971,7 @@ async function exportEntityHistoryPdf(type, id, previewOnly = false) {
     <div class="print-grid entity-report-info">
       <div class="print-item"><span class="print-label">${type==="customer"?"Müşteri":"Tedarikçi"}</span><span class="print-value">${escapeHtml(entity.name)}</span></div>
       <div class="print-item"><span class="print-label">Sipariş Sayısı</span><span class="print-value">${rows.length}</span></div>
+      ${(startDate||endDate)?`<div class="print-item"><span class="print-label">Tarih Aralığı</span><span class="print-value">${startDate?formatDate(startDate):"Başlangıç yok"} — ${endDate?formatDate(endDate):"Bitiş yok"}</span></div>`:""}
       ${contact?`<div class="print-item"><span class="print-label">İletişim</span><span class="print-value">${escapeHtml(contact)}</span></div>`:""}
       ${entity.address?`<div class="print-item print-desc"><span class="print-label">Adres</span><span class="print-value">${escapeHtml(entity.address)}</span></div>`:""}
     </div>`;
@@ -7752,7 +7766,11 @@ document.addEventListener("DOMContentLoaded", initLockScreen);
 <div id="pdfActionChoiceModal" class="pdf-action-choice-modal hidden" aria-hidden="true">
   <div class="pdf-action-choice-box" role="dialog" aria-modal="true" aria-labelledby="pdfActionChoiceTitle">
     <div class="pdf-action-choice-title" id="pdfActionChoiceTitle">PDF İşlemi</div>
-    <div class="pdf-action-choice-subtitle">PDF için yapmak istediğiniz işlemi seçin.</div>
+    <div class="pdf-action-choice-subtitle" id="pdfActionChoiceSubtitle">PDF için yapmak istediğiniz işlemi seçin.</div>
+    <div id="entityPdfDateRange" class="pdf-entity-date-range hidden">
+      <label><span>Başlangıç Tarihi</span><input type="date" id="entityPdfStartDate"></label>
+      <label><span>Bitiş Tarihi</span><input type="date" id="entityPdfEndDate"></label>
+    </div>
     <div class="pdf-action-choice-buttons">
       <button type="button" class="btn btn-primary" id="pdfDownloadChoiceBtn">PDF İndir</button>
       <button type="button" class="btn btn-ghost" id="pdfPreviewChoiceBtn">PDF Ön İzleme</button>
