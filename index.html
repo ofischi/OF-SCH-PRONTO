@@ -303,6 +303,14 @@ input, select, textarea { font-family: inherit; }
 .orders-table tbody tr:last-child td { border-bottom: none; }
 .orders-table tbody tr:nth-child(even) { background: var(--color-row-alt); }
 .orders-table tbody tr:hover { background: var(--color-accent-tint); cursor: pointer; }
+.orders-table th:nth-child(2), .orders-table td:nth-child(2) { width: 105px; white-space: nowrap; }
+.orders-table th:nth-child(3), .orders-table td:nth-child(3) { min-width: 180px; width: 32%; }
+.orders-table th:nth-child(4), .orders-table td:nth-child(4) { width: 82px; text-align: center; white-space: nowrap; }
+.orders-table th:nth-child(5), .orders-table td:nth-child(5) { width: 120px; white-space: nowrap; }
+.orders-table th:nth-child(6), .orders-table td:nth-child(6) { width: 120px; white-space: nowrap; }
+.orders-table th:nth-child(7), .orders-table td:nth-child(7) { width: 150px; white-space: nowrap; }
+.orders-table th:nth-child(8), .orders-table td:nth-child(8) { width: 48px; text-align: center; white-space: nowrap; }
+
 .orders-table td.col-actions { white-space: nowrap; cursor: default; }
 .order-no { font-weight: 700; font-variant-numeric: tabular-nums; }
 .row-actions { display: flex; gap: 5px; }
@@ -340,16 +348,17 @@ input, select, textarea { font-family: inherit; }
 .order-group-table-wrap{overflow-x:hidden !important;overflow-y:auto;max-height:calc(94vh - 190px);border:1px solid var(--color-border,#ddd);border-radius:12px;}
 .order-group-table{width:100% !important;table-layout:fixed;}
 .order-group-table th,.order-group-table td{white-space:normal;overflow-wrap:anywhere;}
-.order-group-table th:nth-child(1),.order-group-table td:nth-child(1){width:42px;}
-.order-group-table th:nth-child(2),.order-group-table td:nth-child(2){width:100px;}
-.order-group-table th:nth-child(3),.order-group-table td:nth-child(3){width:150px;}
-.order-group-table th:nth-child(4),.order-group-table td:nth-child(4){width:20%;}
-.order-group-table th:nth-child(5),.order-group-table td:nth-child(5){width:12%;}
-.order-group-table th:nth-child(6),.order-group-table td:nth-child(6){width:20%;}
-.order-group-table th:nth-child(7),.order-group-table td:nth-child(7){width:65px;}
-.order-group-table th:nth-child(8),.order-group-table td:nth-child(8){width:105px;}
-.order-group-table th:nth-child(9),.order-group-table td:nth-child(9){width:110px;}
-.order-group-table th:nth-child(10),.order-group-table td:nth-child(10){width:55px;}
+.order-group-table th:nth-child(1),.order-group-table td:nth-child(1){width:38px;}
+.order-group-table th:nth-child(2),.order-group-table td:nth-child(2){width:88px;}
+.order-group-table th:nth-child(3),.order-group-table td:nth-child(3){width:92px;}
+.order-group-table th:nth-child(4),.order-group-table td:nth-child(4){width:13%;}
+.order-group-table th:nth-child(5),.order-group-table td:nth-child(5){width:20%;}
+.order-group-table th:nth-child(6),.order-group-table td:nth-child(6){width:10%;}
+.order-group-table th:nth-child(7),.order-group-table td:nth-child(7){width:13%;}
+.order-group-table th:nth-child(8),.order-group-table td:nth-child(8){width:52px;}
+.order-group-table th:nth-child(9),.order-group-table td:nth-child(9){width:88px;}
+.order-group-table th:nth-child(10),.order-group-table td:nth-child(10){width:92px;}
+.order-group-table th:nth-child(11),.order-group-table td:nth-child(11){width:44px;}
 .order-group-select,.group-order-select,#groupSelectAll{position:relative;z-index:5;pointer-events:auto;}
 .order-group-modal .modal-body{overscroll-behavior:contain;}
 @media(max-width:900px){.order-group-table{table-layout:auto}.order-group-table-wrap{overflow-x:auto}.order-group-table{min-width:980px}.order-group-actions .group-action-spacer{display:none}}
@@ -361,6 +370,13 @@ input, select, textarea { font-family: inherit; }
 .order-group-table th{padding:8px 7px;text-align:left;background:var(--color-row-alt);color:var(--color-text-muted);font-size:10.5px;white-space:nowrap;border-bottom:1px solid var(--color-border);}
 .order-group-table td{padding:8px 7px;border-bottom:1px solid var(--color-border);vertical-align:middle;line-height:1.3;overflow-wrap:anywhere;word-break:break-word;}
 .order-group-table tbody tr{cursor:pointer;}
+.order-group-table th:nth-child(1),.order-group-table td:nth-child(1),
+.order-group-table th:nth-child(2),.order-group-table td:nth-child(2),
+.order-group-table th:nth-child(3),.order-group-table td:nth-child(3),
+.order-group-table th:nth-child(8),.order-group-table td:nth-child(8),
+.order-group-table th:nth-child(9),.order-group-table td:nth-child(9),
+.order-group-table th:nth-child(10),.order-group-table td:nth-child(10),
+.order-group-table th:nth-child(11),.order-group-table td:nth-child(11){white-space:nowrap;}
 .order-group-table tbody tr:hover{background:var(--color-accent-tint);}
 .order-group-table tbody tr:last-child td{border-bottom:none;}
 .order-group-table .col-check{text-align:center;width:38px;}
@@ -720,25 +736,28 @@ input, select, textarea { font-family: inherit; }
 }
 
 #view-delivery-form .shipment-table th:nth-child(1),
-#view-delivery-form .shipment-table td:nth-child(1) { width: 16%; }
+#view-delivery-form .shipment-table td:nth-child(1) { width: 11%; }
 
 #view-delivery-form .shipment-table th:nth-child(2),
-#view-delivery-form .shipment-table td:nth-child(2) { width: 11%; }
+#view-delivery-form .shipment-table td:nth-child(2) { width: 15%; }
 
 #view-delivery-form .shipment-table th:nth-child(3),
-#view-delivery-form .shipment-table td:nth-child(3) { width: 27%; }
+#view-delivery-form .shipment-table td:nth-child(3) { width: 10%; }
 
 #view-delivery-form .shipment-table th:nth-child(4),
-#view-delivery-form .shipment-table td:nth-child(4) { width: 11%; }
+#view-delivery-form .shipment-table td:nth-child(4) { width: 23%; }
 
 #view-delivery-form .shipment-table th:nth-child(5),
 #view-delivery-form .shipment-table td:nth-child(5) { width: 10%; }
 
 #view-delivery-form .shipment-table th:nth-child(6),
-#view-delivery-form .shipment-table td:nth-child(6) { width: 13%; }
+#view-delivery-form .shipment-table td:nth-child(6) { width: 9%; }
 
 #view-delivery-form .shipment-table th:nth-child(7),
-#view-delivery-form .shipment-table td:nth-child(7) { width: 12%; }
+#view-delivery-form .shipment-table td:nth-child(7) { width: 11%; }
+
+#view-delivery-form .shipment-table th:nth-child(8),
+#view-delivery-form .shipment-table td:nth-child(8) { width: 11%; text-align:center; }
 
 #view-delivery-form .shipment-table th {
   font-size: 10px;
@@ -750,10 +769,10 @@ input, select, textarea { font-family: inherit; }
 }
 
 #view-delivery-form .delivery-form-open-btn {
-  width: 100%;
-  min-width: 0;
-  padding: 8px 7px;
-  font-size: 12px;
+  display:inline-flex; align-items:center; justify-content:center;
+  width:100%; min-width:0; max-width:100%;
+  padding:8px 5px; font-size:12px;
+  white-space:nowrap; box-sizing:border-box;
 }
 
 #view-delivery-form .shipment-address {
@@ -791,8 +810,7 @@ input, select, textarea { font-family: inherit; }
   }
 
   #view-delivery-form .delivery-form-open-btn {
-    font-size: 10px;
-    padding: 7px 4px;
+    font-size: 10px; padding: 7px 3px;
   }
 }
 
@@ -1701,6 +1719,31 @@ body::after {
  .order-group-table-wrap{max-height:calc(92vh - 205px)!important;overflow-x:auto!important;overflow-y:auto!important}
 }
 
+</style>
+
+<style id="v48-modal-table-compact">
+/* V48 — Modal tablolarında sütunları içerik miktarına göre kompakt dağıt. Ana sistem davranışına dokunmaz. */
+.order-group-modal .order-group-table{width:100%!important;table-layout:fixed!important;min-width:0!important;}
+.order-group-modal .order-group-table th,.order-group-modal .order-group-table td{box-sizing:border-box;padding:7px 6px;}
+.order-group-modal .order-group-table th:nth-child(1),.order-group-modal .order-group-table td:nth-child(1){width:3%!important;}
+.order-group-modal .order-group-table th:nth-child(2),.order-group-modal .order-group-table td:nth-child(2){width:7%!important;}
+.order-group-modal .order-group-table th:nth-child(3),.order-group-modal .order-group-table td:nth-child(3){width:8%!important;}
+.order-group-modal .order-group-table th:nth-child(4),.order-group-modal .order-group-table td:nth-child(4){width:16%!important;}
+.order-group-modal .order-group-table th:nth-child(5),.order-group-modal .order-group-table td:nth-child(5){width:22%!important;}
+.order-group-modal .order-group-table th:nth-child(6),.order-group-modal .order-group-table td:nth-child(6){width:8%!important;}
+.order-group-modal .order-group-table th:nth-child(7),.order-group-modal .order-group-table td:nth-child(7){width:13%!important;}
+.order-group-modal .order-group-table th:nth-child(8),.order-group-modal .order-group-table td:nth-child(8){width:4%!important;text-align:center;}
+.order-group-modal .order-group-table th:nth-child(9),.order-group-modal .order-group-table td:nth-child(9){width:7%!important;}
+.order-group-modal .order-group-table th:nth-child(10),.order-group-modal .order-group-table td:nth-child(10){width:9%!important;text-align:center;}
+.order-group-modal .order-group-table th:nth-child(11),.order-group-modal .order-group-table td:nth-child(11){width:3%!important;text-align:center;}
+.order-group-modal .order-group-table .status-badge,.order-group-modal .order-group-table .status-badge-btn{max-width:100%;box-sizing:border-box;padding:3px 6px;font-size:10px;white-space:nowrap;}
+.order-group-modal .order-group-table .menu-trigger{padding:3px 6px;min-width:0;}
+
+/* Diğer modal tabloları: gereksiz boşlukları azalt, içerik sütunlarına alan bırak. */
+.modal .orders-table,.modal .shipment-table,.modal .delivery-form-table{width:100%;table-layout:fixed;min-width:0;}
+.modal .orders-table th,.modal .orders-table td,.modal .shipment-table th,.modal .shipment-table td,.modal .delivery-form-table th,.modal .delivery-form-table td{box-sizing:border-box;}
+.modal .orders-table th:first-child,.modal .orders-table td:first-child{width:4%;}
+.modal .orders-table th:last-child,.modal .orders-table td:last-child{width:5%;}
 </style>
 </head>
 <body>
@@ -3834,6 +3877,18 @@ function renderSummary() {
   document.getElementById("statLate").textContent = active.filter((o) => isOverdue(o)).length;
 }
 
+function compareOrderDateDesc(a, b) {
+  const ad = String(a?.orderDate || "");
+  const bd = String(b?.orderDate || "");
+  return bd.localeCompare(ad) || Number(b?.id || 0) - Number(a?.id || 0);
+}
+function latestOrderDate(orders) {
+  return (orders || []).reduce((latest, o) => {
+    const d = String(o?.orderDate || "");
+    return d > latest ? d : latest;
+  }, "");
+}
+
 function colorFabricText(o) {
   const parts = [];
   if (o.colorCode) parts.push(o.colorCode);
@@ -3850,15 +3905,15 @@ function buildOrderGroups(list) {
     map.get(key).push(o);
   });
   return Array.from(map.entries()).map(([key, orders]) => {
-    const sorted = orders.slice().sort((a,b) => Number(a.id||0) - Number(b.id||0));
+    const sorted = orders.slice().sort(compareOrderDateDesc);
     const first = sorted[0];
+    const orderDate = latestOrderDate(sorted);
     const totalQuantity = sorted.reduce((sum,o) => sum + (Number(o.quantity) || 0), 0);
     const statuses = Array.from(new Set(sorted.map(o => o.status || "Beklemede")));
     const statusCounts = new Map();
     sorted.forEach(o => statusCounts.set(o.status || "Beklemede", (statusCounts.get(o.status || "Beklemede") || 0) + 1));
-    const orderDate = sorted.reduce((latest, o) => (o.orderDate && o.orderDate > latest ? o.orderDate : latest), "");
     return {key,orders:sorted,ids:sorted.map(o=>o.id),first,customer:first.customer||"-",orderDate,deliveryDate:first.deliveryDate||"",totalQuantity,lineCount:sorted.length,statuses,statusCounts};
-  }).sort((a,b) => (b.orderDate||"").localeCompare(a.orderDate||"") || normName(a.customer).localeCompare(normName(b.customer),"tr"));
+  }).sort((a,b) => (b.orderDate||"").localeCompare(a.orderDate||"") || (b.deliveryDate||"").localeCompare(a.deliveryDate||"") || normName(a.customer).localeCompare(normName(b.customer),"tr"));
 }
 function groupStatusHtml(group) {
   if (!group || !group.orders.length) return "-";
@@ -3896,7 +3951,7 @@ function openOrderGroupModal(groupKey) {
   const group = buildOrderGroups(getFilteredOrders()).find(g => g.key === groupKey);
   if (!group) return;
   document.getElementById("orderGroupModalTitle").textContent = `${group.customer} · ${group.lineCount} kalem`;
-  document.getElementById("orderGroupModalBody").innerHTML = `<div class="order-group-summary"><span>Müşteri: <strong>${escapeHtml(group.customer)}</strong></span><span>SİP Adet: <strong>${escapeHtml(group.totalQuantity)}</strong></span><span>Kalem: <strong>${group.lineCount}</strong></span><span>Teslim: <strong>${formatDate(group.deliveryDate)}</strong></span></div><div class="order-group-table-wrap"><table class="order-group-table"><thead><tr><th class="col-check"><input type="checkbox" id="groupSelectAll" aria-label="Tümünü seç"></th><th>Sipariş No</th><th>Müşteri</th><th>Ürün</th><th>Tedarikçi</th><th>Renk/Kumaş</th><th>Adet</th><th>Teslim</th><th>Durum</th><th>⋯</th></tr></thead><tbody>${group.orders.map(o=>`<tr data-id="${o.id}"><td class="col-check"><input type="checkbox" class="group-order-select" data-id="${o.id}" aria-label="${escapeHtml(orderNo(o))}" ${selectedOrderIds.has(o.id)?"checked":""}></td><td class="order-no">${escapeHtml(orderNo(o))}</td><td>${escapeHtml(o.customer)}</td><td class="order-group-product">${escapeHtml(o.product)}</td><td>${escapeHtml(o.supplier)}</td><td>${colorFabricText(o)}</td><td>${escapeHtml(o.quantity)}</td><td>${formatDate(o.deliveryDate)}</td><td>${statusBadgeHtml(o)}</td><td class="col-actions"><button class="menu-trigger group-order-menu" data-id="${o.id}" type="button">⋯</button></td></tr>`).join("")}</tbody></table></div>`;
+  document.getElementById("orderGroupModalBody").innerHTML = `<div class="order-group-summary"><span>Müşteri: <strong>${escapeHtml(group.customer)}</strong></span><span>SİP Adet: <strong>${escapeHtml(group.totalQuantity)}</strong></span><span>Kalem: <strong>${group.lineCount}</strong></span><span>Teslim: <strong>${formatDate(group.deliveryDate)}</strong></span></div><div class="order-group-table-wrap"><table class="order-group-table"><thead><tr><th class="col-check"><input type="checkbox" id="groupSelectAll" aria-label="Tümünü seç"></th><th>Sipariş No</th><th>Sipariş Tarihi</th><th>Müşteri</th><th>Ürün</th><th>Tedarikçi</th><th>Renk/Kumaş</th><th>Adet</th><th>Teslim</th><th>Durum</th><th>⋯</th></tr></thead><tbody>${group.orders.map(o=>`<tr data-id="${o.id}"><td class="col-check"><input type="checkbox" class="group-order-select" data-id="${o.id}" aria-label="${escapeHtml(orderNo(o))}" ${selectedOrderIds.has(o.id)?"checked":""}></td><td class="order-no">${escapeHtml(orderNo(o))}</td><td>${formatDate(o.orderDate)}</td><td>${escapeHtml(o.customer)}</td><td class="order-group-product">${escapeHtml(o.product)}</td><td>${escapeHtml(o.supplier)}</td><td>${colorFabricText(o)}</td><td>${escapeHtml(o.quantity)}</td><td>${formatDate(o.deliveryDate)}</td><td>${statusBadgeHtml(o)}</td><td class="col-actions"><button class="menu-trigger group-order-menu" data-id="${o.id}" type="button">⋯</button></td></tr>`).join("")}</tbody></table></div>`;
   closeAllModals();
   document.getElementById("orderGroupModal").classList.remove("hidden");
   document.body.classList.add("pronto-modal-lock");
@@ -5543,7 +5598,7 @@ async function exportToExcel() {
   if (exportBusy) return;
   exportBusy = true;
   try { await ensureXlsx(); } catch (_) { exportBusy = false; showToast("Excel modülü yüklenemedi."); return; }
-  const rows = activeOrdersList().slice().sort((a, b) => a.id - b.id).map((o) => ({
+  const rows = activeOrdersList().slice().sort(compareOrderDateDesc).map((o) => ({
     "Sipariş No": orderNo(o), "Müşteri": o.customer, "Tedarikçi": o.supplier, "Ürün": o.product,
     "Adet": o.quantity, "Sipariş Tarihi": formatDate(o.orderDate), "Teslim Tarihi": formatDate(o.deliveryDate),
     "Renk Kodu": o.colorCode || "", "Kumaş Kodu": o.fabricCode || "", "Açıklama": getOrderDescription(o) || "",
@@ -5876,6 +5931,7 @@ function openEntityHistory(type, id) {
     return `<div class="detail-item"><span class="detail-label">${f.label.replace(" *", "")}</span><span class="detail-value">${escapeHtml(val)}</span></div>`;
   }).join("");
 
+  relatedOrders.sort(compareOrderDateDesc);
   const historyHtml = relatedOrders.length ? relatedOrders.map((o) => `
     <div class="history-item" data-id="${o.id}">
       <div class="history-item-left">
@@ -6668,7 +6724,8 @@ function buildShipmentGroups() {
   });
 
   return Array.from(map.entries()).map(([key, orders]) => {
-    const first = orders[0];
+    const sortedOrders = orders.slice().sort(compareOrderDateDesc);
+    const first = sortedOrders[0];
     const customer = customerForOrder(first);
     const shipmentTypes = Array.from(new Set(orders.map(getShipmentType)));
     const allReady = orders.length > 0 && orders.every((o) => o.status === "Sevkiyata Hazır");
@@ -6683,8 +6740,8 @@ function buildShipmentGroups() {
 
     return {
       key,
-      orders,
-      ids: orders.map((o) => o.id),
+      orders: sortedOrders,
+      ids: sortedOrders.map((o) => o.id),
       first,
       customer,
       customerName: first.customer || "-",
@@ -6692,6 +6749,7 @@ function buildShipmentGroups() {
       address: customer?.address || "-",
       city: shipmentCity(first),
       deliveryDate,
+      orderDate: latestOrderDate(sortedOrders),
       shipmentType: shipmentTypes.join(" / "),
       allReady,
       hasHidden,
@@ -6774,8 +6832,9 @@ function renderShipmentView() {
     }
     return true;
   }).sort((a,b) =>
+    (b.orderDate || "").localeCompare(a.orderDate || "") ||
     a.city.localeCompare(b.city,"tr") ||
-    (a.deliveryDate || "").localeCompare(b.deliveryDate || "") ||
+    (b.deliveryDate || "").localeCompare(a.deliveryDate || "") ||
     a.customerName.localeCompare(b.customerName,"tr")
   );
 
@@ -6811,13 +6870,13 @@ function renderShipmentView() {
   groups.innerHTML = Array.from(byCity.entries()).map(([city, shipmentGroups]) => `
     <div class="shipment-city-card">
       <div class="shipment-city-head"><span class="shipment-city-title">${escapeHtml(city)}</span><span class="shipment-city-count">${shipmentGroups.length} sevkiyat</span></div>
-      <table class="shipment-table"><thead><tr><th>Seç</th><th>Müşteri / Telefon</th><th>Adres</th><th>Teslim</th><th>Nakliye Durumu</th><th>İşlem</th></tr></thead><tbody>
+      <table class="shipment-table"><thead><tr><th>Seç</th><th>Sipariş Tarihi</th><th>Müşteri / Telefon</th><th>Adres</th><th>Teslim</th><th>Nakliye Durumu</th><th>İşlem</th></tr></thead><tbody>
       ${shipmentGroups.map((g)=>{
         const checked=isShipmentGroupSelected(g);
         const late=g.deliveryDate && g.deliveryDate < w.todayIso;
         return `<tr class="${checked?"shipment-selected":""}">
           <td><input class="shipment-checkbox" type="checkbox" data-id="${g.first.id}" ${checked?"checked":""}></td>
-          <td><div class="shipment-customer">${escapeHtml(g.customerName)}</div><div class="shipment-contact">${escapeHtml(g.phone)}</div></td>
+          <td>${g.orderDate ? formatDate(g.orderDate) : "-"}</td><td><div class="shipment-customer">${escapeHtml(g.customerName)}</div><div class="shipment-contact">${escapeHtml(g.phone)}</div></td>
           <td class="shipment-address">${escapeHtml(g.address)}</td>
           <td>${g.deliveryDate ? formatDate(g.deliveryDate) : "-"}${late ? " · <strong>Gecikti</strong>" : ""}</td>
           <td><span class="shipment-type ${g.shipmentType.includes("Nakliye")?"shipment-type--transport":""}">${escapeHtml(g.shipmentType)}</span></td>
@@ -6934,8 +6993,9 @@ function getDeliveryFormGroups() {
   return buildShipmentGroups()
     .filter(isDeliveryFormGroupCandidate)
     .sort((a, b) =>
+      (b.orderDate || "").localeCompare(a.orderDate || "") ||
       a.city.localeCompare(b.city, "tr") ||
-      (a.deliveryDate || "").localeCompare(b.deliveryDate || "") ||
+      (b.deliveryDate || "").localeCompare(a.deliveryDate || "") ||
       a.customerName.localeCompare(b.customerName, "tr")
     );
 }
@@ -6969,6 +7029,7 @@ function renderDeliveryForm() {
       <table class="shipment-table">
         <thead>
           <tr>
+            <th>Sipariş Tarihi</th>
             <th>Müşteri / Ünvan</th>
             <th>Telefon</th>
             <th>Adres</th>
@@ -6983,6 +7044,7 @@ function renderDeliveryForm() {
             const readyCount = g.orders.filter((o) => o.status === "Sevkiyata Hazır").length;
             return `
             <tr class="${g.key === deliveryFormGroupKey ? "shipment-selected" : ""}">
+              <td>${g.orderDate ? formatDate(g.orderDate) : "-"}</td>
               <td><div class="shipment-customer">${escapeHtml(g.customerName)}</div></td>
               <td>${escapeHtml(g.phone)}</td>
               <td class="shipment-address">${escapeHtml(g.address)}</td>
