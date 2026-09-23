@@ -301,7 +301,7 @@ input, select, textarea { font-family: inherit; }
 }
 .orders-table td:last-child { border-right: none; }
 .orders-table tbody tr:last-child td { border-bottom: none; }
-.orders-table tbody tr:nth-child(even) { background: var(--color-row-alt); }
+
 .orders-table tbody tr:hover { background: var(--color-accent-tint); cursor: pointer; }
 .orders-table th:nth-child(2), .orders-table td:nth-child(2) { width: 105px; white-space: nowrap; }
 .orders-table th:nth-child(3), .orders-table td:nth-child(3) { min-width: 180px; width: 32%; }
@@ -832,7 +832,7 @@ input, select, textarea { font-family: inherit; }
 }
 .menu-trigger:hover { background: var(--color-bg); }
 .row-menu {
-  position: fixed; z-index: 150; background: var(--color-surface);
+  position: fixed; z-index: 1000; background: var(--color-surface);
   border: 1px solid var(--color-border); border-radius: 10px; box-shadow: var(--shadow-md);
   padding: 6px; min-width: 150px; display: flex; flex-direction: column; gap: 2px;
 }
@@ -1476,6 +1476,19 @@ body::after {
 }
 
 
+
+/* ===================== PDF SAYFA DÜZENİ ===================== */
+.pdf-layout-editor-modal{position:fixed;inset:0;z-index:1200;background:rgba(0,0,0,.46);display:flex;align-items:center;justify-content:center;padding:16px;box-sizing:border-box}
+.pdf-layout-editor-modal.hidden{display:none}
+.pdf-layout-editor-box{width:min(96vw,1400px);height:min(94vh,900px);background:var(--color-surface,#fff);border:1px solid var(--color-border,#ddd);border-radius:16px;box-shadow:0 24px 80px rgba(0,0,0,.28);display:flex;flex-direction:column;overflow:hidden}
+.pdf-layout-editor-head{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--color-border,#ddd);flex:0 0 auto}
+.pdf-layout-editor-head strong{font-size:17px}.pdf-layout-editor-sub{font-size:12px;color:var(--color-text-muted,#777);margin-top:3px}
+.pdf-layout-toolbar{display:flex;align-items:center;gap:24px;flex-wrap:wrap;padding:10px 18px;border-bottom:1px solid var(--color-border,#ddd);background:var(--color-row-alt,#fafafa);flex:0 0 auto}
+.pdf-layout-toolbar label{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700}.pdf-layout-toolbar input[type=range]{width:180px}.pdf-layout-toolbar b{min-width:45px}.pdf-layout-orientation{margin-left:auto;font-weight:800;font-size:12px;padding:5px 9px;border:1px solid var(--color-border,#ddd);border-radius:7px}
+.pdf-layout-scroll{flex:1 1 auto;overflow:auto;background:#e9eaec;padding:24px;min-height:0}.pdf-layout-scroll::-webkit-scrollbar{width:12px;height:12px}.pdf-layout-scroll::-webkit-scrollbar-thumb{background:#aaa;border-radius:10px;border:3px solid #e9eaec}
+#pdfLayoutCanvas{min-width:max-content;min-height:max-content;padding:8px;box-sizing:border-box}
+.pdf-layout-editor-foot{display:flex;justify-content:flex-end;gap:8px;padding:12px 18px;border-top:1px solid var(--color-border,#ddd);flex:0 0 auto}
+
 /* ===================== PDF SEÇENEK PENCERESİ ===================== */
 .pdf-action-choice-modal {
   position:fixed;
@@ -1520,8 +1533,10 @@ body::after {
 /* entityHistoryPdfStyles */
 .entity-report-print{width:100%;box-sizing:border-box}
 .entity-report-flow{width:100%;box-sizing:border-box}
-.entity-report-page{width:100%;min-height:1069px;height:1069px;box-sizing:border-box;display:flex;flex-direction:column;overflow:hidden;border:1px solid #9ea3a8;padding:24px 24px 22px;background:#fff}
+.entity-report-page{width:100%;min-height:746px;height:746px;box-sizing:border-box;display:flex;flex-direction:column;overflow:hidden;border:1px solid #9ea3a8;padding:24px 24px 22px;background:#fff}
 .entity-report-page + .entity-report-page{padding-top:24px}
+.entity-report-page{break-after:page;page-break-after:always}
+.entity-report-page:last-child{break-after:auto;page-break-after:auto}
 .entity-report-page .entity-report-table-wrap{flex:0 0 auto}
 .entity-report-page .entity-report-final-block{margin-top:12px;margin-bottom:0}
 .entity-report-page .print-footer{margin-top:10px;margin-bottom:0}
@@ -1627,6 +1642,14 @@ body::after {
   padding:18px;
   background:#ececec;
 }
+.pdf-page-layout-panel{position:fixed;inset:0;z-index:10070;background:rgba(0,0,0,.35);display:flex;align-items:flex-start;justify-content:center;padding:80px 16px 20px;box-sizing:border-box}
+.pdf-page-layout-panel.hidden{display:none}
+.pdf-page-layout-card{width:min(520px,calc(100vw - 32px));background:#fff;border:1px solid #d8d8d8;border-radius:14px;box-shadow:0 18px 50px rgba(0,0,0,.22);padding:18px;box-sizing:border-box}
+.pdf-page-layout-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.pdf-page-layout-grid label{display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:700}
+.pdf-page-layout-grid select{height:38px;border:1px solid #cfd3d8;border-radius:8px;padding:0 10px;background:#fff}
+@media(max-width:560px){.pdf-page-layout-grid{grid-template-columns:1fr}.pdf-page-layout-panel{padding-top:70px}}
+
 .pdf-preview-loading {
   width:min(794px,calc(100vw - 36px));
   margin:40px auto;
@@ -2528,6 +2551,7 @@ body::after {
   </div>
   <div class="pdf-preview-body" id="pdfPreviewBody"></div>
 </div>
+
 
 <!-- YAZDIRMA ALANI -->
 <div id="printArea"></div>
@@ -3663,8 +3687,37 @@ function statusBadgeHtml(order) {
   const lateChip = isOverdue(order) ? `<span class="status-badge status-gecikti late-chip">Gecikti</span>` : "";
   return lateChip ? `<span class="status-cell">${badge}${lateChip}</span>` : badge;
 }
+function refreshVisibleStatusBadges(orderId) {
+  const id = Number(orderId);
+  const order = allOrders.find((o) => o.id === id);
+  if (!order) return;
+  document.querySelectorAll(`.status-badge-btn[data-id="${id}"]`).forEach((oldBtn) => {
+    const holder = oldBtn.parentElement;
+    if (!holder) return;
+    const replacement = document.createRange().createContextualFragment(statusBadgeHtml(order));
+    if (oldBtn.parentElement.classList.contains("status-cell")) {
+      const lateChip = holder.querySelector('.late-chip');
+      holder.innerHTML = statusBadgeHtml(order);
+    } else {
+      oldBtn.replaceWith(replacement);
+    }
+  });
+  // Yeni oluşturulan butonlara tekrar tıklama olayını bağla.
+  document.querySelectorAll(`.status-badge-btn[data-id="${id}"]`).forEach((btn) => {
+    if (btn.dataset.statusBound === "1") return;
+    btn.dataset.statusBound = "1";
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const current = allOrders.find((o) => o.id === Number(btn.dataset.id));
+      if (current) showStatusMenu(btn, current);
+    });
+  });
+}
+
 function bindStatusBadgeClicks(scopeEl) {
   scopeEl.querySelectorAll(".status-badge-btn").forEach((btn) => {
+    if (btn.dataset.statusBound === "1") return;
+    btn.dataset.statusBound = "1";
     btn.addEventListener("click", (e) => {
       e.stopPropagation();
       const order = allOrders.find((o) => o.id === Number(btn.dataset.id));
@@ -3715,9 +3768,11 @@ async function updateOrderStatus(id, status) {
   }
 
   rebuildDerivedIndexes();
-  // Kullanıcının bulunduğu sekmeyi değiştirme. Sadece mevcut görünümü güncelle.
+  // Durumu önce RAM'de değiştirdiğimiz için tüm açık pencerelerde aynı anda göster.
+  // Ana liste/grup özetleri yeniden çizilir; açık modal, geçmiş ve sevkiyat gibi alanlardaki
+  // mevcut durum rozetleri de ayrıca yerinde güncellenir.
   renderOrdersView();
-  if (currentDetailOrderId === id && !document.getElementById("detailModal").classList.contains("hidden")) openDetailModal(id);
+  refreshVisibleStatusBadges(id);
   showToast(`Durum "${status}" olarak güncellendi.`);
 
   try {
@@ -3731,6 +3786,7 @@ async function updateOrderStatus(id, status) {
     if (product && productSnapshot) Object.assign(product, productSnapshot);
     rebuildDerivedIndexes();
     renderOrdersView();
+    refreshVisibleStatusBadges(id);
     showToast("Durum kaydedilemedi; önceki duruma geri dönüldü.");
   }
 }
@@ -3899,7 +3955,7 @@ function colorFabricText(o) {
 function buildOrderGroups(list) {
   const map = new Map();
   (list || []).forEach((o) => {
-    if (!o || o.status === "İptal") return;
+    if (!o) return;
     const key = `${normName(o.customer || "")}||${o.deliveryDate || "NO_DATE"}`;
     if (!map.has(key)) map.set(key, []);
     map.get(key).push(o);
@@ -4325,12 +4381,18 @@ async function setPendingOrderPhoto(file) {
 async function getOrderPhotoSignedUrl(orderId) {
   if (!supa || !orderId) return "";
   try {
+    const folder = `orders/${Number(orderId)}`;
+    const { data: files, error: listError } = await supa.storage
+      .from(ORDER_PHOTO_BUCKET)
+      .list(folder, { limit: 1, search: "photo.jpg" });
+    // Fotoğraf yoksa createSignedUrl çağrısı yapma; böylece eksik dosyalarda
+    // gereksiz 400 (Bad Request) istekleri oluşmaz.
+    if (listError || !Array.isArray(files) || !files.some(f => f?.name === "photo.jpg")) return "";
     const path = orderPhotoPath(orderId);
     const { data, error } = await supa.storage.from(ORDER_PHOTO_BUCKET).createSignedUrl(path, 60 * 60);
     if (error || !data?.signedUrl) return "";
     return data.signedUrl;
-  } catch (e) {
-    console.warn("Sipariş fotoğrafı okunamadı:", e);
+  } catch (_) {
     return "";
   }
 }
@@ -4962,7 +5024,7 @@ const PRONTO_PDF_PREVIEW_STYLES = `
 .shipment-print-footer{margin-top:24px!important;padding-top:10px!important;border-top:1px solid #bbb!important;font-family:Arial,Helvetica,sans-serif!important;font-size:10px!important;color:#666!important}
 `;
 function loadProntoPdfLibraries() {
-  if (window.html2canvas && window.jspdf) return Promise.resolve();
+  if (window.html2canvas && window.jspdf && window.jspdf.jsPDF && typeof window.jspdf.jsPDF.API?.autoTable === "function") return Promise.resolve();
   if (prontoPdfLibPromise) return prontoPdfLibPromise;
 
   prontoPdfLibPromise = new Promise((resolve, reject) => {
@@ -4983,8 +5045,9 @@ function loadProntoPdfLibraries() {
     };
     Promise.all([
       new Promise((res, rej) => loadScript("https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js", res)),
-      new Promise((res, rej) => loadScript("https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js", res))
-    ]).then(resolve).catch(reject);
+      new Promise((res, rej) => loadScript("https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js", res)),
+      new Promise((res, rej) => loadScript("https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.4/dist/jspdf.plugin.autotable.min.js", res))
+    ]).then(() => resolve()).catch(reject);
   }).catch(err => {
     prontoPdfLibPromise = null;
     throw err;
@@ -4999,102 +5062,170 @@ function safePdfFileName(name) {
     .trim() || "PRONTO";
 }
 
-async function downloadPrintAreaAsPdf(fileName, previewWindow = null) {
-  await loadProntoPdfLibraries();
-  if (!window.html2canvas || !window.jspdf || !window.jspdf.jsPDF) {
-    throw new Error("PDF kütüphaneleri hazır değil.");
-  }
-  const source = document.getElementById("printArea");
-  if (!source) throw new Error("PDF alanı bulunamadı.");
-
-  // PDF için ekranda görünmeyen, sabit A4 genişliğinde temiz bir kopya oluşturulur.
-  // Böylece uygulamanın mevcut CSS/layout yapısı etkilenmez.
+function buildProntoPdfPage(source, pdfOrientation = "landscape", mode = "preview") {
+  const isPortrait = pdfOrientation === "portrait";
+  const wmm = isPortrait ? 210 : 297;
+  const hmm = isPortrait ? 297 : 210;
   const wrapper = document.createElement("div");
+  wrapper.id = mode === "preview" ? "prontoPdfPreviewPage" : "prontoPdfDownloadPage";
   wrapper.style.cssText = [
-    "position:fixed", "left:-100000px", "top:0", "width:794px", "box-sizing:border-box",
-    "padding:32px", "background:#fff", "color:#111", "font-family:Arial,Helvetica,sans-serif",
-    "font-size:12px", "line-height:1.35", "z-index:-9999", "display:block"
+    "background:#fff",
+    "color:#111",
+    "font-family:Arial,Helvetica,sans-serif",
+    "font-size:12px",
+    "line-height:1.35",
+    "box-sizing:border-box",
+    `width:${wmm}mm`,
+    `min-height:${hmm}mm`,
+    `padding:${Math.max(3, Math.min(18, Number(prontoPdfLayoutSettings?.margin)||7))}mm`,
+    mode === "preview" ? "margin:18px auto" : "margin:0",
+    mode === "preview" ? "box-shadow:0 8px 30px rgba(0,0,0,.14)" : "box-shadow:none",
+    "overflow:hidden"
   ].join(";");
 
   const clone = source.cloneNode(true);
   clone.removeAttribute("id");
-  clone.style.cssText = "display:block!important;position:static!important;width:100%!important;max-width:none!important;margin:0!important;padding:0!important;background:#fff!important;color:#111!important;box-sizing:border-box!important;";
+  const layoutScale = Math.max(.7, Math.min(1.2, Number(prontoPdfLayoutSettings?.scale)||1));
+  clone.style.cssText = `display:block!important;position:static!important;width:${100/layoutScale}%!important;max-width:none!important;margin:0!important;padding:0!important;background:#fff!important;color:#111!important;box-sizing:border-box!important;transform:scale(${layoutScale})!important;transform-origin:top left!important;`;
+  clone.querySelectorAll("script,style,button,input,textarea,select").forEach(n => n.remove());
   wrapper.appendChild(clone);
+
+  const style = document.createElement("style");
+  style.textContent = PRONTO_PDF_PREVIEW_STYLES + `
+html,body{margin:0!important;padding:0!important;background:#fff!important}
+#${wrapper.id}{box-sizing:border-box!important;background:#fff!important;color:#111!important;}
+#${wrapper.id} img{max-width:100%!important;}
+@media print{
+  @page{size:${wmm}mm ${hmm}mm;margin:${Math.max(3, Math.min(18, Number(prontoPdfLayoutSettings.margin)||7))}mm!important;}
+  #${wrapper.id}{width:${wmm}mm!important;min-height:${hmm}mm!important;margin:0!important;padding:7mm!important;box-shadow:none!important;overflow:hidden!important;}
+}`;
+  wrapper.appendChild(style);
+  return { wrapper, wmm, hmm };
+}
+
+async function downloadPrintAreaAsPdf(fileName, previewWindow = null, pdfOrientation = "landscape", skipLayout = false) {
+  if (!skipLayout && !previewWindow) {
+    openPdfLayoutEditor(fileName, pdfOrientation);
+    return;
+  }
+  await loadProntoPdfLibraries();
+  if (!window.jspdf || !window.jspdf.jsPDF) throw new Error("PDF kütüphanesi hazır değil.");
+  if (!window.html2canvas) throw new Error("PDF görüntüleme kütüphanesi hazır değil.");
+  const source = document.getElementById("printArea");
+  if (!source) throw new Error("PDF alanı bulunamadı.");
+
+  // PDF ve ön izleme aynı DOM + aynı CSS + aynı A4 ölçüsünü kullanır.
+  const { wrapper, wmm, hmm } = buildProntoPdfPage(source, pdfOrientation, "download");
+  wrapper.style.position = "fixed";
+  wrapper.style.left = "-10000px";
+  wrapper.style.top = "0";
+  wrapper.style.zIndex = "-1";
   document.body.appendChild(wrapper);
 
-  // PDF'e özel, sabit ölçülü tablo stilleri. Ekran görünümüne dokunmaz.
-  const style = document.createElement("style");
-  style.textContent = PRONTO_PDF_PREVIEW_STYLES;
-  wrapper.appendChild(style);
-
   try {
-    await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
-    if (document.fonts && document.fonts.ready) await document.fonts.ready;
-    const renderScale = 2.2;
-    const canvas = await window.html2canvas(wrapper, {
+    const images = Array.from(wrapper.querySelectorAll("img"));
+    await Promise.all(images.map((img) => new Promise((resolve) => {
+      if (img.complete) return resolve();
+      let done=false;
+      const finish=()=>{ if(done)return; done=true; resolve(); };
+      img.addEventListener("load",finish,{once:true});
+      img.addEventListener("error",finish,{once:true});
+      setTimeout(finish,1200);
+    })));
+
+    const cssPxPerMm = 3.7795275591;
+    const pageWpx = wmm * cssPxPerMm;
+    const pageHpx = hmm * cssPxPerMm;
+    const renderScale = 2;
+    const canvas = await html2canvas(wrapper, {
       scale: renderScale,
+      backgroundColor: "#ffffff",
       useCORS: true,
       allowTaint: false,
-      backgroundColor: "#ffffff",
       logging: false,
-      width: 794,
-      windowWidth: 794,
+      imageTimeout: 2500,
+      windowWidth: Math.ceil(pageWpx),
+      width: Math.ceil(pageWpx),
+      height: Math.max(Math.ceil(pageHpx), wrapper.scrollHeight),
       scrollX: 0,
       scrollY: 0
     });
 
     const { jsPDF } = window.jspdf;
-    const pdf = new jsPDF({orientation:"portrait",unit:"mm",format:"a4",compress:true});
-    const margin = 7;
-    const contentW = 210 - margin*2;
-    const contentH = 297 - margin*2;
-    const pxPerMm = canvas.width / contentW;
-    let pagePxH = Math.floor(contentH * pxPerMm);
-    // Müşteri/Tedarikçi raporlarında her rapor sayfası zaten ayrı bir A4 bloğudur.
-    // Genel PDF dilimleme yüksekliği ile bu blokların yüksekliği birebir örtüşmezse
-    // 2. sayfanın başlığı 1. sayfanın altında görünebilir. Bu raporlarda dilimi
-    // doğrudan gerçek A4 blok yüksekliğine hizala.
-    const entityPage = wrapper.querySelector(".entity-report-page");
-    if (entityPage) {
-      const entityCssH = entityPage.getBoundingClientRect().height;
-      if (entityCssH > 0) pagePxH = Math.floor(entityCssH * renderScale);
+    const pdf = new jsPDF({ orientation: pdfOrientation, unit:"mm", format:"a4", compress:true });
+    const pxPerPage = canvas.width * (hmm / wmm);
+    const pageCount = Math.max(1, Math.ceil(canvas.height / pxPerPage));
+
+    let pdfFont="helvetica";
+    try {
+      if(window.__prontoNotoFont){
+        pdf.addFileToVFS("NotoSans-Regular.ttf",window.__prontoNotoFont);
+        pdf.addFont("NotoSans-Regular.ttf","NotoSans","normal");
+        pdfFont="NotoSans";
+      }
+      pdf.setFont(pdfFont,"normal");
+    } catch(_){}
+
+    // Metin katmanı ön izleme DOM'undan alınır; görsel katman ile aynı koordinat sistemindedir.
+    const wrapperRect=wrapper.getBoundingClientRect();
+    const textItems=[];
+    const walker=document.createTreeWalker(wrapper,NodeFilter.SHOW_TEXT,{
+      acceptNode(node){
+        const value=String(node.nodeValue||"").replace(/\u00a0/g," ");
+        if(!value.trim())return NodeFilter.FILTER_REJECT;
+        const parent=node.parentElement;if(!parent)return NodeFilter.FILTER_REJECT;
+        if(parent.closest("script,style,button,input,textarea,select"))return NodeFilter.FILTER_REJECT;
+        const cs=getComputedStyle(parent);
+        if(cs.display==="none"||cs.visibility==="hidden"||Number(cs.opacity||1)===0)return NodeFilter.FILTER_REJECT;
+        return NodeFilter.FILTER_ACCEPT;
+      }
+    });
+    while(walker.nextNode()){
+      const node=walker.currentNode, raw=String(node.nodeValue||"").replace(/\u00a0/g," ");
+      if(!raw.trim())continue;
+      const parent=node.parentElement, cs=getComputedStyle(parent);
+      const fontPx=Math.max(7,Math.min(24,parseFloat(cs.fontSize)||12));
+      const weight=parseInt(cs.fontWeight,10)||400;
+      const range=document.createRange();range.selectNodeContents(node);
+      const rects=Array.from(range.getClientRects()).filter(r=>r.width>.5&&r.height>.5);
+      if(!rects.length)continue;
+      const r=rects[0];
+      textItems.push({text:raw.trim(),x:r.left-wrapperRect.left,y:r.top-wrapperRect.top,width:Math.max(8,r.width),fontPx,bold:weight>=600});
+    }
+    const addText=(pageIndex)=>{
+      const top=pageIndex*pxPerPage,bottom=top+pxPerPage;
+      let invisible=false;
+      try{if(typeof pdf.GState==="function"&&typeof pdf.setGState==="function"){pdf.setGState(new pdf.GState({opacity:0}));invisible=true;}}catch(_){}
+      if(!invisible)pdf.setTextColor(255,255,255);
+      for(const item of textItems){
+        if(item.y<top-2||item.y>bottom+2)continue;
+        const pxToMm=wmm/canvas.width;
+        const x=Math.max(1,Math.min(wmm-1,item.x*pxToMm));
+        const y=Math.max(2,(item.y-top+item.fontPx*1.05)*pxToMm);
+        pdf.setFontSize(Math.max(6,Math.min(20,item.fontPx*.75)));
+        try{pdf.setFont(pdfFont,item.bold?"bold":"normal");}catch(_){pdf.setFont(pdfFont,"normal");}
+        try{pdf.text(item.text,x,y);}catch(_){}
+      }
+      if(invisible){try{pdf.setGState(new pdf.GState({opacity:1}));}catch(_){} } else pdf.setTextColor(30,30,30);
+    };
+
+    for(let i=0;i<pageCount;i++){
+      if(i>0)pdf.addPage();
+      const sy=Math.round(i*pxPerPage), sh=Math.min(Math.round(pxPerPage),canvas.height-sy);
+      const pageCanvas=document.createElement("canvas");pageCanvas.width=canvas.width;pageCanvas.height=Math.max(1,sh);
+      const ctx=pageCanvas.getContext("2d");ctx.fillStyle="#fff";ctx.fillRect(0,0,pageCanvas.width,pageCanvas.height);
+      ctx.drawImage(canvas,0,sy,canvas.width,sh,0,0,canvas.width,sh);
+      const imgData=pageCanvas.toDataURL("image/png");
+      pdf.addImage(imgData,"PNG",0,0,wmm,hmm*(sh/pxPerPage),undefined,"FAST");
+      addText(i);
     }
 
-    let offset = 0, page = 0;
-    while (offset < canvas.height) {
-      const h = Math.min(pagePxH, canvas.height - offset);
-      const slice = document.createElement("canvas");
-      slice.width = canvas.width;
-      slice.height = h;
-      const ctx = slice.getContext("2d");
-      ctx.fillStyle = "#fff";
-      ctx.fillRect(0,0,slice.width,slice.height);
-      ctx.drawImage(canvas,0,offset,canvas.width,h,0,0,canvas.width,h);
-      if (page++) pdf.addPage();
-      pdf.addImage(slice.toDataURL("image/jpeg",0.92),"JPEG",margin,margin,contentW,h/pxPerMm,undefined,"FAST");
-      offset += h;
-    }
-    if (previewWindow) {
-      // bloburl çıktısı bazı Chrome/Electron senaryolarında about:blank
-      // penceresine güvenilir şekilde yönlenmeyebiliyor. Blob'u doğrudan
-      // oluşturup object URL ile açıyoruz.
-      const pdfBlob = pdf.output("blob");
-      const blobUrl = URL.createObjectURL(pdfBlob);
-
-      previewWindow.location.href = blobUrl;
-      previewWindow.focus();
-
-      // Ön izleme penceresi kapatıldıktan sonra URL'yi temizle.
-      const cleanupPreviewUrl = () => {
-        try { URL.revokeObjectURL(blobUrl); } catch (_) {}
-      };
-      setTimeout(cleanupPreviewUrl, 10 * 60 * 1000);
-    } else {
-      pdf.save(`${safePdfFileName(fileName)}.pdf`);
-    }
-  } finally {
-    wrapper.remove();
-  }
+    if(previewWindow){
+      const blobUrl=URL.createObjectURL(pdf.output("blob"));
+      previewWindow.location.href=blobUrl;previewWindow.focus();
+      setTimeout(()=>{try{URL.revokeObjectURL(blobUrl);}catch(_){}},10*60*1000);
+    }else pdf.save(`${safePdfFileName(fileName)}.pdf`);
+  } finally { wrapper.remove(); }
 }
 
 /* =======================================================
@@ -5102,6 +5233,100 @@ async function downloadPrintAreaAsPdf(fileName, previewWindow = null) {
    ======================================================= */
 
 let pendingPdfAction = null;
+let prontoPdfLayoutPending = null;
+let prontoPdfLayoutBusy = false;
+let prontoPdfLayoutSettings = { scale: 1, margin: 7 };
+
+function closePdfLayoutEditor(){
+  const m=document.getElementById("pdfLayoutEditorModal");
+  if(!m)return;
+  m.classList.add("hidden"); m.setAttribute("aria-hidden","true");
+  prontoPdfLayoutPending=null; prontoPdfLayoutBusy=false;
+}
+function updatePdfLayoutEditor(){
+  const page=document.getElementById("pdfLayoutEditorPage");
+  const zoom=document.getElementById("pdfLayoutZoom");
+  const margin=document.getElementById("pdfLayoutMargin");
+  const zoomOut=document.getElementById("pdfLayoutZoomValue");
+  const marginOut=document.getElementById("pdfLayoutMarginValue");
+  if(!page)return;
+  const z=Math.max(.7,Math.min(1.2,Number(zoom?.value||100)/100));
+  const m=Math.max(3,Math.min(18,Number(margin?.value||7)));
+  prontoPdfLayoutSettings.scale=z; prontoPdfLayoutSettings.margin=m;
+  if(zoomOut)zoomOut.textContent=`%${Math.round(z*100)}`;
+  if(marginOut)marginOut.textContent=`${m} mm`;
+  page.style.transform=`scale(${z})`;
+  page.style.transformOrigin="top center";
+  const wrap=document.getElementById("pdfLayoutCanvas");
+  if(wrap){
+    const baseW=page.dataset.baseWidth||"1120"; const baseH=page.dataset.baseHeight||"790";
+    wrap.style.minHeight=`${Math.round(Number(baseH)*z+40)}px`;
+    wrap.style.minWidth=`${Math.round(Number(baseW)*z+40)}px`;
+  }
+}
+function setPdfLayoutOrientation(orientation){
+  if(!prontoPdfLayoutPending) return;
+  const next = orientation === "portrait" ? "portrait" : "landscape";
+  prontoPdfLayoutPending.orientation = next;
+  const source = document.getElementById("printArea");
+  const host = document.getElementById("pdfLayoutCanvas");
+  if(!source || !host) return;
+  const built = buildProntoPdfPage(source, next, "layout");
+  const wrapper = built.wrapper;
+  wrapper.id = "pdfLayoutEditorPage";
+  wrapper.style.margin = "0 auto";
+  wrapper.style.boxShadow = "0 3px 18px rgba(0,0,0,.16)";
+  wrapper.style.overflow = "hidden";
+  wrapper.dataset.baseWidth = String(Math.round(built.wmm * 3.7795));
+  wrapper.dataset.baseHeight = String(Math.round(built.hmm * 3.7795));
+  host.innerHTML = "";
+  host.appendChild(wrapper);
+  const btn = document.getElementById("pdfLayoutOrientationBtn");
+  const menu = document.getElementById("pdfLayoutOrientationMenu");
+  if(btn){ btn.textContent = `A4 ${next === "portrait" ? "Dikey" : "Yatay"} ▾`; btn.setAttribute("aria-expanded","false"); }
+  if(menu) menu.classList.add("hidden");
+  updatePdfLayoutEditor();
+}
+
+function openPdfLayoutEditor(fileName, orientation){
+  const modal=document.getElementById("pdfLayoutEditorModal");
+  const host=document.getElementById("pdfLayoutCanvas");
+  if(!modal||!host){ showToast("PDF Sayfa Düzeni açılamadı."); return; }
+  prontoPdfLayoutPending={fileName,orientation};
+  const source=document.getElementById("printArea");
+  if(!source){showToast("PDF alanı bulunamadı.");return;}
+  const {wrapper,wmm,hmm}=buildProntoPdfPage(source,orientation,"layout");
+  wrapper.id="pdfLayoutEditorPage";
+  wrapper.style.margin="0 auto";
+  wrapper.style.boxShadow="0 3px 18px rgba(0,0,0,.16)";
+  wrapper.style.overflow="hidden";
+  wrapper.dataset.baseWidth=String(Math.round(wmm*3.7795));
+  wrapper.dataset.baseHeight=String(Math.round(hmm*3.7795));
+  host.innerHTML=""; host.appendChild(wrapper);
+  const zoom=document.getElementById("pdfLayoutZoom"), margin=document.getElementById("pdfLayoutMargin");
+  if(zoom)zoom.value=100; if(margin)margin.value=7;
+  const orientLabel=document.getElementById("pdfLayoutOrientationBtn");
+  if(orientLabel) orientLabel.textContent=`A4 ${orientation === "portrait" ? "Dikey" : "Yatay"} ▾`;
+  const orientMenu=document.getElementById("pdfLayoutOrientationMenu");
+  if(orientMenu) orientMenu.classList.add("hidden");
+  if(orientLabel) orientLabel.setAttribute("aria-expanded","false");
+  prontoPdfLayoutSettings={scale:1,margin:7};
+  modal.classList.remove("hidden"); modal.setAttribute("aria-hidden","false");
+  updatePdfLayoutEditor();
+}
+async function confirmPdfLayoutAndDownload(){
+  if(prontoPdfLayoutBusy||!prontoPdfLayoutPending)return;
+  const pending={...prontoPdfLayoutPending};
+  prontoPdfLayoutBusy=true;
+  const btn=document.getElementById("pdfLayoutDownloadBtn");
+  if(btn){btn.disabled=true;btn.textContent="PDF Hazırlanıyor…";}
+  closePdfLayoutEditor();
+  try{
+    await downloadPrintAreaAsPdf(pending.fileName,null,pending.orientation,true);
+    showToast("PDF oluşturuldu.");
+  }catch(e){console.error("PDF oluşturma hatası:",e);showToast(e.message||"PDF oluşturulamadı.");}
+  finally{prontoPdfLayoutBusy=false;if(btn){btn.disabled=false;btn.textContent="PDF Oluştur";}}
+}
 
 function closePdfActionChoice() {
   const modal = document.getElementById("pdfActionChoiceModal");
@@ -5133,7 +5358,7 @@ function openPdfActionChoice(action) {
   modal.setAttribute("aria-hidden", "false");
 }
 
-async function previewCurrentPrintArea(title) {
+async function previewCurrentPrintArea(title, pdfOrientation = null) {
   const modal = document.getElementById("pdfPreviewModal");
   const body = document.getElementById("pdfPreviewBody");
   const previewTitle = document.getElementById("pdfPreviewTitle");
@@ -5147,89 +5372,89 @@ async function previewCurrentPrintArea(title) {
   modal.classList.remove("hidden");
   modal.setAttribute("aria-hidden", "false");
 
-  const wrapper = document.createElement("div");
-  wrapper.id = "prontoPdfPreviewPage";
-  wrapper.style.cssText = "width:794px;min-height:1123px;margin:18px auto;padding:32px;background:#fff;color:#111;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:1.35;box-sizing:border-box;box-shadow:0 8px 30px rgba(0,0,0,.14);";
+  const previewIsPortrait = pdfOrientation ? pdfOrientation === "portrait" : /teslim.?formu/i.test(String(title || ""));
+  const { wrapper } = buildProntoPdfPage(source, previewIsPortrait ? "portrait" : "landscape", "preview");
+  wrapper.style.margin = "18px auto";
+  wrapper.style.boxShadow = "0 8px 30px rgba(0,0,0,.14)";
+  wrapper.style.overflow = "hidden";
 
-  const clone = source.cloneNode(true);
-  clone.removeAttribute("id");
-  clone.style.cssText = "display:block!important;position:static!important;width:100%!important;max-width:none!important;margin:0!important;padding:0!important;background:#fff!important;color:#111!important;box-sizing:border-box!important;";
-  wrapper.appendChild(clone);
-
-  const style = document.createElement("style");
-  style.textContent = PRONTO_PDF_PREVIEW_STYLES + `
-html,body{margin:0;padding:0;background:#ececec}
-@media print{
-  @page{size:A4 portrait;margin:7mm!important;}
-  html,body{background:#fff!important;width:auto!important;min-width:0!important;margin:0!important;padding:0!important;}
-  #prontoPdfPreviewPage{
-    width:196mm!important;
-    min-height:283mm!important;
-    margin:0 auto!important;
-    padding:7.9mm!important;
-    box-shadow:none!important;
-    background:#fff!important;
-    box-sizing:border-box!important;
-  }
-}`;
-  wrapper.appendChild(style);
   body.innerHTML = "";
   body.appendChild(wrapper);
+
 }
 
 async function printCurrentPdfPreview() {
   const page = document.getElementById("prontoPdfPreviewPage");
-  if (!page) {
-    showToast("Yazdırılacak PDF ön izlemesi bulunamadı.");
-    return;
-  }
+  if (!page) { showToast("Yazdırılacak PDF ön izlemesi bulunamadı."); return; }
 
+  // Ön izleme ile aynı yönü kullan: Teslim Formu dikey, diğerleri yatay.
+  const isPortrait = (page.offsetWidth || 0) < (page.offsetHeight || 0);
+  const printW = isPortrait ? 210 : 297;
+  const printH = isPortrait ? 297 : 210;
+  const printSize = `${printW}mm ${printH}mm`;
+
+  // Yazdırırken görsel dosyalarını geçici olarak optimize et.
+  // Ön izleme DOM'u değişmez; yazdırma bittiğinde tüm src değerleri geri yüklenir.
   const images = Array.from(page.querySelectorAll("img"));
-  await Promise.all(images.map((img) => new Promise((resolve) => {
-    if (img.complete && img.naturalWidth > 0) return resolve();
-    img.addEventListener("load", resolve, { once: true });
-    img.addEventListener("error", resolve, { once: true });
-    setTimeout(resolve, 3000);
-  })));
+  const originalSrc = new Map();
+  const optimized = [];
 
-  // Electron'da window.open() ile oluşturulan alt pencere bazı sürümlerde
-  // yazdırma diyaloğunu tetiklemeyebiliyor. Bu nedenle yazdırmayı doğrudan
-  // mevcut renderer penceresinde yapıyoruz. Uygulamanın ekran görünümü
-  // yazdırma bittikten sonra aynen geri yüklenir.
+  const optimizeImageForPrint = (img) => new Promise((resolve) => {
+    try {
+      if (!img || !img.src || img.src.startsWith("data:image/svg")) return resolve();
+      const naturalW = img.naturalWidth || 0, naturalH = img.naturalHeight || 0;
+      if (!naturalW || !naturalH) return resolve();
+      // PDF'de fiziksel boyutu aşmayacak kadar çözünürlük; gereksiz dev bitmapleri küçült.
+      const maxW = Math.min(1600, Math.max(700, Math.round((img.clientWidth || naturalW) * 3)));
+      const maxH = Math.min(1200, Math.max(500, Math.round((img.clientHeight || naturalH) * 3)));
+      if (naturalW <= maxW && naturalH <= maxH && img.src.startsWith("data:image/jpeg")) return resolve();
+      const scale = Math.min(1, maxW / naturalW, maxH / naturalH);
+      const w = Math.max(1, Math.round(naturalW * scale));
+      const h = Math.max(1, Math.round(naturalH * scale));
+      const canvas = document.createElement("canvas");
+      canvas.width = w; canvas.height = h;
+      const ctx = canvas.getContext("2d", { alpha:false });
+      if (!ctx) return resolve();
+      ctx.fillStyle = "#fff"; ctx.fillRect(0,0,w,h);
+      ctx.drawImage(img,0,0,w,h);
+      const data = canvas.toDataURL("image/jpeg", 0.82);
+      if (data && data.length < img.src.length * 0.92) {
+        originalSrc.set(img, img.src); img.src = data; optimized.push(img);
+      }
+    } catch (_) {}
+    resolve();
+  });
+
+  await Promise.all(images.map(optimizeImageForPrint));
+
   const printStyle = document.createElement("style");
   printStyle.id = "prontoDirectPrintStyle";
   printStyle.textContent = `
-    @page{size:A4 portrait;margin:7mm!important;}
+    @page{size:${printSize};margin:7mm!important;}
     html,body{background:#fff!important;width:auto!important;min-width:0!important;margin:0!important;padding:0!important;}
     body > *:not(#pdfPreviewModal){display:none!important;}
     #pdfPreviewModal{display:block!important;position:static!important;inset:auto!important;background:#fff!important;overflow:visible!important;}
     #pdfPreviewModal *{visibility:visible!important;}
     #pdfPreviewBody{display:block!important;position:static!important;width:100%!important;height:auto!important;overflow:visible!important;padding:0!important;background:#fff!important;}
-    #prontoPdfPreviewPage{width:196mm!important;min-height:283mm!important;margin:0 auto!important;padding:7.9mm!important;box-shadow:none!important;background:#fff!important;color:#111!important;box-sizing:border-box!important;}
+    #prontoPdfPreviewPage{width:${printW}mm!important;min-height:${printH}mm!important;margin:0 auto!important;padding:7mm!important;box-shadow:none!important;background:#fff!important;color:#111!important;box-sizing:border-box!important;}
     .pdf-preview-topbar,.pdf-preview-close,.pdf-preview-print{display:none!important;}
+    img{image-rendering:auto!important;}
     *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}
   `;
   document.head.appendChild(printStyle);
-
   const previousOverflow = document.body.style.overflow;
   document.body.style.overflow = "visible";
 
   const restore = () => {
+    for (const [img, src] of originalSrc) img.src = src;
     document.body.style.overflow = previousOverflow;
     printStyle.remove();
   };
-
-  window.addEventListener("afterprint", restore, { once: true });
+  window.addEventListener("afterprint", restore, { once:true });
   setTimeout(() => {
-    try {
-      window.focus();
-      window.print();
-    } catch (err) {
-      restore();
-      showToast("Yazdırma başlatılamadı.");
-      console.error("PRONTO yazdırma hatası:", err);
-    }
-  }, 150);
+    try { window.focus(); window.print(); }
+    catch (err) { restore(); showToast("Yazdırma başlatılamadı."); console.error("PRONTO yazdırma hatası:", err); }
+  }, 80);
 }
 
 function closePdfPreview() {
@@ -5276,7 +5501,7 @@ async function exportOrderGroupPdf(groupKey, previewOnly=false) {
       <tbody>${rows}</tbody></table>
     <div class="print-footer">PRONTO — Ofischi Premium için hazırlandı</div>`;
   if (previewOnly) { await previewCurrentPrintArea(`${group.customer} · ${group.lineCount} kalem - PDF Ön İzleme`); return; }
-  await downloadPrintAreaAsPdf(`Siparis_Grubu_${safePdfFileName(group.customer)}`);
+  await downloadPrintAreaAsPdf(`Siparis_Grubu_${safePdfFileName(group.customer)}`, null, "landscape");
 }
 
 async function previewOrderPdf(id) {
@@ -5371,22 +5596,23 @@ async function exportOrderPdf(id, previewWindow = null, fastPreview = false, inA
 
     const wrapper = targetDocument.createElement("div");
     wrapper.id = "prontoPdfPreviewPage";
-    wrapper.style.cssText = "width:794px;min-height:1123px;margin:18px auto;padding:32px;background:#fff;color:#111;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:1.35;box-sizing:border-box;box-shadow:0 8px 30px rgba(0,0,0,.14);";
+    wrapper.style.cssText = "width:1123px;min-height:794px;margin:18px auto;padding:32px;background:#fff;color:#111;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:1.35;box-sizing:border-box;box-shadow:0 8px 30px rgba(0,0,0,.14);";
 
     const clone = previewSource.cloneNode(true);
     clone.removeAttribute("id");
-    clone.style.cssText = "display:block!important;position:static!important;width:100%!important;max-width:none!important;margin:0!important;padding:0!important;background:#fff!important;color:#111!important;box-sizing:border-box!important;";
+    const layoutScale = Math.max(.7, Math.min(1.2, Number(prontoPdfLayoutSettings?.scale)||1));
+  clone.style.cssText = `display:block!important;position:static!important;width:${100/layoutScale}%!important;max-width:none!important;margin:0!important;padding:0!important;background:#fff!important;color:#111!important;box-sizing:border-box!important;transform:scale(${layoutScale})!important;transform-origin:top left!important;`;
     wrapper.appendChild(clone);
 
     const style = targetDocument.createElement("style");
     style.textContent = PRONTO_PDF_PREVIEW_STYLES + `
 html,body{margin:0;padding:0;background:#ececec}
 @media print{
-  @page{size:A4 portrait;margin:7mm!important;}
+  @page{size:A4 landscape;margin:7mm!important;}
   html,body{background:#fff!important;width:auto!important;min-width:0!important;margin:0!important;padding:0!important;}
   #prontoPdfPreviewPage{
-    width:196mm!important;
-    min-height:283mm!important;
+    width:283mm!important;
+    min-height:196mm!important;
     margin:0 auto!important;
     padding:7.9mm!important;
     box-shadow:none!important;
@@ -5432,7 +5658,7 @@ html,body{margin:0;padding:0;background:#ececec}
     }
   }
 
-  await downloadPrintAreaAsPdf(`Siparis_${orderNo(order)}`, previewWindow);
+  await downloadPrintAreaAsPdf(`Siparis_${orderNo(order)}`, previewWindow, "landscape");
 }
 function confirmMarkDelivered(id) {
   showConfirm("Bu sipariş teslim edildi olarak işaretlensin mi?", async () => {
@@ -5670,6 +5896,24 @@ function bindOrderEvents() {
     else if (action.type === "entityHistory") { const start=document.getElementById("entityPdfStartDate")?.value||"", end=document.getElementById("entityPdfEndDate")?.value||""; if(start&&end&&start>end){showToast("Başlangıç tarihi, bitiş tarihinden sonra olamaz.");return;} await exportEntityHistoryPdf(action.entityType, action.id, true, start, end); }
     else if (action.type === "orderGroup") await previewOrderGroupPdf(action.groupKey);
   });
+
+  document.getElementById("pdfLayoutZoom")?.addEventListener("input", updatePdfLayoutEditor);
+  document.getElementById("pdfLayoutMargin")?.addEventListener("input", updatePdfLayoutEditor);
+  document.getElementById("pdfLayoutOrientationBtn")?.addEventListener("click", (e) => {
+    e.stopPropagation();
+    const menu = document.getElementById("pdfLayoutOrientationMenu");
+    const btn = document.getElementById("pdfLayoutOrientationBtn");
+    if(!menu) return;
+    const open = menu.classList.toggle("hidden");
+    if(btn) btn.setAttribute("aria-expanded", String(!open));
+  });
+  document.querySelectorAll("#pdfLayoutOrientationMenu [data-orientation]").forEach((item) => {
+    item.addEventListener("click", () => setPdfLayoutOrientation(item.dataset.orientation));
+  });
+  document.getElementById("pdfLayoutDownloadBtn")?.addEventListener("click", confirmPdfLayoutAndDownload);
+  document.getElementById("pdfLayoutEditorClose")?.addEventListener("click", closePdfLayoutEditor);
+  document.getElementById("pdfLayoutEditorCancel")?.addEventListener("click", closePdfLayoutEditor);
+  document.getElementById("pdfLayoutEditorModal")?.addEventListener("click", (e) => { if(e.target.id === "pdfLayoutEditorModal") closePdfLayoutEditor(); });
 
   document.getElementById("pdfActionChoiceModal")?.addEventListener("click", (e) => {
     if (e.target.id === "pdfActionChoiceModal") closePdfActionChoice();
@@ -6063,9 +6307,11 @@ async function exportEntityHistoryPdf(type, id, previewOnly = false, startDate =
     const tbodyRows = Array.from(table.tBodies[0].rows);
     const originalRows = tbodyRows.map(r => r.outerHTML);
     const chunks = [];
-    for (let i = 0; i < originalRows.length; i += (chunks.length === 0 ? 25 : 30)) {
-      const size = chunks.length === 0 ? 25 : 30;
-      chunks.push(Array.from({length: Math.min(size, originalRows.length - i)}, (_, j) => i + j));
+    // Landscape A4: keep a stable row count so wrapped rows never force a
+    // logical report page to spill into the next physical PDF page.
+    const rowsPerPage = 25;
+    for (let i = 0; i < originalRows.length; i += rowsPerPage) {
+      chunks.push(Array.from({length: Math.min(rowsPerPage, originalRows.length - i)}, (_, j) => i + j));
     }
 
     const pageHtml = chunks.map((chunk, idx) => {
@@ -6082,7 +6328,7 @@ async function exportEntityHistoryPdf(type, id, previewOnly = false, startDate =
   }
 
   if(previewOnly) await previewCurrentPrintArea(`${title} — ${escapeHtml(entity.name)}`);
-  else await downloadPrintAreaAsPdf(`Siparis_Raporu_${entity.name}`);
+  else await downloadPrintAreaAsPdf(`Siparis_Raporu_${entity.name}`, null, "landscape");
 }
 async function saveEntityFromForm() {
   const form = document.getElementById("entityForm");
@@ -6937,7 +7183,7 @@ function renderShipmentView() {
       showToast("İşlem kaydedilemedi. Tekrar deneyin.");
     }
   }));
-  bindStatusBadges(groups);
+  bindStatusBadgeClicks(groups);
 }
 
 async function exportShipmentPdf(previewOnly = false) {
@@ -6966,7 +7212,7 @@ async function exportShipmentPdf(previewOnly = false) {
     return;
   }
 
-  await downloadPrintAreaAsPdf(`Ofischi_Sevkiyat_Listesi_${todayISO()}`);
+  await downloadPrintAreaAsPdf(`Ofischi_Sevkiyat_Listesi_${todayISO()}`, null, "landscape");
 }
 
 function bindShipmentEvents() {
@@ -7085,53 +7331,47 @@ function renderDeliveryForm() {
   const deliverer = document.getElementById("deliveryFormDeliverer")?.value || "";
   const note = document.getElementById("deliveryFormNote")?.value || "";
 
-  const rows = group.orders.map((o) => {
-    const ready = o.status === "Sevkiyata Hazır";
-    const checked = deliveryFormSelectedOrderIds.has(o.id);
-    return `
+  const selectedOrders = group.orders.filter((o) => deliveryFormSelectedOrderIds.has(o.id));
+  const pdfRows = selectedOrders.map((o, index) => `
     <tr>
-      <td style="width:44px;text-align:center;">
-        <input type="checkbox" class="delivery-form-order-check" data-order-id="${escapeHtml(String(o.id))}" ${checked ? "checked" : ""} ${ready ? "" : "disabled"} aria-label="${escapeHtml(o.product || "Sipariş")}">
-      </td>
+      <td style="width:42px;text-align:center;">${index + 1}</td>
       <td>${escapeHtml(o.product || "-")}</td>
-      <td>${escapeHtml(o.quantity ?? "-")}</td>
-      <td>${escapeHtml(o.supplier || "-")}</td>
-      <td>${ready ? `<span style="font-weight:700;">Sevkiyata Hazır</span>` : `<span style="color:var(--color-text-muted);">${escapeHtml(o.status || "Hazır değil")}</span>`}</td>
-    </tr>`;
-  }).join("");
+      <td style="width:70px;text-align:center;">${escapeHtml(o.quantity ?? "-")}</td>
+    </tr>`).join("");
 
+  const logoSrc = LOGO_SRC || "";
   preview.innerHTML = `
-    <div class="delivery-form-sheet" id="deliveryFormSheet">
-      <div class="delivery-form-head">
-        <div>
-          <div class="delivery-form-title">TESLİM FORMU</div>
-          <div style="margin-top:5px;color:var(--color-text-muted);font-size:12px;">OFİSCHİ BÜRO MOBİLYALARI</div>
-        </div>
-        <div style="font-size:12px;text-align:right;">Teslim: ${escapeHtml(group.deliveryDate ? formatDate(group.deliveryDate) : "-")}</div>
-      </div>
-
-      <div class="delivery-form-meta">
-        <div class="delivery-form-meta-item"><span>Müşteri / Ünvan</span><strong>${escapeHtml(group.customerName)}</strong></div>
-        <div class="delivery-form-meta-item"><span>Teslim Tarihi</span><strong>${escapeHtml(group.deliveryDate ? formatDate(group.deliveryDate) : "-")}</strong></div>
-        <div class="delivery-form-meta-item"><span>Telefon</span><strong>${escapeHtml(customer?.phone || group.phone || "-")}</strong></div>
-        <div class="delivery-form-meta-item"><span>Adres</span><strong>${escapeHtml(customer?.address || group.address || "-")}</strong></div>
-      </div>
-
-      <table class="delivery-form-table">
-        <thead><tr><th style="width:44px;"></th><th>Ürün</th><th>Adet</th><th>Tedarikçi</th><th>Durum</th></tr></thead>
-        <tbody>${rows}</tbody>
+    <div class="delivery-form-sheet" id="deliveryFormSheet" style="background:#fff;color:#111;border:0;border-radius:0;padding:18mm 16mm 14mm;box-sizing:border-box;font-family:Arial,Helvetica,sans-serif;min-height:257mm;display:flex;flex-direction:column;">
+      ${logoSrc ? `<img src="${logoSrc}" alt="Ofischi" style="display:block;width:140px;height:auto;max-height:46px;object-fit:contain;object-position:left center;margin:0 0 10px;">` : ""}
+      <div style="font-size:11px;letter-spacing:3px;font-weight:700;margin-bottom:4px;">OFİSCHİ BÜRO MOBİLYALARI • TESLİMAT BELGESİ</div>
+      <div style="font-size:12px;letter-spacing:4px;font-weight:700;margin-bottom:10px;">TESLİM FORMU</div>
+      <div style="font-size:11px;margin-bottom:4px;">Belge tarihi: ${escapeHtml(todayISO().split("-").reverse().join("."))}</div>
+      <div style="font-size:11px;letter-spacing:1px;margin:2px 0 8px;">Müşteri / Ünvan</div>
+      <div style="font-size:12px;font-weight:700;margin-bottom:6px;">${escapeHtml(group.customerName)}</div>
+      <div style="font-size:11px;margin-bottom:5px;">Teslim Tarihi</div>
+      <div style="font-size:12px;font-weight:700;margin-bottom:7px;">${escapeHtml(group.deliveryDate ? formatDate(group.deliveryDate) : "-")}</div>
+      <div style="font-size:11px;margin-bottom:5px;">Telefon</div>
+      <div style="font-size:12px;margin-bottom:7px;">${escapeHtml(customer?.phone || group.phone || "-")}</div>
+      <div style="font-size:11px;margin-bottom:5px;">Teslimat Adresi</div>
+      <div style="font-size:12px;margin-bottom:8px;">${escapeHtml(customer?.address || group.address || "-")}</div>
+      <div style="font-size:11px;margin:6px 0 5px;">Teslim Edilen Ürünler</div>
+      <table style="width:100%;border-collapse:collapse;margin-top:2px;font-size:11px;table-layout:fixed;">
+        <thead><tr><th style="width:42px;border:1px solid #bbb;background:#262626;color:#fff;padding:7px;text-align:left;">No</th><th style="border:1px solid #bbb;background:#262626;color:#fff;padding:7px;text-align:left;">Ürün</th><th style="width:70px;border:1px solid #bbb;background:#262626;color:#fff;padding:7px;text-align:left;">Adet</th></tr></thead>
+        <tbody><tr><td style="border:1px solid #ccc;padding:7px;">No</td><td style="border:1px solid #ccc;padding:7px;">Ürün</td><td style="border:1px solid #ccc;padding:7px;">Adet</td></tr>${pdfRows}</tbody>
       </table>
-
-      ${note ? `<div style="margin-top:18px;"><strong>Not:</strong> ${escapeHtml(note)}</div>` : ""}
-
-      <div class="delivery-form-signatures">
-        <div class="delivery-form-signature">
-          <strong>Teslim Alan</strong><br>${escapeHtml(receiver || "____________________________")}
+      ${note ? `<div style="margin-top:14px;padding:10px 12px;border:1px solid #dedede;border-left:3px solid #b08d3c;background:#fafafa;font-size:10.5px;line-height:1.5;"><span style="font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#777;">Not</span><div style="margin-top:3px;">${escapeHtml(note)}</div></div>` : ""}
+      <div style="flex:1;min-height:28mm;"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:28mm;align-items:end;border-top:1px solid #d8d8d8;padding-top:9mm;margin-top:8mm;">
+        <div style="min-height:27mm;display:flex;flex-direction:column;justify-content:flex-end;">
+          <div style="font-size:9px;letter-spacing:2px;font-weight:700;color:#777;text-transform:uppercase;margin-bottom:12mm;">Teslim Alan</div>
+          <div style="border-top:1px solid #222;padding-top:5px;font-size:10.5px;font-weight:700;min-height:12mm;">${escapeHtml(receiver || "")}</div>
         </div>
-        <div class="delivery-form-signature">
-          <strong>Teslim Eden</strong><br>${escapeHtml(deliverer || "____________________________")}
+        <div style="min-height:27mm;display:flex;flex-direction:column;justify-content:flex-end;text-align:right;">
+          <div style="font-size:9px;letter-spacing:2px;font-weight:700;color:#777;text-transform:uppercase;margin-bottom:12mm;">Teslim Eden</div>
+          <div style="border-top:1px solid #222;padding-top:5px;font-size:10.5px;font-weight:700;min-height:12mm;">${escapeHtml(deliverer || "OFİSCHİ BÜRO MOBİLYALARI")}</div>
         </div>
       </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8mm;padding-top:4mm;border-top:1px solid #ededed;color:#888;font-size:8px;letter-spacing:1.5px;text-transform:uppercase;"><span>OFİSCHİ BÜRO MOBİLYALARI</span><span>TESLİM FORMU</span></div>
     </div>`;
 
   preview.querySelectorAll(".delivery-form-order-check").forEach((checkbox) => {
@@ -7147,149 +7387,39 @@ function renderDeliveryForm() {
 
 async function exportDeliveryFormPdf(previewOnly = false) {
   const group = getSelectedDeliveryFormGroup();
-  if (!group) {
-    showToast("Önce Sevkiyat listesinden bir müşteri seçin.");
-    return;
-  }
-
+  if (!group) { showToast("Önce Sevkiyat listesinden bir müşteri seçin."); return; }
   ensureDeliveryFormSelection(group);
   if (deliveryFormSelectedOrderIds.size === 0) {
     showToast("Teslim formu için en az bir hazır sipariş seçin.");
     return;
   }
+
+  // PDF kaynağı, ekrandaki Teslim Formu şablonunun birebir aynısıdır.
+  // Ayrı bir PDF şablonu kullanılmaz; böylece ön izleme ile PDF arasında fark oluşmaz.
   renderDeliveryForm();
   const printArea = document.getElementById("printArea");
-  if (!printArea) {
-    showToast("Teslim formu hazırlanamadı.");
+  const sheet = document.getElementById("deliveryFormSheet");
+  if (!printArea || !sheet) {
+    showToast("Teslim formu ön izleme hazırlanamadı.");
     return;
   }
 
-  const customer = group.customer || null;
-  const receiver = document.getElementById("deliveryFormReceiver")?.value || "";
-  const deliverer = document.getElementById("deliveryFormDeliverer")?.value || "";
-  const note = document.getElementById("deliveryFormNote")?.value || "";
-
-  // Logo: mevcut Ofischi logosu, oranı bozulmadan ve net ölçüde kullanılır.
-  const logoHtml = LOGO_SRC
-    ? `<img src="${LOGO_SRC}" alt="Ofischi" style="display:block;width:190px;height:auto;max-height:58px;object-fit:contain;object-position:left center;">`
-    : `<div style="font-size:22px;font-weight:800;">OFİSCHİ</div>`;
-
-  // Teslim formunda tedarikçi kesinlikle gösterilmez.
-  // PDF'ye yalnızca seçilen ve "Sevkiyata Hazır" olan siparişler girer.
-  const selectedOrders = group.orders.filter((o) =>
-    o.status === "Sevkiyata Hazır" && deliveryFormSelectedOrderIds.has(o.id)
-  );
-  const rows = selectedOrders.map((o, i) => `
-    <tr>
-      <td style="width:52px;text-align:center;">${i + 1}</td>
-      <td>${escapeHtml(o.product || "-")}</td>
-      <td style="width:90px;text-align:center;">${escapeHtml(o.quantity ?? "-")}</td>
-    </tr>`).join("");
-
-  // Kullanıcının istediği üzere PDF'deki teslim tarihi her zaman güncel tarihtir.
-  const currentDate = todayISO();
-
-  const pdfHtml = `
-  <div id="deliveryPdfDocument" style="
-    width:794px; min-height:1123px; box-sizing:border-box;
-    background:#fff; color:#171717; font-family:Arial,Helvetica,sans-serif;
-    padding:48px 52px 44px; position:relative;">
-
-    <div style="display:flex;justify-content:space-between;align-items:flex-start;
-                padding-bottom:22px;border-bottom:3px solid #222;">
-      <div style="width:250px;">
-        ${logoHtml}
-        <div style="margin-top:8px;font-size:10px;letter-spacing:1.2px;color:#777;">
-          OFİS MOBİLYALARI • TESLİMAT BELGESİ
-        </div>
-      </div>
-      <div style="text-align:right;">
-        <div style="font-size:25px;font-weight:800;letter-spacing:.5px;">TESLİM FORMU</div>
-        <div style="margin-top:8px;font-size:12px;color:#666;">
-          Belge tarihi: ${escapeHtml(formatDate(currentDate))}
-        </div>
-      </div>
-    </div>
-
-    <div style="margin-top:26px;padding:18px 20px;border:1px solid #ddd;border-radius:8px;background:#fafafa;">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:17px 34px;">
-        <div>
-          <div style="font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:#777;">Müşteri / Ünvan</div>
-          <div style="margin-top:5px;font-size:16px;font-weight:700;">${escapeHtml(group.customerName)}</div>
-        </div>
-        <div>
-          <div style="font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:#777;">Teslim Tarihi</div>
-          <div style="margin-top:5px;font-size:16px;font-weight:700;">${escapeHtml(formatDate(currentDate))}</div>
-        </div>
-        <div>
-          <div style="font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:#777;">Telefon</div>
-          <div style="margin-top:5px;font-size:14px;">${escapeHtml(customer?.phone || group.phone || "-")}</div>
-        </div>
-        <div>
-        </div>
-        <div style="grid-column:1 / -1;">
-          <div style="font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:#777;">Teslimat Adresi</div>
-          <div style="margin-top:5px;font-size:14px;line-height:1.45;">${escapeHtml(customer?.address || group.address || "-")}</div>
-        </div>
-      </div>
-    </div>
-
-    <div style="margin-top:28px;">
-      <div style="font-size:12px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;margin-bottom:10px;">
-        Teslim Edilen Ürünler
-      </div>
-      <table style="width:100%;border-collapse:collapse;font-size:12px;">
-        <thead>
-          <tr style="background:#222;color:#fff;">
-            <th style="padding:11px 9px;text-align:center;">No</th>
-            <th style="padding:11px 9px;text-align:left;">Ürün</th>
-            <th style="padding:11px 9px;text-align:center;">Adet</th>
-          </tr>
-        </thead>
-        <tbody>${rows}</tbody>
-      </table>
-    </div>
-
-    ${note ? `
-    <div style="margin-top:24px;padding:14px 16px;border-left:4px solid #222;background:#f7f7f7;">
-      <div style="font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:#777;">Not</div>
-      <div style="margin-top:6px;font-size:12px;line-height:1.5;">${escapeHtml(note)}</div>
-    </div>` : ""}
-
-    <div style="margin-top:70px;display:grid;grid-template-columns:1fr 1fr;gap:70px;">
-      <div style="padding-top:10px;border-top:1px solid #333;min-height:70px;">
-        <div style="font-size:12px;font-weight:700;">Teslim Alan</div>
-        <div style="margin-top:8px;font-size:12px;">${escapeHtml(receiver || "")}</div>
-      </div>
-      <div style="padding-top:10px;border-top:1px solid #333;min-height:70px;">
-        <div style="font-size:12px;font-weight:700;">Teslim Eden</div>
-        <div style="margin-top:8px;font-size:12px;">${escapeHtml(deliverer || "")}</div>
-      </div>
-    </div>
-
-    <div style="position:absolute;left:52px;right:52px;bottom:30px;padding-top:10px;
-                border-top:1px solid #ddd;display:flex;justify-content:space-between;
-                font-size:9px;color:#888;">
-      <span>OFİSCHİ BÜRO MOBİLYALARI</span>
-      <span>Teslim Formu</span>
-    </div>
-  </div>`;
-
-  printArea.innerHTML = pdfHtml;
+  printArea.innerHTML = sheet.outerHTML;
   if (previewOnly) {
-    await previewCurrentPrintArea(`Teslim Formu - PDF Ön İzleme`);
+    await previewCurrentPrintArea("Teslim Formu - PDF Ön İzleme", "portrait");
     return;
   }
+
   try {
     await downloadPrintAreaAsPdf(
-      `Ofischi_Teslim_Formu_${sanitizeText(group.customerName, 80)}_${currentDate}`
+      `Ofischi_Teslim_Formu_${sanitizeText(group.customerName, 80)}_${todayISO()}`,
+      null,
+      "portrait"
     );
     showToast("Teslim formu PDF oluşturuldu.");
   } catch (e) {
     console.error("Teslim formu PDF hatası:", e);
     showToast("Teslim formu PDF oluşturulamadı.");
-  } finally {
-    printArea.innerHTML = "";
   }
 }
 
@@ -7826,6 +7956,32 @@ document.addEventListener("DOMContentLoaded", initLockScreen);
 </script>
 </body>
 </html>
+
+
+<div id="pdfLayoutEditorModal" class="pdf-layout-editor-modal hidden" aria-hidden="true">
+  <div class="pdf-layout-editor-box" role="dialog" aria-modal="true" aria-labelledby="pdfLayoutEditorTitle">
+    <div class="pdf-layout-editor-head">
+      <div><strong id="pdfLayoutEditorTitle">PDF Sayfa Düzeni</strong><div class="pdf-layout-editor-sub">Excel gibi kaydırarak sayfayı kontrol et. Ayarlar PDF'ye uygulanır.</div></div>
+      <button type="button" class="icon-btn" id="pdfLayoutEditorClose">✕</button>
+    </div>
+    <div class="pdf-layout-toolbar">
+      <label>Ölçek <input id="pdfLayoutZoom" type="range" min="70" max="120" value="100" step="5"><b id="pdfLayoutZoomValue">%100</b></label>
+      <label>Kenar boşluğu <input id="pdfLayoutMargin" type="range" min="3" max="18" value="7" step="1"><b id="pdfLayoutMarginValue">7 mm</b></label>
+      <div class="pdf-layout-orientation-picker" id="pdfLayoutOrientationPicker">
+        <button type="button" class="pdf-layout-orientation" id="pdfLayoutOrientationBtn" aria-haspopup="menu" aria-expanded="false">A4 Yatay ▾</button>
+        <div class="pdf-layout-orientation-menu hidden" id="pdfLayoutOrientationMenu" role="menu">
+          <button type="button" data-orientation="landscape" role="menuitem">A4 Yatay</button>
+          <button type="button" data-orientation="portrait" role="menuitem">A4 Dikey</button>
+        </div>
+      </div>
+    </div>
+    <div class="pdf-layout-scroll" id="pdfLayoutScroll"><div id="pdfLayoutCanvas"></div></div>
+    <div class="pdf-layout-editor-foot">
+      <button type="button" class="btn btn-ghost" id="pdfLayoutEditorCancel">İptal</button>
+      <button type="button" class="btn btn-primary" id="pdfLayoutDownloadBtn">PDF Oluştur</button>
+    </div>
+  </div>
+</div>
 
 <div id="pdfActionChoiceModal" class="pdf-action-choice-modal hidden" aria-hidden="true">
   <div class="pdf-action-choice-box" role="dialog" aria-modal="true" aria-labelledby="pdfActionChoiceTitle">
