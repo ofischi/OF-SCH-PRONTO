@@ -7326,61 +7326,61 @@ function renderDeliveryForm() {
 
   const logoSrc = LOGO_SRC || "";
   preview.innerHTML = `
-    <div class="delivery-form-sheet" id="deliveryFormSheet" style="background:#fff;color:#222;border:0;border-radius:0;padding:10mm 8mm 8mm;box-sizing:border-box;font-family:Arial,Helvetica,sans-serif;min-height:257mm;display:flex;flex-direction:column;">
+    <div class="delivery-form-sheet" id="deliveryFormSheet" style="background:#fff;color:#111;border:0;border-radius:0;padding:10mm 8mm 8mm;box-sizing:border-box;font-family:Arial,Helvetica,sans-serif;min-height:257mm;display:flex;flex-direction:column;">
       <div style="text-align:center;margin-bottom:7mm;">
         ${logoSrc ? `<img src="${logoSrc}" alt="Ofischi" style="display:block;width:190px;height:auto;max-height:55px;object-fit:contain;margin:0 auto 5mm;">` : `<div style="font-size:22px;font-weight:700;letter-spacing:2px;margin-bottom:5mm;">LOGO</div>`}
-        <div style="font-size:15px;letter-spacing:4px;font-weight:700;margin-bottom:4mm;color:#222;">OFİSCHİ BÜRO MOBİLYALARI</div>
-        <div style="font-size:12px;letter-spacing:3px;font-weight:700;color:#222;">TESLİM FORMU</div>
+        <div style="font-size:15px;letter-spacing:4px;font-weight:700;margin-bottom:4mm;color:#111;">OFİSCHİ BÜRO MOBİLYALARI</div>
+        <div style="font-size:12px;letter-spacing:3px;font-weight:700;color:#111;">TESLİM FORMU</div>
       </div>
 
       <div style="font-size:10px;line-height:1.3;">
-        <div style="display:grid;grid-template-columns:1fr 1fr;border:1px solid #8b8b8b;">
+        <div style="display:grid;grid-template-columns:1fr 1fr;border:1px solid #bbb;">
           <div style="display:grid;grid-template-columns:50% 50%;min-width:0;">
-            <div style="padding:4mm 3mm;border-right:1px solid #8b8b8b;font-weight:700;">Müşteri/Ünvan</div>
+            <div style="padding:4mm 3mm;border-right:1px solid #bbb;font-weight:700;">Müşteri/Ünvan</div>
             <div style="padding:4mm 3mm;min-width:0;overflow-wrap:anywhere;">${escapeHtml(group.customerName || "-")}</div>
           </div>
-          <div style="display:grid;grid-template-columns:50% 50%;min-width:0;border-left:1px solid #8b8b8b;">
-            <div style="padding:4mm 3mm;border-right:1px solid #8b8b8b;font-weight:700;">Teslim Tarihi</div>
-            <div style="padding:4mm 3mm;">${escapeHtml(group.deliveryDate ? formatDate(group.deliveryDate) : "-")}</div>
+          <div style="display:grid;grid-template-columns:50% 50%;min-width:0;border-left:1px solid #bbb;">
+            <div style="padding:4mm 3mm;border-right:1px solid #bbb;font-weight:700;">Teslim Tarihi</div>
+            <div style="padding:4mm 3mm;">${escapeHtml(formatDate(todayISO()))}</div>
           </div>
         </div>
 
-        <div style="display:grid;grid-template-columns:50% 50%;border-left:1px solid #8b8b8b;border-right:1px solid #8b8b8b;border-bottom:1px solid #d2d2d2;">
-          <div style="padding:4mm 3mm;border-right:1px solid #8b8b8b;font-weight:700;">Adres</div>
+        <div style="display:grid;grid-template-columns:50% 50%;border-left:1px solid #bbb;border-right:1px solid #bbb;border-bottom:1px solid #bbb;">
+          <div style="padding:4mm 3mm;border-right:1px solid #bbb;font-weight:700;">Adres</div>
           <div style="padding:4mm 3mm;overflow-wrap:anywhere;">${escapeHtml(customer?.address || group.address || "-")}</div>
         </div>
 
-        <div style="display:grid;grid-template-columns:50% 50%;border-left:1px solid #8b8b8b;border-right:1px solid #8b8b8b;border-bottom:1px solid #d2d2d2;">
-          <div style="padding:4mm 3mm;border-right:1px solid #8b8b8b;font-weight:700;">Telefon</div>
+        <div style="display:grid;grid-template-columns:50% 50%;border-left:1px solid #bbb;border-right:1px solid #bbb;border-bottom:1px solid #bbb;">
+          <div style="padding:4mm 3mm;border-right:1px solid #bbb;font-weight:700;">Telefon</div>
           <div style="padding:4mm 3mm;">${escapeHtml(customer?.phone || group.phone || "-")}</div>
         </div>
       </div>
 
-      <table style="width:100%;border-collapse:collapse;table-layout:fixed;font-size:9.5px;color:#222;">
+      <table style="width:100%;border-collapse:collapse;table-layout:fixed;font-size:9.5px;color:#111;">
         <colgroup><col style="width:7%;"><col style="width:30%;"><col style="width:18%;"><col style="width:10%;"><col style="width:35%;"></colgroup>
         <thead>
-          <tr style="background:#262626;color:#fff;">
-            <th style="padding:3mm 2mm;text-align:left;border-bottom:1px solid #d2d2d2;">No</th>
-            <th style="padding:3mm 2mm;text-align:left;border-bottom:1px solid #d2d2d2;">Ürün</th>
-            <th style="padding:3mm 2mm;text-align:left;border-bottom:1px solid #d2d2d2;">Renk</th>
-            <th style="padding:3mm 2mm;text-align:center;border-bottom:1px solid #d2d2d2;">Adet</th>
-            <th style="padding:3mm 2mm;text-align:left;border-bottom:1px solid #d2d2d2;">Açıklama</th>
+          <tr style="background:#f1f1f1;color:#111;">
+            <th style="padding:3mm 2mm;text-align:left;border-bottom:1px solid #bbb;">No</th>
+            <th style="padding:3mm 2mm;text-align:left;border-bottom:1px solid #bbb;">Ürün</th>
+            <th style="padding:3mm 2mm;text-align:left;border-bottom:1px solid #bbb;">Renk</th>
+            <th style="padding:3mm 2mm;text-align:center;border-bottom:1px solid #bbb;">Adet</th>
+            <th style="padding:3mm 2mm;text-align:left;border-bottom:1px solid #bbb;">Açıklama</th>
           </tr>
         </thead>
-        <tbody>${pdfRows.replace(/<td style="width:34px;text-align:center;">/g,'<td style="text-align:left;padding:2.5mm 2mm;border-bottom:1px solid #d8d8d8;">').replace(/<td>/g,'<td style="padding:2.5mm 2mm;border-bottom:1px solid #d8d8d8;overflow-wrap:anywhere;">').replace(/<td style="width:95px;">/g,'<td style="padding:2.5mm 2mm;border-bottom:1px solid #d8d8d8;overflow-wrap:anywhere;">').replace(/<td style="width:48px;text-align:center;">/g,'<td style="padding:2.5mm 2mm;text-align:center;border-bottom:1px solid #d8d8d8;">')}</tbody>
+        <tbody>${pdfRows.replace(/<td style="width:34px;text-align:center;">/g,'<td style="text-align:left;padding:2.5mm 2mm;border-bottom:1px solid #bbb;">').replace(/<td>/g,'<td style="padding:2.5mm 2mm;border-bottom:1px solid #bbb;overflow-wrap:anywhere;">').replace(/<td style="width:95px;">/g,'<td style="padding:2.5mm 2mm;border-bottom:1px solid #bbb;overflow-wrap:anywhere;">').replace(/<td style="width:48px;text-align:center;">/g,'<td style="padding:2.5mm 2mm;text-align:center;border-bottom:1px solid #bbb;">')}</tbody>
       </table>
 
-      ${note ? `<div style="margin-top:5mm;padding:3mm 4mm;border:1px solid #d6d6d6;background:#fafafa;font-size:9.5px;line-height:1.5;"><span style="font-weight:700;letter-spacing:1px;text-transform:uppercase;">Not</span><div style="margin-top:2mm;">${escapeHtml(note)}</div></div>` : ""}
+      ${note ? `<div style="margin-top:5mm;padding:3mm 4mm;border:1px solid #ddd;background:#fff;font-size:9.5px;line-height:1.5;"><span style="font-weight:700;letter-spacing:1px;text-transform:uppercase;">Not</span><div style="margin-top:2mm;">${escapeHtml(note)}</div></div>` : ""}
 
       <div style="flex:1;min-height:24mm;"></div>
 
-      <div style="display:grid;grid-template-columns:1fr 1fr;border:1px solid #8b8b8b;">
-        <div style="padding:4mm 3mm;border-right:1px solid #8b8b8b;font-weight:700;">Teslim Alan</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;border:1px solid #bbb;">
+        <div style="padding:4mm 3mm;border-right:1px solid #bbb;font-weight:700;">Teslim Alan</div>
         <div style="padding:4mm 3mm;font-weight:700;">Teslim Eden</div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:16mm;margin-top:6mm;">
-        <div style="border-top:1px dashed #555;min-height:17mm;padding-top:3mm;font-size:10px;">${escapeHtml(receiver || "")}</div>
-        <div style="border-top:1px dashed #555;min-height:17mm;padding-top:3mm;font-size:10px;">${escapeHtml(deliverer || "")}</div>
+        <div style="border-top:1px solid #bbb;min-height:17mm;padding-top:3mm;font-size:10px;">${escapeHtml(receiver || "")}</div>
+        <div style="border-top:1px solid #bbb;min-height:17mm;padding-top:3mm;font-size:10px;">${escapeHtml(deliverer || "")}</div>
       </div>
     </div>`;
 
