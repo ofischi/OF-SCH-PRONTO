@@ -1,4 +1,3 @@
-```
 <!DOCTYPE html>
 <html lang="tr">
 <head>
@@ -47,10 +46,6 @@
   --color-text: #1C1C1E;
   --color-text-muted: #6B6B70;
   --color-border: rgba(28, 28, 30, 0.10);
-  /* V108: Kodda kullanılan yardımcı yüzey/kenar değişkenleri artık tanımlı. */
-  --color-border-strong: rgba(28, 28, 30, 0.18);
-  --color-primary: var(--color-accent);
-  --color-surface-soft: rgba(255, 255, 255, 0.72);
   --color-row-alt: rgba(28, 28, 30, 0.022);
   --color-danger: #C0392B;
   --color-danger-bg: rgba(192, 57, 43, 0.10);
@@ -99,9 +94,6 @@
   --color-text: #ECEDEB;
   --color-text-muted: #9A9C9F;
   --color-border: rgba(255, 255, 255, 0.10);
-  --color-border-strong: rgba(255, 255, 255, 0.18);
-  --color-primary: var(--color-accent);
-  --color-surface-soft: rgba(38, 40, 45, 0.72);
   --color-row-alt: rgba(255, 255, 255, 0.032);
   --color-danger: #E57368;
   --color-danger-bg: rgba(229, 115, 104, 0.14);
@@ -1590,9 +1582,6 @@ table.pd-t{width:100%;border-collapse:collapse;font-size:9pt}.pd-t thead{display
 .pronto-v24-status{display:inline-block;padding:3px 7px;border-radius:999px;background:#FBEECB;color:#6B4E0A;font-weight:800;font-size:9px;white-space:nowrap}
 .pronto-v24-preview-foot{margin-top:22px;padding-top:10px;border-top:1px solid #cfcac0;color:#777;font-size:9px;display:flex;justify-content:space-between;gap:12px}
 @media(max-width:820px){.pronto-v24-preview-body{padding:10px}.pronto-v24-preview-page{width:794px;margin:0 auto;padding:28px}}
-.pronto-v24-pdf-document{display:flex;flex-direction:column;gap:24px;width:100%;align-items:center}
-.pronto-v24-pdf-page{break-after:page;page-break-after:always}
-.pronto-v24-pdf-page:last-child{break-after:auto;page-break-after:auto}
 </style>
 </head>
 <body>
@@ -1651,6 +1640,10 @@ table.pd-t{width:100%;border-collapse:collapse;font-size:9pt}.pd-t thead{display
         <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 3h16v18H4z"/><path d="M8 7h8M8 11h8M8 15h5"/></svg>
         Teslim Formu
       </button>
+      <button class="nav-item" id="v24NavBtn" type="button" style="position:relative">
+        <span style="font-size:16px">↔</span> PRONTO SİPARİŞ (V24)
+        <span id="v24BridgeBadge" class="hidden" style="margin-left:auto;min-width:22px;height:22px;border-radius:999px;background:#c9a24a;color:#111;display:grid;place-items:center;font-size:11px;font-weight:800">0</span>
+      </button>
       <button class="nav-item" data-view="reports">
         <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M18 17V9M13 17V5M8 17v-4"/></svg>
         Raporlar
@@ -1685,6 +1678,7 @@ table.pd-t{width:100%;border-collapse:collapse;font-size:9pt}.pd-t thead{display
             Excel'e Aktar
           </button>
           <button id="orderTrashBtn" class="btn btn-ghost hidden" type="button">🗑 Çöp Kutusu</button>
+          <button id="v24NotificationsBtn" class="btn btn-secondary" type="button">V24 Teklifleri <span id="v24HeaderBadge" class="hidden" style="margin-left:6px">0</span></button>
           <button id="newOrderBtn" class="btn btn-primary">+ Yeni Sipariş</button>
         </div>
       </div>
@@ -2348,6 +2342,12 @@ table.pd-t{width:100%;border-collapse:collapse;font-size:9pt}.pd-t thead{display
 </div>
 
 <!-- ONAY MODAL -->
+<div class="modal-overlay hidden" id="v24BridgeModal">
+  <div class="modal" style="max-width:1050px;width:calc(100% - 32px)">
+    <div class="modal-header"><h2>V24 Teklif Bildirimleri</h2><button class="icon-btn" id="v24BridgeClose">✕</button></div>
+    <div class="modal-body"><div id="v24BridgeList" style="display:grid;gap:10px"></div></div>
+  </div>
+</div>
 <div class="modal-overlay hidden" id="confirmModal">
   <div class="modal modal--confirm">
     <p id="confirmModalText">Emin misin?</p>
@@ -2829,21 +2829,91 @@ function subscribeToChanges() {
       scheduleRemoteRefresh();
     }).subscribe();
 }
+function updateOpenOrderGroupRow(orderId) {
+  const id = Number(orderId);
+  if (!Number.isFinite(id)) return;
+  const groupBody = document.getElementById("orderGroupModalBody");
+  if (!groupBody || document.getElementById("orderGroupModal")?.classList.contains("hidden")) return;
+  const tr = groupBody.querySelector(`tbody tr[data-id="${id}"]`);
+  if (!tr) return;
+  const order = allOrders.find((o) => o.id === id);
+  if (!order) { tr.remove(); return; }
+  const cells = tr.children;
+  if (cells.length < 11) return;
+  cells[2].textContent = formatDate(order.orderDate);
+  cells[3].textContent = order.customer || "";
+  cells[4].textContent = order.product || "";
+  cells[5].textContent = order.supplier || "";
+  cells[6].innerHTML = colorFabricText(order);
+  cells[7].textContent = order.quantity ?? "";
+  cells[8].textContent = formatDate(order.deliveryDate);
+  cells[9].innerHTML = statusBadgeHtml(order);
+  bindStatusBadgeClicks(tr);
+}
+
+function remoteOrderNeedsListRender(order, previous) {
+  if (!order || !previous) return true;
+  // Bu alanlar grup anahtarını, sıralamayı, filtreleri veya grup özetini etkiler.
+  return order.customer !== previous.customer ||
+    order.product !== previous.product ||
+    order.supplier !== previous.supplier ||
+    order.orderDate !== previous.orderDate ||
+    order.deliveryDate !== previous.deliveryDate ||
+    Number(order.quantity) !== Number(previous.quantity) ||
+    order.status !== previous.status;
+}
+
+function applyRemoteOrderChange(c) {
+  const id = Number(c.row?.id);
+  const previous = allOrders.find((o) => o.id === id);
+  if (c.eventType === "DELETE") {
+    removeLocalStore("orders", id);
+    return true;
+  }
+  const incoming = fromRow("orders", c.row);
+  const structural = remoteOrderNeedsListRender(incoming, previous);
+  // Küçük alan değişikliklerinde derived indexleri ve ana listeyi tekrar tarama.
+  // Sadece ilgili sipariş nesnesini güncelle.
+  const idx = allOrders.findIndex((o) => o.id === id);
+  if (idx >= 0) allOrders[idx] = incoming;
+  else allOrders.push(incoming);
+  if (structural) {
+    sortedOrders = allOrders.slice().sort((a, b) => b.id - a.id);
+    rebuildDerivedIndexes();
+  }
+  updateOpenOrderGroupRow(id);
+  return structural;
+}
+
 function scheduleRemoteRefresh() {
   clearTimeout(remoteRefreshTimer);
   remoteRefreshTimer = setTimeout(() => {
     const changes = Array.from(pendingRemotePayloads.values());
     pendingRemotePayloads.clear();
     const stores = new Set();
+    let ordersNeedListRender = false;
+
     for (const c of changes) {
       stores.add(c.store);
-      if (c.eventType === "DELETE") removeLocalStore(c.store, Number(c.row.id));
-      else upsertLocalStore(c.store, fromRow(c.store, c.row));
+      if (c.store === "orders") {
+        if (applyRemoteOrderChange(c)) ordersNeedListRender = true;
+      } else if (c.eventType === "DELETE") {
+        removeLocalStore(c.store, Number(c.row.id));
+      } else {
+        upsertLocalStore(c.store, fromRow(c.store, c.row));
+      }
     }
-    refreshDatalists(true);
+
+    if (!stores.has("orders") || ordersNeedListRender) refreshDatalists(true);
     if (stores.has("orders")) {
       cleanupExpiredDeletedOrders().catch(() => {});
-      renderOrdersView();
+      // Sadece grup/sıralama/filtreyi etkileyen bir değişiklik varsa ana listeyi yeniden çiz.
+      // Örn. açıklama, renk veya kumaş kodunda tek harf değiştiğinde tüm liste taranmaz/çizilmez.
+      if (ordersNeedListRender && currentView === "orders") renderOrdersView();
+      if (currentDetailOrderId != null && !document.getElementById("detailModal")?.classList.contains("hidden") && changes.some(c => c.store === "orders" && Number(c.row?.id) === Number(currentDetailOrderId))) {
+        openDetailModal(Number(currentDetailOrderId));
+      }
+      if (currentView === "reports" && ordersNeedListRender) renderReportsView();
     }
     if (stores.has("products")) {
       cleanupExpiredDeletedProducts().catch(() => {});
@@ -2852,8 +2922,7 @@ function scheduleRemoteRefresh() {
     if (stores.has("customers") && currentView === "customers") renderCustomersView();
     if (stores.has("suppliers") && currentView === "suppliers") renderSuppliersView();
     if (stores.has("stockMovements") && currentView === "stock") renderStockView();
-    if (stores.has("orders") && currentView === "reports") renderReportsView();
-  }, 250);
+  }, 150);
 }
 
 /* reloadAll artık gereksiz ağ trafiği oluşturmaz. CRUD işlemleri yerel önbelleği
@@ -4749,31 +4818,6 @@ let v91GenericPdfState = null;
 function v91PdfSafeName(v){return String(v||"PDF").replace(/[^0-9A-Za-zÇĞİÖŞÜçğıöşü_-]+/g,"-").replace(/^-+|-+$/g,"")||"PDF"}
 async function v91BuildElementPdfBlob(el,o){
   if(!window.html2canvas||!window.jspdf?.jsPDF) throw new Error("PDF motoru yüklenemedi. İnternet bağlantısını kontrol edin.");
-  const isV24Paged=!!el.querySelector?.('.pronto-v24-pdf-page');
-  if(isV24Paged){
-    const pages=Array.from(el.querySelectorAll('.pronto-v24-pdf-page'));
-    const landscape=o?.orient!=="portrait", size=o?.size==="A3"?[297,420]:[210,297], pageW=landscape?size[1]:size[0], pageH=landscape?size[0]:size[1];
-    const {jsPDF}=window.jspdf;
-    const pdf=new jsPDF({orientation:landscape?"landscape":"portrait",unit:"mm",format:o?.size==="A3"?"a3":"a4",compress:true});
-    const host=document.createElement('div');
-    const probeWidth=(landscape?(o?.size==="A3"?420:297):(o?.size==="A3"?297:210))*3.78+40;
-    host.style.cssText=`position:fixed;left:-100000px;top:0;width:${probeWidth}px;background:#fff;z-index:-1;padding:0;margin:0;`;
-    const css=v91PdfCssForElement(); if(css){const style=document.createElement('style');style.textContent=css;host.appendChild(style);}
-    document.body.appendChild(host);
-    try{
-      for(let pageIndex=0;pageIndex<pages.length;pageIndex++){
-        const page=pages[pageIndex].cloneNode(true);
-        v91PdfPageGeometry(page,o||{size:'A4',orient:'landscape'});
-        host.appendChild(page);
-        await Promise.all(Array.from(page.querySelectorAll('img')).map(i=>i.decode().catch(()=>{})));
-        const canvas=await html2canvas(page,{backgroundColor:'#fff',scale:2,useCORS:true,allowTaint:true,logging:false,imageTimeout:15000,windowWidth:Math.max(document.documentElement.clientWidth,host.offsetWidth)});
-        if(pageIndex) pdf.addPage();
-        pdf.addImage(canvas.toDataURL('image/jpeg',.94),'JPEG',0,0,pageW,pageW*canvas.height/canvas.width);
-        page.remove();
-      }
-      return pdf.output('blob');
-    }finally{host.remove();}
-  }
   const clone=el.cloneNode(true);
   const css=v91PdfCssForElement();
   const host=document.createElement("div");
@@ -4880,11 +4924,7 @@ function v91OpenElementPdf(el,title,filename,orient="portrait"){
       const root=document.getElementById("pdfPrintRoot");if(!root)return;
       root.innerHTML="";
       const css=v91PdfCssForElement();if(css){const style=document.createElement("style");style.textContent=css;root.appendChild(style);}
-      if(state.el.querySelector?.('.pronto-v24-pdf-page')){
-        Array.from(state.el.querySelectorAll('.pronto-v24-pdf-page')).forEach(src=>{const page=src.cloneNode(true);v91PdfPageGeometry(page,state.o);root.appendChild(page);});
-      }else{
-        const page=state.el.cloneNode(true);v91PdfPageGeometry(page,state.o);root.appendChild(page);
-      }
+      const page=state.el.cloneNode(true);v91PdfPageGeometry(page,state.o);root.appendChild(page);
       const printStyle=document.createElement("style");printStyle.textContent=`@page{size:${state.o.size||"A4"} ${state.o.orient||"portrait"};margin:0}html,body{background:#fff!important;margin:0!important;padding:0!important}body>*:not(#pdfPrintRoot){display:none!important}#pdfPrintRoot{display:block!important}`;
       root.appendChild(printStyle);
       const cleanup=()=>{root.innerHTML="";window.removeEventListener("afterprint",cleanup);};
@@ -4907,21 +4947,11 @@ function v91GetGroupPdfOrders(group){
   const selected=group.orders.filter(o=>selectedOrderIds.has(o.id));
   return selected.length ? selected : group.orders.slice();
 }
-const V24_PDF_ROWS_PER_PAGE=30;
-function v91BuildV24GroupPdfPageHtml(group,orders,pageIndex,pageCount,totalQty){
-  const rows=orders.map(o=>`<tr><td><strong>${escapeHtml(orderNo(o))}</strong></td><td>${escapeHtml(o.orderDate?formatDate(o.orderDate):"-")}</td><td>${escapeHtml(o.customer||"-")}</td><td><strong>${escapeHtml(o.product||"-")}</strong></td><td>${escapeHtml(o.supplier||"-")}</td><td>${escapeHtml(colorFabricText(o)||"-")}</td><td class="num">${escapeHtml(o.quantity??"-")}</td><td>${formatDate(o.deliveryDate)}</td><td><span class="pronto-v24-status">${escapeHtml(o.status||"-")}</span></td></tr>`).join("");
-  const logo=(typeof LOGO_SRC!=="undefined"&&LOGO_SRC)||v90PdfLogo()||"";
-  const rangeStart=pageIndex*V24_PDF_ROWS_PER_PAGE+1;
-  const rangeEnd=rangeStart+orders.length-1;
-  return `<div class="pronto-v24-preview-page pronto-v24-pdf-page" data-v24-page="${pageIndex+1}"><div class="pronto-v24-preview-head"><div style="flex:1;min-width:0">${logo?`<img src="${v90PdfEsc(logo)}" class="pronto-v24-preview-logo" alt="Ofischi Logo">`:`<div style="font-size:22px;font-weight:900;margin-bottom:14px">OFİSCHİ</div>`}<h1 class="pronto-v24-preview-h1">${escapeHtml(group.customer)} · ${escapeHtml(orders.length)} KALEM</h1><p class="pronto-v24-preview-sub">Sipariş Grubu · Sayfa ${pageIndex+1}/${pageCount} · Kalem ${rangeStart}-${rangeEnd}</p></div><div class="pronto-v24-preview-kpis"><div class="pronto-v24-preview-kpi"><span>Teslim</span><strong>${formatDate(orders[0]?.deliveryDate||group.deliveryDate)}</strong></div><div class="pronto-v24-preview-kpi"><span>TOPLAM SİP ADET</span><strong>${escapeHtml(totalQty)}</strong></div></div></div><div style="font-size:13px;font-weight:800;margin:0 0 10px">Sipariş Kalemleri</div><table class="pronto-v24-preview-table"><thead><tr><th>Sipariş No</th><th>Sipariş Tarihi</th><th>Müşteri</th><th>Ürün</th><th>Tedarikçi</th><th>Renk/Kumaş</th><th>Adet</th><th>Teslim</th><th>Durum</th></tr></thead><tbody>${rows}</tbody></table><div class="pronto-v24-preview-foot"><span>OFİSCHİ BÜRO MOBİLYALARI</span><span>PRONTO · V24 ŞABLONU · ${pageIndex+1}/${pageCount}</span></div></div>`;
-}
 function v91BuildV24GroupPdfHtml(group,orders){
   const totalQty=orders.reduce((sum,o)=>sum+(Number(o.quantity)||0),0);
-  const chunks=[];
-  for(let i=0;i<orders.length;i+=V24_PDF_ROWS_PER_PAGE) chunks.push(orders.slice(i,i+V24_PDF_ROWS_PER_PAGE));
-  const pageCount=Math.max(1,chunks.length);
-  if(!chunks.length) chunks.push([]);
-  return `<div class="pronto-v24-pdf-document" data-v24-pages="${pageCount}">${chunks.map((chunk,i)=>v91BuildV24GroupPdfPageHtml(group,chunk,i,pageCount,totalQty)).join("")}</div>`;
+  const rows=orders.map(o=>`<tr><td><strong>${escapeHtml(orderNo(o))}</strong></td><td>${escapeHtml(o.orderDate?formatDate(o.orderDate):"-")}</td><td>${escapeHtml(o.customer||"-")}</td><td><strong>${escapeHtml(o.product||"-")}</strong></td><td>${escapeHtml(o.supplier||"-")}</td><td>${escapeHtml(colorFabricText(o)||"-")}</td><td class="num">${escapeHtml(o.quantity??"-")}</td><td>${formatDate(o.deliveryDate)}</td><td><span class="pronto-v24-status">${escapeHtml(o.status||"-")}</span></td></tr>`).join("");
+  const logo=(typeof LOGO_SRC!=="undefined"&&LOGO_SRC)||v90PdfLogo()||"";
+  return `<div class="pronto-v24-preview-page"><div class="pronto-v24-preview-head"><div style="flex:1;min-width:0">${logo?`<img src="${v90PdfEsc(logo)}" class="pronto-v24-preview-logo" alt="Ofischi Logo">`:`<div style="font-size:22px;font-weight:900;margin-bottom:14px">OFİSCHİ</div>`}<h1 class="pronto-v24-preview-h1">${escapeHtml(group.customer)} · ${orders.length} KALEM</h1><p class="pronto-v24-preview-sub">Sipariş Grubu · Hazırlanma tarihi: ${formatDate(todayISO())}</p></div><div class="pronto-v24-preview-kpis"><div class="pronto-v24-preview-kpi"><span>Teslim</span><strong>${formatDate(orders[0]?.deliveryDate||group.deliveryDate)}</strong></div><div class="pronto-v24-preview-kpi"><span>SİP Adet</span><strong>${escapeHtml(totalQty)}</strong></div></div></div><div style="font-size:13px;font-weight:800;margin:0 0 10px">Sipariş Kalemleri</div><table class="pronto-v24-preview-table"><thead><tr><th>Sipariş No</th><th>Sipariş Tarihi</th><th>Müşteri</th><th>Ürün</th><th>Tedarikçi</th><th>Renk/Kumaş</th><th>Adet</th><th>Teslim</th><th>Durum</th></tr></thead><tbody>${rows}</tbody></table><div class="pronto-v24-preview-foot"><span>OFİSCHİ BÜRO MOBİLYALARI</span><span>PRONTO · V24 ŞABLONU</span></div></div>`;
 }
 async function v91OpenOrderGroupPdf(group){
   if(!group)return;
@@ -7197,6 +7227,76 @@ document.addEventListener("DOMContentLoaded", () => {
 
 </script>
 
+<script>
+/* ================= V24 ↔ V107 TEKLİF KÖPRÜSÜ — WebSocket YOK ================= */
+const V24_BRIDGE_CONFIG=Object.freeze({url:'https://xjkydcegmhjfjikizotz.supabase.co',key:'sb_publishable_AYLPJs6IdI9mYGRs3OKrNg_yacLOapM'});
+let v24BridgeRows=[],v24BridgeKnown=new Map(),v24BridgePollTimer=null;
+async function fetchV24BridgeRows(){
+  const url=V24_BRIDGE_CONFIG.url+'/rest/v1/pronto_quote_bridge?select=*&order=created_at.desc';
+  const res=await fetch(url,{headers:{'apikey':V24_BRIDGE_CONFIG.key,'Authorization':'Bearer '+V24_BRIDGE_CONFIG.key}});
+  const txt=await res.text(); if(!res.ok) throw new Error(txt||('HTTP '+res.status));
+  return JSON.parse(txt||'[]');
+}
+function bridgeNotifyNew(rows){
+  for(const r of rows){
+    if(!r?.id) continue;
+    const key=String(r.status)+'|'+String(r.updated_at||'');
+    const prev=v24BridgeKnown.get(String(r.id));
+    if(prev===undefined){
+      v24BridgeKnown.set(String(r.id),key);
+      if(r.status==='Bekliyor') showToast(`Yeni V24 teklifi: ${r.teklif_no} · ${r.customer||''}`);
+    }else if(prev!==key){
+      v24BridgeKnown.set(String(r.id),key);
+      if(r.status==='Onaylandı') showToast(`Teklif ${r.teklif_no}: V24 durumu güncellendi`);
+      if(r.status==='Reddedildi') showToast(`Teklif ${r.teklif_no}: reddedildi`);
+    }
+  }
+}
+async function loadV24Bridge(){
+  try{const rows=await fetchV24BridgeRows();bridgeNotifyNew(rows);v24BridgeRows=rows;renderV24Bridge();}catch(e){console.warn('V24 bildirimleri alınamadı',e);}
+}
+function initV24Bridge(){
+  try{
+    loadV24Bridge();
+    if(!v24BridgePollTimer) v24BridgePollTimer=setInterval(loadV24Bridge,3000);
+  }catch(e){console.warn('V24 bridge',e);}
+}
+function bridgeEsc(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
+function renderV24Bridge(){
+  const pending=v24BridgeRows.filter(x=>x.status==='Bekliyor');
+  const badge=document.getElementById('v24BridgeBadge'); if(badge){badge.textContent=String(pending.length);badge.classList.toggle('hidden',pending.length===0);}
+  const hb=document.getElementById('v24HeaderBadge'); if(hb){hb.textContent=String(pending.length);hb.classList.toggle('hidden',pending.length===0);}
+  const box=document.getElementById('v24BridgeList'); if(!box)return;
+  if(!v24BridgeRows.length){box.innerHTML='<div class="empty-state">V24 tarafından henüz teklif gönderilmedi.</div>';return;}
+  box.innerHTML=v24BridgeRows.map(r=>`<div style="border:1px solid var(--color-border);border-radius:12px;padding:14px;background:var(--color-surface);display:flex;gap:14px;align-items:center;justify-content:space-between;flex-wrap:wrap"><div><div style="font-weight:800">Teklif ${bridgeEsc(r.teklif_no)} · ${bridgeEsc(r.customer)}</div><div style="font-size:12px;opacity:.75;margin-top:4px">${bridgeEsc(r.item_count)} adet · ${bridgeEsc(r.currency)} ${Number(r.total||0).toLocaleString('tr-TR',{minimumFractionDigits:2})} · Teslim: ${bridgeEsc(r.delivery_date||'—')}</div><div style="font-size:12px;margin-top:4px">Durum: <b>${bridgeEsc(r.status)}</b></div></div><div style="display:flex;gap:8px"><button class="btn btn-secondary" data-bridge-open="${bridgeEsc(r.id)}">Detay</button>${r.status==='Bekliyor'?`<button class="btn btn-primary" data-bridge-approve="${bridgeEsc(r.id)}">Onayla</button><button class="btn btn-ghost" data-bridge-reject="${bridgeEsc(r.id)}">Reddet</button>`:''}</div></div>`).join('');
+}
+async function approveV24Bridge(id){
+  const r=v24BridgeRows.find(x=>x.id===id); if(!r)return;
+  let q={};try{q=typeof r.quote_json==='string'?JSON.parse(r.quote_json):r.quote_json||{};}catch{}
+  const items=Array.isArray(q.items)?q.items:[]; const ids=[];
+  for(const it of items){
+    const product=[it.kategori,it.model,it.modul].filter(Boolean).join(' ')||'Teklif Ürünü';
+    const order={customer:q.cariSnap?.unvan||r.customer||'',supplier:it.tedarikci||it.supplier||'',product,quantity:Number(it.adet||it.qty||1),orderDate:q.tarih||r.quote_date||todayISO(),deliveryDate:q.teslim||r.delivery_date||'',colorCode:it.renk||'',fabricCode:it.kumas||it.fabric||'',description:`V24 Teklif ${r.teklif_no} · Ölçü: ${it.olcu||''} · Yön: ${it.yon||''} · Modül: ${it.modul||''}`,status:'Beklemede'};
+    try{const saved=await dbAdd('orders',order); if(saved&&saved.id!=null)ids.push(saved.id);}catch(e){showToast('Sipariş oluşturulamadı: '+(e.message||e));return;}
+  }
+  const url=V24_BRIDGE_CONFIG.url+'/rest/v1/pronto_quote_bridge?id=eq.'+encodeURIComponent(id);
+  const res=await fetch(url,{method:'PATCH',headers:{'apikey':V24_BRIDGE_CONFIG.key,'Authorization':'Bearer '+V24_BRIDGE_CONFIG.key,'Content-Type':'application/json'},body:JSON.stringify({status:'Onaylandı',order_ids:ids,approved_at:new Date().toISOString(),approved_by:'V107',updated_at:new Date().toISOString()})});
+  if(!res.ok){showToast('Teklif onaylandı ancak köprü kaydı güncellenemedi.');return;}
+  await loadV24Bridge(); renderOrdersView(); showToast(`Teklif ${r.teklif_no} onaylandı; ${ids.length} sipariş oluşturuldu.`);
+}
+async function rejectV24Bridge(id){
+  const r=v24BridgeRows.find(x=>x.id===id);if(!r)return;const reason=prompt('Red nedeni (opsiyonel):','');
+  const url=V24_BRIDGE_CONFIG.url+'/rest/v1/pronto_quote_bridge?id=eq.'+encodeURIComponent(id);
+  const res=await fetch(url,{method:'PATCH',headers:{'apikey':V24_BRIDGE_CONFIG.key,'Authorization':'Bearer '+V24_BRIDGE_CONFIG.key,'Content-Type':'application/json'},body:JSON.stringify({status:'Reddedildi',rejected_at:new Date().toISOString(),rejected_by:'V107',rejection_reason:reason||'',updated_at:new Date().toISOString()})});
+  if(!res.ok){showToast('Red kaydedilemedi.');return;}await loadV24Bridge();showToast(`Teklif ${r.teklif_no} reddedildi.`);
+}
+function openV24Bridge(){document.getElementById('v24BridgeModal')?.classList.remove('hidden');renderV24Bridge();loadV24Bridge();}
+function openV24(){sessionStorage.setItem('pronto_v107_return','1');location.href=new URL('PRONTO-V24.html',location.href).href;}
+document.addEventListener('click',e=>{const a=e.target.closest('[data-bridge-approve]');if(a)approveV24Bridge(a.dataset.bridgeApprove);const r=e.target.closest('[data-bridge-reject]');if(r)rejectV24Bridge(r.dataset.bridgeReject);const o=e.target.closest('[data-bridge-open]');if(o){const x=v24BridgeRows.find(v=>v.id===o.dataset.bridgeOpen);if(x)alert(JSON.stringify(x.quote_json,null,2));}});
+document.getElementById('v24BridgeClose')?.addEventListener('click',()=>document.getElementById('v24BridgeModal')?.classList.add('hidden'));
+document.getElementById('v24NotificationsBtn')?.addEventListener('click',openV24Bridge);
+document.getElementById('v24NavBtn')?.addEventListener('click',openV24);
+window.addEventListener('load',()=>setTimeout(initV24Bridge,800));
+</script>
 </body>
 </html>
-```
