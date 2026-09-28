@@ -21,7 +21,8 @@
     "appId": "com.ofischi.pronto",
     "productName": "PRONTO Sipariş Takibi",
     "files": [
-      "main.js"
+      "main.js",
+      "preload.js"
     ],
     "directories": {
       "output": "dist"
