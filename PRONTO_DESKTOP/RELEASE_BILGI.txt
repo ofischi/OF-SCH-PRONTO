@@ -1,5 +1,5 @@
-PRONTO Windows masaustu otomatik guncelleme altyapisi aktif.
-Surum: 1.0.2
-Yeni surum icin package.json version numarasini artirin.
-GitHub Actions, PRONTO_DESKTOP degisikliginde Windows kurulumunu build edip GitHub Release olarak yayinlar.
-Kurulu PRONTO, GitHub Releases uzerinden yeni surumu kontrol eder ve indirir.
+PRONTO Sipariş Takibi — Windows masaüstü
+- Program sayfayı https://ofischi.github.io/OF-SCH-PRONTO/ adresinden açar.
+- index.html'i güncellemek için .exe derlemeye gerek yok; programı yeniden açmak veya F5 yeterli.
+- Sadece PRONTO_DESKTOP klasöründeki dosyalar değişince GitHub Actions yeni .exe derler
+  ve kurulu programlar otomatik günceller (sürüm numarası kendiliğinden artar).

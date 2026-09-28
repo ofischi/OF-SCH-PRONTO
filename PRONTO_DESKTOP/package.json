@@ -20,10 +20,21 @@
   "build": {
     "appId": "com.ofischi.pronto",
     "productName": "PRONTO Sipariş Takibi",
-    "files": ["index.html", "main.js", "preload.js"],
-    "directories": {"output": "dist"},
+    "files": [
+      "main.js"
+    ],
+    "directories": {
+      "output": "dist"
+    },
     "win": {
-      "target": [{"target": "nsis", "arch": ["x64"]}],
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
       "artifactName": "PRONTO-Siparis-Takibi-Setup-${version}.${ext}"
     },
     "nsis": {
