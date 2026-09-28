@@ -4,7 +4,7 @@ on:
   push:
     paths:
       - 'PRONTO_DESKTOP/**'
-      - 'index.html'
+      
   workflow_dispatch:
 
 permissions:
@@ -21,11 +21,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Copy current PRONTO web application
-        shell: pwsh
-        run: |
-          Copy-Item -Force ".\index.html" ".\PRONTO_DESKTOP\index.html"
 
       - name: Setup Node
         uses: actions/setup-node@v4
