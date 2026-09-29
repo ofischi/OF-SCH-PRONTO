@@ -3101,6 +3101,7 @@ function liveReload(store) {
   if (deltaMode && liveChannel) liveChannel.send({ type: "broadcast", event: "reload", payload: { store } }).catch(() => {});
 }
 async function catchUpAfterReconnect() {
+  v99YoklariSil();
   try {
     for (const store of ["orders", "products", "customers", "suppliers"]) await reloadStore(store);
     if (stockLoaded) await reloadStore("stockMovements");
@@ -3126,6 +3127,7 @@ function subscribeToChanges() {
       scheduleCacheSave();
     })
     .on("broadcast", { event: "gelen" }, ({ payload }) => { try { v98Canli(payload); } catch (_) {} })
+    .on("broadcast", { event: "foto" }, ({ payload }) => { try { v99FotoGeldi(payload); } catch (_) {} })
     .on("broadcast", { event: "reload" }, ({ payload }) => {
       const store = payload && payload.store;
       if (!TABLES[store] || (store === "stockMovements" && !stockLoaded)) return;
@@ -4487,7 +4489,7 @@ async function imageFileToJpegBlob(file) {
 
   const bitmap = await createImageBitmap(file);
   try {
-    const maxSide = 1800;
+    const maxSide = 1600;
     const scale = Math.min(1, maxSide / Math.max(bitmap.width, bitmap.height));
     const width = Math.max(1, Math.round(bitmap.width * scale));
     const height = Math.max(1, Math.round(bitmap.height * scale));
@@ -4498,7 +4500,7 @@ async function imageFileToJpegBlob(file) {
     ctx.fillStyle = "#ffffff";
     ctx.fillRect(0, 0, width, height);
     ctx.drawImage(bitmap, 0, 0, width, height);
-    const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", .88));
+    const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", .82));
     if (!blob) throw new Error("Fotoğraf hazırlanamadı.");
     return blob;
   } finally {
@@ -4520,8 +4522,37 @@ async function setPendingOrderPhoto(file) {
   }
 }
 
+/* v99: fotoğraf adresi önbelleği (Free plan trafiği)
+   - Adres 24 saat geçerli imzalanır, 23 saat saklanır: aynı adres = tarayıcı önbelleği, tekrar indirme yok
+   - "Fotoğraf yok" bilgisi 6 saat saklanır: her açılışta boşuna sorgu atılmaz
+   - Fotoğraf değişince diğer bilgisayarlara tek küçük canlı mesaj gider, onlar da önbelleği siler */
+const V99_KEY = "v99foto", V99_URL_TTL = 23 * 3600e3, V99_YOK_TTL = 6 * 3600e3;
+const v99Yolda = new Map();
+function v99Oku() { try { const m = JSON.parse(localStorage.getItem(V99_KEY) || "{}"); return m && typeof m === "object" ? m : {}; } catch (_) { return {}; } }
+function v99Yaz(m) { try { localStorage.setItem(V99_KEY, JSON.stringify(m)); } catch (_) {} }
+function v99FotoGet(id) { const e = v99Oku()[Number(id)]; return e && e.x > Date.now() && typeof e.u === "string" && (e.u === "" || /^https:\/\//.test(e.u) || /^http:\/\/localhost/.test(e.u)) ? e : null; }
+function v99FotoSet(id, u, ttl) { const m = v99Oku(), now = Date.now(); for (const k of Object.keys(m)) if (!m[k] || m[k].x <= now) delete m[k]; m[Number(id)] = { u, x: now + ttl }; v99Yaz(m); }
+function v99FotoSil(ids) { const m = v99Oku(); let d = false; for (const id of [].concat(ids)) if (m[Number(id)]) { delete m[Number(id)]; d = true; } if (d) v99Yaz(m); }
+function v99YoklariSil() { const m = v99Oku(); for (const k of Object.keys(m)) if (!m[k] || m[k].u === "") delete m[k]; v99Yaz(m); }
+let v99DuyurIds = new Set(), v99DuyurT = null;
+function v99FotoDuyur(id) {
+  v99DuyurIds.add(Number(id)); clearTimeout(v99DuyurT);
+  v99DuyurT = setTimeout(() => { const ids = [...v99DuyurIds].slice(0, 500); v99DuyurIds = new Set();
+    if (liveChannel && ids.length) liveChannel.send({ type: "broadcast", event: "foto", payload: { ids } }).catch(() => {}); }, 400);
+}
+function v99FotoGeldi(payload) {
+  const ids = ((payload && payload.ids) || []).map(Number).filter((x) => Number.isFinite(x) && x > 0).slice(0, 500);
+  if (!ids.length) return; v99FotoSil(ids);
+  if (currentDetailOrderId != null && ids.includes(Number(currentDetailOrderId)) && !document.getElementById("detailModal")?.classList.contains("hidden")) loadOrderPhotoIntoDetail(Number(currentDetailOrderId));
+}
 async function getOrderPhotoSignedUrl(orderId) {
   if (!supa || !orderId) return "";
+  const id = Number(orderId); const c = v99FotoGet(id); if (c) return c.u;
+  if (v99Yolda.has(id)) return v99Yolda.get(id);
+  const p = v99FotoImzala(id).finally(() => v99Yolda.delete(id));
+  v99Yolda.set(id, p); return p;
+}
+async function v99FotoImzala(orderId) {
   try {
     const folder = `orders/${Number(orderId)}`;
     const { data: files, error: listError } = await supa.storage
@@ -4529,10 +4560,12 @@ async function getOrderPhotoSignedUrl(orderId) {
       .list(folder, { limit: 1, search: "photo.jpg" });
     // Fotoğraf yoksa createSignedUrl çağrısı yapma; böylece eksik dosyalarda
     // gereksiz 400 (Bad Request) istekleri oluşmaz.
-    if (listError || !Array.isArray(files) || !files.some(f => f?.name === "photo.jpg")) return "";
+    if (listError) return "";
+    if (!Array.isArray(files) || !files.some(f => f?.name === "photo.jpg")) { v99FotoSet(orderId, "", V99_YOK_TTL); return ""; }
     const path = orderPhotoPath(orderId);
-    const { data, error } = await supa.storage.from(ORDER_PHOTO_BUCKET).createSignedUrl(path, 60 * 60);
+    const { data, error } = await supa.storage.from(ORDER_PHOTO_BUCKET).createSignedUrl(path, 24 * 60 * 60);
     if (error || !data?.signedUrl) return "";
+    v99FotoSet(orderId, data.signedUrl, V99_URL_TTL);
     return data.signedUrl;
   } catch (_) {
     return "";
@@ -4548,6 +4581,7 @@ async function uploadOrderPhoto(orderId, blob) {
     cacheControl: "3600"
   });
   if (error) throw error;
+  v99FotoSil(orderId); v99FotoDuyur(orderId);
 }
 
 async function deleteOrderPhoto(orderId) {
@@ -4555,6 +4589,7 @@ async function deleteOrderPhoto(orderId) {
   const { error } = await supa.storage.from(ORDER_PHOTO_BUCKET).remove([orderPhotoPath(orderId)]);
   // "not found" benzeri durumda sipariş kaydını etkileme.
   if (error && !/not found|object not found/i.test(String(error.message || ""))) throw error;
+  v99FotoSil(orderId); v99FotoDuyur(orderId);
 }
 
 async function applyPendingOrderPhoto(orderId) {
@@ -5761,7 +5796,13 @@ async function applyStockForStatusChange(order, oldStatus, newStatus) {
   }
 }
 
+let v99StokDenendi = false;
 function openEntityHistory(type, id) {
+  if (type === "product" && !stockLoaded && !v99StokDenendi) {
+    v99StokDenendi = true;
+    ensureStockLoaded().catch(() => showToast("Stok hareketleri yüklenemedi.")).finally(() => openEntityHistory(type, id));
+    return;
+  }
   const config = ENTITY_CONFIG[type];
   const list = { product: allProducts, customer: allCustomers, supplier: allSuppliers }[type];
   const entity = list.find((x) => x.id === id);
@@ -7272,6 +7313,7 @@ function bindSettingsEvents() {
   });
 
   document.getElementById("backupBtn").addEventListener("click", async () => {
+    try { await ensureStockLoaded(); } catch (_) { showToast("Stok hareketleri yüklenemedi; yedek alınmadı. Bağlantıyı kontrol edip tekrar deneyin."); return; }
     const data = { orders: allOrders, products: activeProductsList(), customers: allCustomers, suppliers: allSuppliers, stockMovements: allStockMovements, exportedAt: new Date().toISOString() };
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
@@ -7799,7 +7841,7 @@ async function v98Jpeg(dataUrl) {
   const k = Math.min(1, 1600 / Math.max(img.naturalWidth, img.naturalHeight));
   const cv = document.createElement("canvas"); cv.width = Math.round(img.naturalWidth * k); cv.height = Math.round(img.naturalHeight * k);
   const g = cv.getContext("2d"); g.fillStyle = "#fff"; g.fillRect(0, 0, cv.width, cv.height); g.drawImage(img, 0, 0, cv.width, cv.height);
-  return await new Promise((ok) => cv.toBlob(ok, "image/jpeg", 0.85));
+  return await new Promise((ok) => cv.toBlob(ok, "image/jpeg", 0.82));
 }
 function v98Reddet(row, parent) {
   const m = v98Ov(`<div class="modal-head"><h2>Teklif ${escapeHtml(row.teklif_no)} — Reddet</h2><button class="icon-btn" data-x aria-label="Kapat">✕</button></div>
@@ -7852,7 +7894,8 @@ function v97Save(kind, o) { try { localStorage.setItem("pronto_v97_pdf_" + kind,
 function v97Keys(kind) { return kind === "tek" ? ["lang", "size", "orient", "foto", "logoPos", "logoSize"] : ["size", "orient", "logoPos", "logoSize"]; }
 function v97LogoSrc() { return v90PdfLogo() || ""; }
 function v97Txt(v) { return v == null || v === "" ? "-" : String(v); }
-function v97Upper(v) { return String(v || "").toLocaleUpperCase("tr-TR"); }
+let V97_LANG = "tr";
+function v97Upper(v) { return String(v || "").toLocaleUpperCase(V97_LANG === "en" ? "en-US" : "tr-TR"); }
 
 /* ---------- İçerik modelleri ---------- */
 function v97ModelOrder(order, o, photo) {
@@ -7863,7 +7906,7 @@ function v97ModelOrder(order, o, photo) {
   return {
     kind: "tek", docNo: orderNo(order), previewTitle: orderNo(order), filename: v90PdfFileName(order),
     contact: { type: "supplier", name: order.supplier },
-    kv: [[L.orderDate, formatDate(order.orderDate)], [L.delivery, formatDate(order.deliveryDate)], [L.status, v97Txt(order.status)], [L.supplier, v97Txt(order.supplier)]],
+    kv: [[L.orderDate, formatDate(order.orderDate)], [L.delivery, formatDate(order.deliveryDate)], [L.status, v97Txt(en ? ({ "Beklemede": "Pending", "Üretimde": "In production", "Sevkiyata Hazır": "Ready to ship", "Teslim Edildi": "Delivered", "İptal": "Cancelled", "Gecikti": "Delayed" }[order.status] || order.status) : order.status)], [L.supplier, v97Txt(order.supplier)]],
     sections: [
       { table: { cols: [{ h: L.photo, w: ps + 10 }, { h: L.product, w: "*" }, { h: L.color, w: "*" }, { h: L.qty, w: 50, align: "r" }],
         rows: [[{ img: photo || "", size: ps, alt: L.nophoto }, { text: v97Txt(order.product), bold: true }, v97Txt([order.colorCode, order.fabricCode].filter(Boolean).join(" / ")), { text: v97Txt(order.quantity), bold: true }]] } },
@@ -7992,6 +8035,7 @@ function v97Cell(c, col) {
   return `<td${cls ? ` class="${cls}"` : ""}>${escapeHtml(v97Txt(t))}</td>`;
 }
 function v97Html(m, o) {
+  V97_LANG = o && o.lang === "en" ? "en" : "tr";
   const [w, h] = v97Dims(o), lh = V97_LOGO_H[o.logoSize] || 76, src = v97LogoSrc();
   const logo = src ? `<img src="${escapeHtml(src)}" alt="OFİSCHİ" style="height:${lh}px;max-width:${lh * 4}px">` : `<b style="font-size:20px">OFİSCHİ</b>`;
   const right = (m.docNo || (m.kv && m.kv.length)) ? `<div class="hr">${m.docNo ? `<div class="no">${escapeHtml(m.docNo)}</div>` : ""}${m.kv && m.kv.length ? `<table class="kv">${m.kv.map(([k, v]) => `<tr><td>${escapeHtml(k)}</td><td>${escapeHtml(v97Txt(v))}</td></tr>`).join("")}</table>` : ""}</div>` : "";
@@ -8010,7 +8054,7 @@ function v97Html(m, o) {
   }).join("");
   const tot = m.totals && m.totals.length ? m.totals.map(([k, v]) => `<div class="tot"><span>${escapeHtml(k)}</span><b>${escapeHtml(v)}</b></div>`).join("") : "";
   const signs = m.signs ? `<div class="signs">${m.signs.map((s) => `<div>${s.name ? `<b>${escapeHtml(s.name)}</b>` : ""}${escapeHtml(v97Upper(s.title))}<br><span>Ad Soyad / İmza</span></div>`).join("")}</div>` : "";
-  return `<div class="v97p" style="width:${w}mm;min-height:${h}mm"><style>${V97_CSS}</style>${head}${title}${meta}${secs}${tot}${signs}<div class="ft"><span>OFİSCHİ BÜRO MOBİLYALARI</span><span>PRONTO · Sayfa 1/1</span></div></div>`;
+  return `<div class="v97p" lang="${o && o.lang === "en" ? "en" : "tr"}" style="width:${w}mm;min-height:${h}mm"><style>${V97_CSS}</style>${head}${title}${meta}${secs}${tot}${signs}<div class="ft"><span>OFİSCHİ BÜRO MOBİLYALARI</span><span>PRONTO · ${o && o.lang === "en" ? "Page" : "Sayfa"} 1/1</span></div></div>`;
 }
 function v97Fill(spec) {
   const root = document.getElementById("pdfPrintRoot"); root.innerHTML = spec.html;
@@ -8018,7 +8062,7 @@ function v97Fill(spec) {
   const ps = document.createElement("style");
   ps.textContent = `@page{size:${size} ${orient};margin:14mm 14mm 16mm;
 @bottom-left{content:"OFİSCHİ BÜRO MOBİLYALARI";font:7.5px Arial,sans-serif;color:#a3a7ad;letter-spacing:.06em}
-@bottom-right{content:"PRONTO · Sayfa " counter(page) "/" counter(pages);font:7.5px Arial,sans-serif;color:#a3a7ad;letter-spacing:.06em}}
+@bottom-right{content:"PRONTO · ${o.lang === "en" ? "Page" : "Sayfa"} " counter(page) "/" counter(pages);font:7.5px Arial,sans-serif;color:#a3a7ad;letter-spacing:.06em}}
 @media print{html,body{background:#fff!important;margin:0!important;padding:0!important}body::before,body::after{display:none!important;content:none!important;background:none!important}body>*:not(#pdfPrintRoot){display:none!important}#pdfPrintRoot{display:block!important}#pdfPrintRoot *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}}`;
   root.appendChild(ps);
   return () => { root.innerHTML = ""; };
@@ -8054,6 +8098,7 @@ async function v97Pdf(m, o) {
   const logo = await v97ToPng(v97LogoSrc(), 900, "png");
   const imgs = {};
   for (const s of m.sections || []) for (const r of (s.table ? s.table.rows : [])) for (const c of r) if (c && typeof c === "object" && c.img && !imgs[c.img]) imgs[c.img] = await v97ToPng(c.img, 700, "jpeg");
+  V97_LANG = o && o.lang === "en" ? "en" : "tr"; const V97PG = V97_LANG === "en" ? "Page" : "Sayfa";
   const logoNode = logo ? { image: logo.data, width: Math.min(lh * logo.w / logo.h, lh * 4), height: Math.min(lh, lh * 4 * logo.h / logo.w) } : { text: "OFİSCHİ", fontSize: 16, bold: true };
   const right = [];
   if (m.docNo) right.push({ text: m.docNo, fontSize: 21, color: INK, alignment: "right", characterSpacing: 0.4 });
@@ -8093,7 +8138,7 @@ async function v97Pdf(m, o) {
     pageSize: o.size === "A3" ? "A3" : "A4", pageOrientation: o.orient === "landscape" ? "landscape" : "portrait",
     pageMargins: [40, 40, 40, 46],
     defaultStyle: { font: "Roboto", fontSize: 8, color: INK, lineHeight: 1.2 },
-    footer: (cur, total) => ({ columns: [{ text: "OFİSCHİ BÜRO MOBİLYALARI", fontSize: 6, color: "#a3a7ad", characterSpacing: 0.4 }, { text: `PRONTO · Sayfa ${cur}/${total}`, fontSize: 6, color: "#a3a7ad", alignment: "right", characterSpacing: 0.4 }], margin: [40, 18, 40, 0] }),
+    footer: (cur, total) => ({ columns: [{ text: "OFİSCHİ BÜRO MOBİLYALARI", fontSize: 6, color: "#a3a7ad", characterSpacing: 0.4 }, { text: `PRONTO · ${V97PG} ${cur}/${total}`, fontSize: 6, color: "#a3a7ad", alignment: "right", characterSpacing: 0.4 }], margin: [40, 18, 40, 0] }),
     content
   };
   return new Promise((ok, no) => { try { window.pdfMake.createPdf(dd).getBlob((b) => ok(b)); } catch (e) { no(e); } });
