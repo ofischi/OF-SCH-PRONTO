@@ -1705,6 +1705,47 @@ table.pd-t{width:100%;border-collapse:collapse;font-size:9pt}.pd-t thead{display
  .search-box{min-height:44px}
  .icon-btn{min-width:42px;min-height:42px}
 }
+
+/* ===== v98: gelen siparişler ===== */
+.v98-badge{display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;padding:0 6px;border-radius:999px;background:#D93025;color:#fff;font-size:11.5px;font-weight:800;margin-left:auto}
+#v98GelenNav{display:flex;align-items:center}
+.v98-mob{margin-left:-6px;cursor:pointer}
+.v98-banner{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:0 0 16px;padding:12px 16px;border-radius:14px;border:1.5px solid #E6B22A;background:rgba(230,178,42,.12);font-size:14px}
+.v98-row{display:flex;align-items:center;gap:12px;padding:12px 4px;border-bottom:1px solid var(--color-border)}
+.v98-row:last-child{border-bottom:0}
+.v98-t{font-weight:800;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.v98-s{font-size:12.5px;color:var(--color-text-muted);margin-top:2px;line-height:1.4}
+.v98-l{font-size:11px;font-weight:700;color:var(--color-text-muted);text-transform:uppercase;letter-spacing:.04em}
+.v98-v{font-size:15px;font-weight:800;margin:3px 0 2px}
+.v98-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+.v98-card{border:1px solid var(--color-border);border-radius:12px;padding:12px 14px;background:var(--color-surface-solid)}
+.v98-in{width:100%;height:40px;border:1px solid var(--color-border);border-radius:10px;padding:0 10px;background:var(--color-surface-solid);color:var(--color-text);font:inherit;box-sizing:border-box}
+textarea.v98-in{height:auto;padding:10px}
+.v98-wide{max-width:1180px !important;width:96vw}
+.v98-tw{overflow-x:auto;border:1px solid var(--color-border);border-radius:12px}
+table.v98-t{width:100%;border-collapse:collapse;font-size:13px}
+.v98-t th{text-align:left;font-size:11px;color:var(--color-text-muted);padding:9px 10px;border-bottom:1px solid var(--color-border);background:var(--color-row-alt);white-space:nowrap}
+.v98-t td{padding:9px 10px;border-bottom:1px solid var(--color-border);vertical-align:top}
+.v98-t tr:last-child td{border-bottom:0}
+.v98-t .num{text-align:right}
+.v98-ph{width:64px}.v98-ph img{width:56px;height:56px;object-fit:contain;border-radius:6px;border:1px solid var(--color-border);background:#fff}
+.v98-ac{max-width:220px;white-space:pre-wrap;font-size:12.5px}
+.v98-sup{min-width:170px;height:38px;border:1px solid var(--color-border);border-radius:9px;padding:0 9px;font:inherit;background:var(--color-surface-solid);color:var(--color-text)}
+.v98-sup.v98-err{border-color:#D93025;box-shadow:0 0 0 3px rgba(217,48,37,.15)}
+.v98-warn{margin:0 0 12px;padding:10px 12px;border-radius:10px;background:rgba(217,48,37,.08);border:1px solid rgba(217,48,37,.35);font-size:13px}
+.v98-red{color:#C0392B !important}
+@media screen and (max-width:1024px){
+ .v98-grid{grid-template-columns:1fr}
+ table.v98-t thead{display:none}
+ table.v98-t,table.v98-t tbody,table.v98-t tr,table.v98-t td{display:block;width:100%;box-sizing:border-box}
+ table.v98-t tr{padding:10px 12px;border-bottom:1px solid var(--color-border)}
+ table.v98-t td{border:0;padding:3px 0}
+ table.v98-t td.num,table.v98-t td.v98-ph{text-align:left}
+ .v98-sup{width:100%}
+ table.v98-t td[data-l]::before{content:attr(data-l) ": ";color:var(--color-text-muted);font-weight:600;font-size:12px}
+ table.v98-t td.v98-ph:not(:has(img)){display:none}
+ table.v98-t td[data-l="Tedarikçi *"]::before{display:block;margin:4px 0 3px}
+}
 </style>
 </head>
 <body>
@@ -3065,6 +3106,7 @@ async function catchUpAfterReconnect() {
     if (stockLoaded) await reloadStore("stockMovements");
     refreshDatalists(true);
     if (currentView === "orders") renderOrdersView();
+    v98Yukle().catch(() => {});
   } catch (e) { console.warn("Yeniden bağlanma eşitlemesi:", e); }
 }
 
@@ -3083,6 +3125,7 @@ function subscribeToChanges() {
       scheduleRemoteRefresh();
       scheduleCacheSave();
     })
+    .on("broadcast", { event: "gelen" }, ({ payload }) => { try { v98Canli(payload); } catch (_) {} })
     .on("broadcast", { event: "reload" }, ({ payload }) => {
       const store = payload && payload.store;
       if (!TABLES[store] || (store === "stockMovements" && !stockLoaded)) return;
@@ -3620,6 +3663,7 @@ async function startApp() {
     return;
   }
   subscribeToChanges();
+  v98Yukle().catch(() => {});
   bindNav();
   bindGlobalEvents();
   bindOrderEvents();
@@ -7604,6 +7648,186 @@ function v93ReadHistoryRange() {
 }
 
 
+
+/* ===== v98: PRONTO Teklif'ten gelen siparişler (onay kutusu) =====
+   Trafik: açılışta 1 okuma; yeni kayıt canlı kanaldan gelir (istek yok);
+   onay ekranı açılınca en fazla 3 küçük okuma; onay/ret tek istek. */
+let v98Gelen = [], v98Aktif = true;
+const v98Lbl = (x) => ({ dahil: "Dahil", haric: "Hariç", fabrika: "Fabrika teslim", adres: "Adrese teslim" }[x] || x || "-");
+const v98TurTxt = t => (t === "guncelleme" ? "Güncelleme" : "Yeni sipariş");
+function v98TrAlt(s) { return String(s || "").replace(/I/g, "ı").replace(/İ/g, "i").toLocaleLowerCase("tr-TR").trim(); }
+async function v98Yukle() {
+  if (!supa) return;
+  const { data, error } = await supa.from("pronto_gelen").select("id,teklif_no,tur,durum,created_at,musteri:veri->cari->>unvan,kalem:veri->kalemler").eq("durum", "bekliyor").order("created_at", { ascending: true }).limit(200);
+  if (error) { if (/does not exist|schema cache|relation|permission/i.test(error.message || "")) v98Aktif = false; return; }
+  v98Aktif = true;
+  v98Gelen = (data || []).map((r) => ({ id: r.id, teklif_no: r.teklif_no, tur: r.tur, durum: r.durum, musteri: r.musteri || "", kalem: Array.isArray(r.kalem) ? r.kalem.length : 0, created_at: r.created_at }));
+  v98Ciz();
+}
+function v98Ciz() {
+  const n = v98Gelen.length;
+  const nav = document.getElementById("v98GelenNav");
+  if (nav) { nav.style.display = v98Aktif ? "" : "none"; const b = nav.querySelector(".v98-badge"); b.textContent = n; b.style.display = n ? "" : "none"; }
+  const mb = document.getElementById("v98MobBadge"); if (mb) { mb.textContent = n; mb.style.display = n ? "" : "none"; }
+  const ban = document.getElementById("v98Banner");
+  if (ban) { ban.style.display = n ? "" : "none"; const t = ban.querySelector("[data-n]"); if (t) t.textContent = n === 1 ? "PRONTO Teklif'ten 1 sipariş onay bekliyor" : `PRONTO Teklif'ten ${n} sipariş onay bekliyor`; }
+  document.title = (n ? `(${n}) ` : "") + document.title.replace(/^\(\d+\)\s*/, "");
+  const lst = document.getElementById("v98Liste"); if (lst) lst.innerHTML = v98ListeHtml();
+}
+function v98ListeHtml() {
+  if (!v98Gelen.length) return `<div class="history-empty" style="padding:26px;text-align:center">Onay bekleyen sipariş yok.</div>`;
+  return v98Gelen.map((g) => `<div class="v98-row" data-id="${g.id}"><div style="min-width:0;flex:1"><div class="v98-t">Teklif ${escapeHtml(g.teklif_no)} · ${escapeHtml(g.musteri)}</div><div class="v98-s">${v98TurTxt(g.tur)} · ${g.kalem} kalem · ${escapeHtml(new Date(g.created_at).toLocaleString("tr-TR", { dateStyle: "short", timeStyle: "short" }))}</div></div><span class="status-badge ${g.tur === "guncelleme" ? "status-uretimde" : "status-beklemede"}">${v98TurTxt(g.tur)}</span><button class="btn btn-primary" data-ac="${g.id}">İncele</button></div>`).join("");
+}
+function v98Ov(html, wide) {
+  const ov = document.createElement("div"); ov.className = "modal-overlay v98-ov"; ov.style.zIndex = "1150";
+  ov.innerHTML = `<div class="modal${wide ? " v98-wide" : ""}" role="dialog" aria-modal="true">${html}</div>`;
+  document.body.appendChild(ov); document.body.classList.add("pronto-modal-lock");
+  const close = () => { ov.remove(); if (!document.querySelector(".modal-overlay:not(.hidden)")) document.body.classList.remove("pronto-modal-lock"); };
+  ov.addEventListener("mousedown", (e) => { if (e.target === ov) close(); });
+  ov.addEventListener("click", (e) => { if (e.target.closest("[data-x]")) close(); });
+  return { ov, close, $: (s) => ov.querySelector(s) };
+}
+function v98ListeAc() {
+  document.querySelector(".sidebar")?.classList.remove("open"); document.querySelector(".sidebar-overlay")?.classList.remove("open");
+  const m = v98Ov(`<div class="modal-head"><h2>Gelen Siparişler</h2><button class="icon-btn" data-x aria-label="Kapat">✕</button></div><div class="modal-body" id="v98Liste">${v98ListeHtml()}</div><div class="modal-foot"><button class="btn btn-ghost" data-x>Kapat</button></div>`);
+  m.ov.addEventListener("click", (e) => { const b = e.target.closest("[data-ac]"); if (b) { m.close(); v98Onay(Number(b.dataset.ac)); } });
+}
+function v98Canli(p) {
+  if (!p || p.id == null) return;
+  const i = v98Gelen.findIndex((g) => g.id === p.id);
+  if (p.durum === "bekliyor") {
+    const yeni = i < 0;
+    const g = { id: p.id, teklif_no: p.teklif_no, tur: p.tur, durum: p.durum, musteri: p.musteri || "", kalem: p.kalem || 0, created_at: i >= 0 ? v98Gelen[i].created_at : new Date().toISOString() };
+    if (i >= 0) v98Gelen[i] = g; else v98Gelen.push(g);
+    if (yeni) {
+      const msg = `${v98TurTxt(g.tur)}: Teklif ${g.teklif_no} · ${g.musteri}`;
+      showToast("📥 " + msg);
+      try { window.prontoDesktop?.notify?.({ title: "PRONTO — Onay bekleyen sipariş", body: msg }); } catch (_) {}
+    }
+  } else {
+    if (i >= 0) v98Gelen.splice(i, 1);
+    const acik = document.querySelector(`.v98-ov[data-gelen="${p.id}"]`);
+    if (acik) { acik.remove(); showToast(`Teklif ${p.teklif_no} başka bir bilgisayarda ${p.durum === "onaylandi" ? "onaylandı" : p.durum === "reddedildi" ? "reddedildi" : "güncellendi"}.`); }
+  }
+  v98Ciz();
+}
+async function v98Onay(id) {
+  let row;
+  { const { data, error } = await supa.from("pronto_gelen").select("id,teklif_id,teklif_no,tur,durum,veri").eq("id", id).maybeSingle();
+    if (error || !data) return showToast("Kayıt okunamadı: " + ((error && error.message) || "bulunamadı"));
+    if (data.durum !== "bekliyor") { v98Canli({ id, durum: data.durum, teklif_no: data.teklif_no }); return showToast("Bu kayıt artık onay beklemiyor."); }
+    row = data; }
+  const v = row.veri || {}, c = v.cari || {}, kal = Array.isArray(v.kalemler) ? v.kalemler : [];
+  const anah = []; kal.forEach((k) => { anah.push("urun:" + v98TrAlt(k.urun), "kat:" + v98TrAlt(k.kategori)); });
+  const [haf, esk] = await Promise.all([
+    supa.from("pronto_tedarikci_hafiza").select("anahtar,tedarikci").in("anahtar", Array.from(new Set(anah)).slice(0, 400)),
+    row.tur === "guncelleme" ? supa.from("orders").select("id,teklif_kalem,status,product,quantity,color_code,supplier,description").eq("teklif_id", row.teklif_id) : Promise.resolve({ data: [] })
+  ]);
+  const hm = new Map((haf.data || []).map((h) => [h.anahtar, h.tedarikci]));
+  const eski = new Map(); (esk.data || []).forEach((o) => { if (o.teklif_kalem && (!eski.has(o.teklif_kalem) || o.id > eski.get(o.teklif_kalem).id)) eski.set(o.teklif_kalem, o); });
+  const uidSet = new Set(kal.map((k) => k.uid));
+  const cikan = Array.from(eski.values()).filter((o) => !uidSet.has(o.teklif_kalem) && o.status !== "Teslim Edildi" && o.status !== "İptal");
+  const bulunan = allCustomers.find((x) => v98TrAlt(x.name) === v98TrAlt(c.unvan));
+  const custOpts = `<option value="">${bulunan ? "Kayıtlı müşteri: " + escapeHtml(bulunan.name) : "Yeni müşteri açılacak: " + escapeHtml(c.unvan || "")}</option>` +
+    allCustomers.filter((x) => !bulunan || x.id !== bulunan.id).slice().sort((a, b) => String(a.name).localeCompare(String(b.name), "tr")).map((x) => `<option value="${x.id}">${escapeHtml(x.name)}</option>`).join("");
+  const adres = [c.adres, c.ilce, c.sehir].filter(Boolean).join(", ");
+  const supList = `<datalist id="v98Sup">${allSuppliers.map((s) => `<option value="${escapeHtml(s.name)}">`).join("")}</datalist>`;
+  const durumOf = (k) => { const o = eski.get(k.uid); if (!o) return row.tur === "guncelleme" ? ["Yeni", "status-teslim"] : ["", ""]; const ch = o.product !== k.urun || Number(o.quantity) !== Number(k.adet) || (o.color_code || "") !== (k.renk || ""); return ch ? ["Değişti", "status-uretimde"] : ["Aynı", "status-beklemede"]; };
+  const rows = kal.map((k) => { const [dt, dc] = durumOf(k); const o = eski.get(k.uid); const sup = o ? o.supplier : (hm.get("urun:" + v98TrAlt(k.urun)) || hm.get("kat:" + v98TrAlt(k.kategori)) || "");
+    return `<tr data-uid="${escapeHtml(k.uid)}"><td class="v98-ph" data-foto="${escapeHtml(k.foto || "")}">${k.foto ? "…" : "—"}</td><td><b>${escapeHtml(k.urun)}</b>${dt ? ` <span class="status-badge ${dc}">${dt}</span>` : ""}${o ? `<div class="v98-s">${escapeHtml(orderNo(o))} · ${escapeHtml(o.status || "")}${dt === "Değişti" ? ` · şu an: ${escapeHtml(o.product)} × ${escapeHtml(o.quantity)}${o.color_code ? " · " + escapeHtml(o.color_code) : ""}` : ""}</div>` : ""}</td><td data-l="Ölçü">${escapeHtml(k.olcu || "—")}</td><td data-l="Renk">${escapeHtml(k.renk || "—")}</td><td data-l="Yön">${escapeHtml(k.yon || "—")}</td><td class="num" data-l="Adet"><b>${escapeHtml(k.adet)}</b></td><td class="v98-ac" data-l="Açıklama">${escapeHtml(k.aciklama || "—")}</td><td data-l="Tedarikçi *"><input class="v98-sup" list="v98Sup" value="${escapeHtml(sup)}" placeholder="Tedarikçi seçin" maxlength="200" aria-label="Tedarikçi"></td></tr>`; }).join("");
+  const cikanHtml = cikan.length ? `<div class="v98-warn"><b>Tekliften çıkarılan ${cikan.length} kalem</b> onaylanınca <b>İptal</b> yapılacak (silinmez): ${cikan.map((o) => escapeHtml(orderNo(o) + " " + o.product)).join(", ")}</div>` : "";
+  const m = v98Ov(`<div class="modal-head"><h2>Teklif ${escapeHtml(row.teklif_no)} — ${v98TurTxt(row.tur)}</h2><button class="icon-btn" data-x aria-label="Kapat">✕</button></div>
+    <div class="modal-body">
+      <div class="v98-grid">
+        <div class="v98-card"><div class="v98-l">Müşteri</div><div class="v98-v">${escapeHtml(c.unvan || "-")}</div><div class="v98-s">${escapeHtml([c.gsm, c.eposta].filter(Boolean).join(" · ") || "-")}</div><div class="v98-s">${escapeHtml(adres || "-")}</div>
+          <label class="v98-l" style="margin-top:10px;display:block">Kayıt</label><select class="v98-in" id="v98Cust" ${row.tur === "guncelleme" ? "disabled" : ""}>${custOpts}</select></div>
+        <div class="v98-card"><div class="v98-l">Teklif</div><div class="v98-s">Teklif tarihi: ${escapeHtml(v.tarih ? formatDate(v.tarih) : "-")} · Personel: ${escapeHtml(v.personel || "-")}</div><div class="v98-s">Montaj: ${escapeHtml(v98Lbl(v.montaj))} · Nakliye: ${escapeHtml(v98Lbl(v.nakliye))} · Teslim yeri: ${escapeHtml(v98Lbl(v.teslimYeri))}</div>
+          <label class="v98-l" style="margin-top:10px;display:block">Teslim tarihi</label><input type="date" class="v98-in" id="v98Teslim" value="${escapeHtml(v.teslim || "")}"></div>
+      </div>
+      ${cikanHtml}
+      <div class="v98-tw"><table class="v98-t"><thead><tr><th>Foto</th><th>Ürün</th><th>Ölçü</th><th>Renk</th><th>Yön</th><th class="num">Adet</th><th>Açıklama</th><th>Tedarikçi *</th></tr></thead><tbody>${rows}</tbody></table></div>${supList}
+      <div class="v98-s" style="margin-top:8px">Tedarikçi, ürün ve kategori için en son seçileni hatırlar. Listede olmayan bir ad yazarsanız tedarikçi listesine eklenir.</div>
+    </div>
+    <div class="modal-foot"><button class="btn btn-ghost v98-red" data-red>Reddet</button><span style="flex:1"></span><button class="btn btn-ghost" data-x>Sonra</button><button class="btn btn-primary" data-ok>Onayla</button></div>`, true);
+  m.ov.dataset.gelen = String(id);
+  // fotoğraflar (sadece bu ekranda, tek istek)
+  if (kal.some((k) => k.foto)) {
+    supa.rpc("pronto_gelen_foto", { p_id: id }).then(({ data }) => {
+      m.fotolar = data || {};
+      m.ov.querySelectorAll("[data-foto]").forEach((td) => { const f = m.fotolar[td.dataset.foto]; td.innerHTML = f && /^data:image\//.test(f) ? `<img src="${escapeHtml(f)}" alt="">` : "—"; });
+    }).catch(() => {});
+  }
+  m.ov.addEventListener("click", async (e) => {
+    if (e.target.closest("[data-red]")) return v98Reddet(row, m);
+    if (!e.target.closest("[data-ok]")) return;
+    const ted = {}; let eksik = null;
+    m.ov.querySelectorAll("tbody tr[data-uid]").forEach((tr) => { const val = tr.querySelector(".v98-sup").value.trim(); tr.querySelector(".v98-sup").classList.toggle("v98-err", !val && !eski.has(tr.dataset.uid)); if (val) ted[tr.dataset.uid] = val; else if (!eski.has(tr.dataset.uid) && !eksik) eksik = tr; });
+    if (eksik) { eksik.querySelector(".v98-sup").focus(); return showToast("Her ürün için tedarikçi seçin."); }
+    const teslim = m.$("#v98Teslim").value; if (!teslim) return showToast("Teslim tarihi seçin.");
+    const custId = m.$("#v98Cust").value ? Number(m.$("#v98Cust").value) : null;
+    const btn = m.$("[data-ok]"); btn.disabled = true; btn.textContent = "Onaylanıyor…";
+    try {
+      const { data, error } = await supa.rpc("pronto_gelen_onayla", { p_id: id, p_tedarikci: ted, p_musteri_id: custId, p_teslim: teslim });
+      if (error) throw error;
+      const ords = (data && data.orders) || [];
+      if (data && data.customer) { const cu = fromRow("customers", data.customer); upsertLocalStore("customers", cu); liveSend("customers", "INSERT", [data.customer]); }
+      if (data && data.suppliers && data.suppliers.length) { upsertLocalStore("suppliers", data.suppliers.map((s) => fromRow("suppliers", s))); liveSend("suppliers", "INSERT", data.suppliers); }
+      const clean = ords.map((o) => { const { _foto, _yeni, _iptal, teklif_id, teklif_kalem, ...r } = o; return r; });
+      upsertLocalStore("orders", clean.map((o) => fromRow("orders", o)));
+      liveSend("orders", "UPDATE", clean);
+      v98Gelen = v98Gelen.filter((g) => g.id !== id); v98Ciz();
+      m.close();
+      const yeni = ords.filter((o) => o._yeni).length, deg = ords.filter((o) => !o._yeni && !o._iptal).length, ipt = ords.filter((o) => o._iptal).length;
+      showToast(row.tur === "guncelleme" ? `Güncellendi: ${yeni} yeni, ${deg} güncellenen, ${ipt} iptal` : `${yeni} sipariş oluşturuldu (Teklif ${row.teklif_no})`);
+      refreshDatalists(true); if (currentView === "orders") renderOrdersView();
+      // fotoğraflar yeni siparişlere bir kez kopyalanır
+      const need = ords.filter((o) => o._yeni && o._foto);
+      if (need.length) {
+        let fot = m.fotolar;
+        if (!fot) { const r = await supa.rpc("pronto_gelen_foto", { p_id: id }); fot = r.data || {}; }
+        for (const o of need) { const f = fot[o._foto]; if (!f) continue; try { const b = await v98Jpeg(f); if (b) await uploadOrderPhoto(o.id, b); } catch (_) {} }
+      }
+    } catch (er) {
+      btn.disabled = false; btn.textContent = "Onayla";
+      showToast("Onaylanamadı: " + ((er && er.message) || er));
+      if (/onay beklemiyor/.test((er && er.message) || "")) { m.close(); v98Yukle(); }
+    }
+  });
+}
+async function v98Jpeg(dataUrl) {
+  const img = new Image(); img.src = dataUrl; await img.decode();
+  const k = Math.min(1, 1600 / Math.max(img.naturalWidth, img.naturalHeight));
+  const cv = document.createElement("canvas"); cv.width = Math.round(img.naturalWidth * k); cv.height = Math.round(img.naturalHeight * k);
+  const g = cv.getContext("2d"); g.fillStyle = "#fff"; g.fillRect(0, 0, cv.width, cv.height); g.drawImage(img, 0, 0, cv.width, cv.height);
+  return await new Promise((ok) => cv.toBlob(ok, "image/jpeg", 0.85));
+}
+function v98Reddet(row, parent) {
+  const m = v98Ov(`<div class="modal-head"><h2>Teklif ${escapeHtml(row.teklif_no)} — Reddet</h2><button class="icon-btn" data-x aria-label="Kapat">✕</button></div>
+    <div class="modal-body"><label class="v98-l">Ret nedeni (PRONTO Teklif'te görünür) *</label><textarea class="v98-in" id="v98Not" rows="3" maxlength="500" placeholder="Örn. Fiyat onaylanmadı, ölçü kontrol edilecek…"></textarea></div>
+    <div class="modal-foot"><button class="btn btn-ghost" data-x>Vazgeç</button><button class="btn btn-danger" data-rok>Reddet</button></div>`);
+  m.ov.style.zIndex = "1200"; setTimeout(() => m.$("#v98Not").focus(), 30);
+  m.ov.addEventListener("click", async (e) => {
+    if (!e.target.closest("[data-rok]")) return;
+    const not = m.$("#v98Not").value.trim(); if (!not) { m.$("#v98Not").focus(); return showToast("Ret nedenini yazın."); }
+    const b = m.$("[data-rok]"); b.disabled = true;
+    const { error } = await supa.rpc("pronto_gelen_reddet", { p_id: row.id, p_not: not });
+    if (error) { b.disabled = false; return showToast("Reddedilemedi: " + error.message); }
+    m.close(); parent.close(); v98Gelen = v98Gelen.filter((g) => g.id !== row.id); v98Ciz();
+    showToast(`Teklif ${row.teklif_no} reddedildi.`);
+  });
+}
+(function v98Kur() {
+  const nav = document.querySelector(".sidebar-nav .nav-item[data-view='orders']");
+  if (nav && !document.getElementById("v98GelenNav")) {
+    const b = document.createElement("button"); b.className = "nav-item"; b.id = "v98GelenNav"; b.type = "button"; b.style.display = "none";
+    b.innerHTML = `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg> Gelen Siparişler <span class="v98-badge" style="display:none">0</span>`;
+    b.addEventListener("click", v98ListeAc); nav.after(b);
+  }
+  const ham = document.getElementById("hamburgerBtn");
+  if (ham && !document.getElementById("v98MobBadge")) { const s = document.createElement("span"); s.id = "v98MobBadge"; s.className = "v98-badge v98-mob"; s.style.display = "none"; s.addEventListener("click", (e) => { e.stopPropagation(); v98ListeAc(); }); ham.after(s); }
+  const head = document.querySelector("#view-orders .page-header");
+  if (head && !document.getElementById("v98Banner")) { const d = document.createElement("div"); d.id = "v98Banner"; d.className = "v98-banner"; d.style.display = "none"; d.innerHTML = `<span>📥 <b data-n></b></span><button class="btn btn-primary" type="button">İncele</button>`; d.querySelector("button").addEventListener("click", v98ListeAc); head.after(d); }
+})();
 
 /* ===== v97: B (Sade) şablonu — tek içerik modeli, iki çıktı:
    1) önizleme / yazdır / masaüstü program: HTML → Chrome motoru (gerçek, yazısı seçilebilen PDF)
