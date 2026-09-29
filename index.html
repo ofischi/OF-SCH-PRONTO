@@ -539,7 +539,7 @@ input, select, textarea { font-family: inherit; }
   .summary-grid { grid-template-columns: repeat(2, 1fr); }
 }
 
-@media (max-width: 768px) {
+@media screen and (max-width:1024px) {
   .sidebar {
     transform: translateX(-100%);
     width: 250px;
@@ -607,7 +607,7 @@ input, select, textarea { font-family: inherit; }
 .shipment-type--transport { background:var(--color-accent-tint); color:var(--color-accent-dark); }
 .shipment-checkbox { width:17px; height:17px; accent-color:var(--color-accent-dark); }
 .shipment-mobile-list { display:none; }
-@media (max-width:768px) {
+@media screen and (max-width:1024px) {
   .shipment-toolbar { flex-direction:column; }
   .shipment-select { width:100%; }
   .shipment-city-card { overflow:visible; }
@@ -868,7 +868,7 @@ input, select, textarea { font-family: inherit; }
 .settings-card--danger h3 { color: var(--color-danger); }
 
 /* ===================== RESPONSIVE ADDITIONS ===================== */
-@media (max-width: 768px) {
+@media screen and (max-width:1024px) {
   .report-grid { grid-template-columns: 1fr; }
   .date-range-pop { right: auto; left: 0; width: 220px; }
 }
@@ -996,7 +996,7 @@ input, select, textarea { font-family: inherit; }
   border: 1px solid var(--color-border); background: var(--color-surface);
   font-size: 13.5px; color: var(--color-text); font-family: inherit;
 }
-@media (max-width: 768px) {
+@media screen and (max-width:1024px) {
   .pagination { flex-direction: column; align-items: stretch; gap: 10px; }
   .pagination-controls { justify-content: center; }
   .pagination-info { text-align: center; }
@@ -1453,7 +1453,7 @@ body::after {
 
 /* V24 PDF MOTORU / ÖNİZLEME STİLİ */
 .pdf-ov .modal{width:80vw;max-width:none;height:88dvh;max-height:none;padding:0;overflow:hidden}
-@media (max-width:767px){.pdf-ov .modal{width:95vw;height:95dvh}}
+@media screen and (max-width:1024px){.pdf-ov .modal{width:95vw;height:95dvh}}
 .pdf-h{display:flex;align-items:center;gap:12px;padding:10px 14px;border-bottom:1px solid var(--color-border,#ddd);flex-wrap:wrap}
 .pdf-h .meta{flex:1;min-width:160px;display:flex;align-items:center;gap:10px}.pdf-h .meta .mark{font-weight:800;letter-spacing:.08em}.pdf-stage{flex:1;overflow:auto;padding:24px;background:rgba(0,0,0,.05);touch-action:pan-x pan-y}.pdf-zoom{transform-origin:top center;margin:0 auto;width:max-content}
 .pdoc{--pf:#1a1d24;background:#fff;color:var(--pf);width:210mm;min-height:297mm;padding:14mm 12mm 26mm;font:10pt/1.4 Arial,Helvetica,sans-serif;box-shadow:0 10px 40px rgba(0,0,0,.35);position:relative}
@@ -1499,7 +1499,7 @@ table.pd-t{width:100%;border-collapse:collapse;font-size:9pt}.pd-t thead{display
   box-sizing: border-box;
 }
 
-@media (max-width: 768px) {
+@media screen and (max-width:1024px) {
   .main-content {
     width: 100%;
     max-width: none !important;
@@ -1605,7 +1605,7 @@ table.pd-t{width:100%;border-collapse:collapse;font-size:9pt}.pd-t thead{display
  .price-summary-box{grid-template-columns:repeat(2,minmax(0,1fr)) !important}
 }
 /* 4) Telefonda teslim formu listesi: satırlar kart olarak */
-@media(max-width:768px){
+@media screen and (max-width:1024px){
  #view-delivery-form .shipment-table{display:block !important;width:100% !important;border:0 !important}
  #view-delivery-form .shipment-table thead{display:none}
  #view-delivery-form .shipment-table tbody,#view-delivery-form .shipment-table tr{display:block}
@@ -1642,6 +1642,69 @@ table.pd-t{width:100%;border-collapse:collapse;font-size:9pt}.pd-t thead{display
 /* + Ekle butonu açıklamanın altında, hiçbir alanın üstüne binmez */
 .order-add-line-wrap{position:static !important;margin:14px 0 4px !important;padding:0 !important;justify-content:stretch !important}
 .order-add-line-btn{width:100% !important;height:42px !important;transform:none !important;font-size:14px !important}
+
+/* ===== v96: arayüz düzeltmeleri ===== */
+/* 9) Pencereler opak: arkadaki sayfa yazıları karışmaz */
+.modal{background:var(--color-surface-solid) !important;-webkit-backdrop-filter:none !important;backdrop-filter:none !important}
+/* 4) + Ekle alt çubukta */
+.order-add-line-wrap{display:none !important}
+.modal-foot .v96-add-foot{margin-right:auto}
+/* 1) Teslim formu tablosu: tarih/telefon bölünmez */
+#view-delivery-form .shipment-table td:nth-child(1),#view-delivery-form .shipment-table td:nth-child(3),#view-delivery-form .shipment-table td:nth-child(5),#view-delivery-form .shipment-table td:nth-child(6){white-space:nowrap !important;overflow-wrap:normal !important;word-break:normal !important}
+#view-delivery-form .shipment-table th:nth-child(1),#view-delivery-form .shipment-table td:nth-child(1){width:10%}
+#view-delivery-form .shipment-table th:nth-child(2),#view-delivery-form .shipment-table td:nth-child(2){width:17%}
+#view-delivery-form .shipment-table th:nth-child(3),#view-delivery-form .shipment-table td:nth-child(3){width:12%}
+#view-delivery-form .shipment-table th:nth-child(4),#view-delivery-form .shipment-table td:nth-child(4){width:20%}
+#view-delivery-form .shipment-table th:nth-child(6),#view-delivery-form .shipment-table td:nth-child(6){width:7%}
+#view-delivery-form .shipment-table th:nth-child(8),#view-delivery-form .shipment-table td:nth-child(8){width:12%}
+.shipment-type{white-space:nowrap}
+.shipment-table td:nth-child(2){white-space:nowrap}
+/* 13) Eksi stok */
+.v96-neg{color:#C0392B;font-weight:800}
+/* 12) Odak ve gizli öğeler */
+.search-box:focus-within{border-color:var(--color-accent) !important;box-shadow:0 0 0 3px rgba(230,178,42,.22) !important}
+.upcoming-panel:not(.is-open) .upcoming-list{visibility:hidden}
+@media screen and (max-width:1024px){
+ .sidebar{visibility:hidden;transition:transform .25s ease,visibility 0s linear .25s}
+ .sidebar.open{visibility:visible;transition:transform .25s ease,visibility 0s}
+ /* 1) tablet: kartlar iki sütun */
+ /* 8) Geçmiş penceresi alt çubuk */
+ #entityHistoryModal .modal-foot{display:grid !important;grid-template-columns:1fr 1fr;gap:8px;align-items:end}
+ #entityHistoryModal .modal-foot .v93-range{grid-column:1/-1;margin:0 !important;display:grid !important;grid-template-columns:1fr 1fr auto;gap:8px;width:100%}
+ #entityHistoryModal .modal-foot>.btn{height:44px;width:100%;justify-content:center}
+ /* 2) Grup penceresi: satırlar kart */
+ #orderGroupModal table.v96-cardable{display:block;width:100% !important;min-width:0 !important;border:0}
+ #orderGroupModal table.v96-cardable thead{display:none}
+ #orderGroupModal table.v96-cardable tbody{display:block}
+ #orderGroupModal .order-group-table-wrap{overflow:visible !important}
+ #orderGroupModal table.v96-cardable tr{display:grid !important;width:100% !important;box-sizing:border-box;grid-template-columns:auto 1fr auto;gap:2px 10px;align-items:start;border:1px solid var(--color-border);border-radius:12px;padding:10px 12px;margin-bottom:10px;background:var(--color-surface-solid)}
+ #orderGroupModal table.v96-cardable td{display:block !important;width:auto !important;max-width:none !important;min-width:0 !important;justify-self:stretch;border:0 !important;padding:1px 0 !important;white-space:normal !important;overflow-wrap:break-word !important;word-break:normal !important;text-align:left !important;font-size:14px;line-height:1.35}
+ #orderGroupModal table.v96-cardable td:first-child{grid-row:1/span 7;padding-top:3px !important}
+ #orderGroupModal table.v96-cardable td:last-child{grid-column:3;grid-row:1}
+ #orderGroupModal table.v96-cardable td:not(:first-child):not(:last-child){grid-column:2}
+ #orderGroupModal table.v96-cardable td[data-label="Müşteri"]{display:none !important}
+ #orderGroupModal table.v96-cardable td[data-label]:not([data-label=""]):not(:nth-child(2)):not(.col-actions):not(.col-check)::before{content:attr(data-label) ": ";color:var(--color-text-muted);font-weight:600;font-size:12px}
+ #orderGroupModal table.v96-cardable td:nth-child(2){font-weight:800;font-size:15px}
+ #orderGroupModal .modal-foot{flex-wrap:wrap;gap:8px}
+ /* 11) Teslim formu kartlarında okunur yazı */
+ #view-delivery-form .shipment-table td{font-size:14px !important;line-height:1.45}
+ #view-delivery-form .shipment-table td:nth-child(2){font-size:16px !important}
+}
+@media screen and (min-width:700px) and (max-width:1024px){
+ .cards-wrap{display:grid !important;grid-template-columns:1fr 1fr;gap:12px;align-items:start}
+ .cards-wrap>.order-card{margin:0}
+}
+/* 10) Dokunmatik ekranda rahat dokunma alanları */
+@media screen and (max-width:1024px), screen and (pointer:coarse){
+ .status-badge-btn{min-height:34px;padding:6px 12px;display:inline-flex;align-items:center}
+ .menu-trigger{min-width:42px;min-height:42px}
+ .stock-adj{min-width:42px;min-height:42px}
+ .stock-input{min-height:42px}
+ .shipment-archive-btn,.delivery-form-open-btn,#view-shipment .btn,#view-delivery-form .btn{min-height:42px}
+ .filter-pills .pill{min-height:38px}
+ .search-box{min-height:44px}
+ .icon-btn{min-width:42px;min-height:42px}
+}
 </style>
 </head>
 <body>
@@ -1806,7 +1869,7 @@ table.pd-t{width:100%;border-collapse:collapse;font-size:9pt}.pd-t thead{display
               <th class="col-check"><input type="checkbox" id="selectAllOrders"></th>
               <th>No</th>
               <th>Müşteri</th>
-              <th>SİP Adet</th>
+              <th>Sip. Adet</th>
               <th>Sipariş Tarihi</th>
               <th>Teslim</th>
               <th>Durum</th>
@@ -1886,7 +1949,7 @@ table.pd-t{width:100%;border-collapse:collapse;font-size:9pt}.pd-t thead{display
       </div>
       <div class="table-wrap" id="productsTableWrap">
         <table class="orders-table">
-          <thead><tr><th>Ürün Adı</th><th>Kategori</th><th>Birim</th><th>Birim Fiyat</th><th>Stok</th><th>Açıklama</th><th></th></tr></thead>
+          <thead><tr><th>Ürün Adı</th><th>Kategori</th><th>Birim</th><th>Stok</th><th>Açıklama</th><th></th></tr></thead>
           <tbody id="productsTableBody"></tbody>
         </table>
       </div>
@@ -2232,6 +2295,7 @@ table.pd-t{width:100%;border-collapse:collapse;font-size:9pt}.pd-t thead{display
       </div>
     </form>
     <div class="modal-foot">
+      <button type="button" class="btn btn-secondary v96-add-foot" id="orderAddLineFootBtn">+ Ekle</button>
       <button class="btn btn-ghost" id="orderCancelBtn">İptal</button>
       <button type="button" class="btn btn-primary" id="orderSaveBtn">Siparişleri Kaydet</button>
     </div>
@@ -2508,7 +2572,6 @@ const ENTITY_CONFIG = {
       { id: "name", label: "Ürün Adı *", type: "text", required: true },
       { id: "category", label: "Kategori", type: "text", placeholder: "Ör. Çalışma Masası" },
       { id: "unit", label: "Birim", type: "text", placeholder: "Adet" },
-      { id: "price", label: "Birim Fiyat (₺)", type: "number" },
       { id: "stock", label: "Stok Adedi", type: "number" },
       { id: "description", label: "Açıklama", type: "textarea", wide: true }
     ]
@@ -4010,15 +4073,15 @@ function groupStatusHtml(group) {
 function renderOrdersTable(groups) {
   const tbody=document.getElementById("ordersTableBody");
   tbody.innerHTML=groups.map(g=>`<tr data-group-key="${escapeHtml(g.key)}"><td class="col-check"><input type="checkbox" class="group-select" data-group-key="${escapeHtml(g.key)}" ${g.ids.length&&g.ids.every(id=>selectedOrderIds.has(id))?"checked":""}></td><td class="order-group-no">${escapeHtml(orderNo(g.first))}<span class="order-group-count">${g.lineCount} kalem</span></td><td class="order-group-customer">${escapeHtml(g.customer)}</td><td class="order-group-qty" title="${g.lineCount} sipariş kalemi">${escapeHtml(g.totalQuantity)}</td><td>${formatDate(g.orderDate)}</td><td>${formatDate(g.deliveryDate)}</td><td>${groupStatusHtml(g)}</td><td class="col-actions"><button class="menu-trigger group-menu-trigger" data-group-key="${escapeHtml(g.key)}">⋯</button></td></tr>`).join("");
-  tbody.querySelectorAll("tr").forEach(tr=>tr.addEventListener("click",e=>{if(e.target.closest(".group-menu-trigger")||e.target.closest(".group-select")||e.target.closest(".status-badge-btn"))return;openOrderGroupModal(tr.dataset.groupKey);}));
+  tbody.querySelectorAll("tr").forEach(tr=>tr.addEventListener("click",e=>{if(e.target.closest(".group-menu-trigger")||e.target.closest(".group-select")||e.target.closest(".status-badge-btn"))return;v96OpenGroupOrOrder(groups,tr.dataset.groupKey);}));v96BindListBadges(tbody,groups);
   tbody.querySelectorAll(".group-select").forEach(cb=>{cb.addEventListener("click",e=>e.stopPropagation());cb.addEventListener("change",()=>{const g=groups.find(x=>x.key===cb.dataset.groupKey);if(!g)return;g.ids.forEach(id=>cb.checked?selectedOrderIds.add(id):selectedOrderIds.delete(id));updateBulkBar();updateSelectAllState();});});
-  tbody.querySelectorAll(".group-menu-trigger").forEach(btn=>btn.addEventListener("click",e=>{e.stopPropagation();const g=groups.find(x=>x.key===btn.dataset.groupKey);if(!g)return;showRowMenu(btn,[{label:"Siparişleri Aç",onClick:()=>openOrderGroupModal(g.key)},{label:"İlk Sipariş Kartı",onClick:()=>openDetailModal(g.first.id)}]);}));
+  tbody.querySelectorAll(".group-menu-trigger").forEach(btn=>btn.addEventListener("click",e=>{e.stopPropagation();const g=groups.find(x=>x.key===btn.dataset.groupKey);if(!g)return;const id=g.first.id;showRowMenu(btn,g.lineCount===1?[{label:"Sipariş Kartı",onClick:()=>openDetailModal(id)},{label:"PDF",onClick:()=>v90OpenPdf(id)},{label:"Düzenle",onClick:()=>openOrderModal(id)},{label:"Sil",danger:true,onClick:()=>confirmDeleteOrder(id)}]:[{label:"Siparişleri Aç",onClick:()=>openOrderGroupModal(g.key)},{label:"Grup PDF",onClick:()=>v91OpenOrderGroupPdf(g)},{label:"İlk Sipariş Kartı",onClick:()=>openDetailModal(g.first.id)}]);}));
   updateSelectAllState();
 }
 function renderOrdersCards(groups) {
   const wrap=document.getElementById("cardsWrap");
   wrap.innerHTML=groups.map(g=>`<div class="order-card has-select" data-group-key="${escapeHtml(g.key)}"><input type="checkbox" class="group-select order-card-select" data-group-key="${escapeHtml(g.key)}" ${g.ids.length&&g.ids.every(id=>selectedOrderIds.has(id))?"checked":""}><div class="order-card-top"><div><div class="order-card-no">${escapeHtml(orderNo(g.first))} · ${g.lineCount} kalem</div><div class="order-card-customer">${escapeHtml(g.customer)}</div></div><div class="order-card-qty">${escapeHtml(g.totalQuantity)} adet</div></div><div class="order-card-meta"><span>🚚 Teslim: ${formatDate(g.deliveryDate)}</span></div><div class="order-card-status">${groupStatusHtml(g)}</div></div>`).join("");
-  wrap.querySelectorAll(".order-card").forEach(card=>card.addEventListener("click",e=>{if(e.target.closest(".group-select"))return;openOrderGroupModal(card.dataset.groupKey);}));
+  wrap.querySelectorAll(".order-card").forEach(card=>card.addEventListener("click",e=>{if(e.target.closest(".group-select")||e.target.closest(".status-badge-btn"))return;v96OpenGroupOrOrder(groups,card.dataset.groupKey);}));v96BindListBadges(wrap,groups);
   wrap.querySelectorAll(".group-select").forEach(cb=>{cb.addEventListener("click",e=>e.stopPropagation());cb.addEventListener("change",()=>{const g=groups.find(x=>x.key===cb.dataset.groupKey);if(!g)return;g.ids.forEach(id=>cb.checked?selectedOrderIds.add(id):selectedOrderIds.delete(id));updateBulkBar();updateSelectAllState();});});
 }
 function updateOrderGroupSelectionUi(group) {
@@ -4038,7 +4101,7 @@ function openOrderGroupModal(groupKey) {
   const group = buildOrderGroups(getFilteredOrders()).find(g => g.key === groupKey);
   if (!group) return;
   document.getElementById("orderGroupModalTitle").textContent = `${group.customer} · ${group.lineCount} kalem`;
-  document.getElementById("orderGroupModalBody").innerHTML = `<div class="order-group-summary"><span>Müşteri: <strong>${escapeHtml(group.customer)}</strong></span><span>SİP Adet: <strong>${escapeHtml(group.totalQuantity)}</strong></span><span>Kalem: <strong>${group.lineCount}</strong></span><span>Teslim: <strong>${formatDate(group.deliveryDate)}</strong></span></div><div class="order-group-table-wrap"><table class="order-group-table"><thead><tr><th class="col-check"><input type="checkbox" id="groupSelectAll" aria-label="Tümünü seç"></th><th>Sipariş No</th><th>Sipariş Tarihi</th><th>Müşteri</th><th>Ürün</th><th>Tedarikçi</th><th>Renk/Kumaş</th><th>Adet</th><th>Teslim</th><th>Durum</th><th>⋯</th></tr></thead><tbody>${group.orders.map(o=>`<tr data-id="${o.id}"><td class="col-check"><input type="checkbox" class="group-order-select" data-id="${o.id}" aria-label="${escapeHtml(orderNo(o))}" ${selectedOrderIds.has(o.id)?"checked":""}></td><td class="order-no">${escapeHtml(orderNo(o))}</td><td>${formatDate(o.orderDate)}</td><td>${escapeHtml(o.customer)}</td><td class="order-group-product">${escapeHtml(o.product)}</td><td>${escapeHtml(o.supplier)}</td><td>${colorFabricText(o)}</td><td>${escapeHtml(o.quantity)}</td><td>${formatDate(o.deliveryDate)}</td><td>${statusBadgeHtml(o)}</td><td class="col-actions"><button class="menu-trigger group-order-menu" data-id="${o.id}" type="button">⋯</button></td></tr>`).join("")}</tbody></table></div>`;
+  document.getElementById("orderGroupModalBody").innerHTML = `<div class="order-group-summary"><span>Müşteri: <strong>${escapeHtml(group.customer)}</strong></span><span>Sip. Adet: <strong>${escapeHtml(group.totalQuantity)}</strong></span><span>Kalem: <strong>${group.lineCount}</strong></span><span>Teslim: <strong>${formatDate(group.deliveryDate)}</strong></span></div><div class="order-group-table-wrap"><table class="order-group-table"><thead><tr><th class="col-check"><input type="checkbox" id="groupSelectAll" aria-label="Tümünü seç"></th><th>Sipariş No</th><th>Sipariş Tarihi</th><th>Müşteri</th><th>Ürün</th><th>Tedarikçi</th><th>Renk/Kumaş</th><th>Adet</th><th>Teslim</th><th>Durum</th><th>⋯</th></tr></thead><tbody>${group.orders.map(o=>`<tr data-id="${o.id}"><td class="col-check"><input type="checkbox" class="group-order-select" data-id="${o.id}" aria-label="${escapeHtml(orderNo(o))}" ${selectedOrderIds.has(o.id)?"checked":""}></td><td class="order-no">${escapeHtml(orderNo(o))}</td><td>${formatDate(o.orderDate)}</td><td>${escapeHtml(o.customer)}</td><td class="order-group-product">${escapeHtml(o.product)}</td><td>${escapeHtml(o.supplier)}</td><td>${colorFabricText(o)}</td><td>${escapeHtml(o.quantity)}</td><td>${formatDate(o.deliveryDate)}</td><td>${statusBadgeHtml(o)}</td><td class="col-actions"><button class="menu-trigger group-order-menu" data-id="${o.id}" type="button">⋯</button></td></tr>`).join("")}</tbody></table></div>`;
   closeAllModals();
   document.getElementById("orderGroupModal").classList.remove("hidden");
   document.body.classList.add("pronto-modal-lock");
@@ -4067,6 +4130,7 @@ function openOrderGroupModal(groupKey) {
     showRowMenu(btn,[{label:"Sipariş Kartı",onClick:()=>openDetailModal(id)},{label:"PDF",onClick:()=>v90OpenPdf(id)},{label:"Düzenle",onClick:()=>openOrderModal(id)},{label:"Sil",danger:true,onClick:()=>confirmDeleteOrder(id)}]);
   }));
   bindStatusBadgeClicks(body);
+  v96Labelize(body);
   updateOrderGroupSelectionUi(group);
 
   const statusBtn = document.getElementById("orderGroupBulkStatusBtn");
@@ -4838,6 +4902,7 @@ function openOrderModal(id) {
   const addLineWrap = document.querySelector(".order-add-line-wrap");
   if (rightPane) rightPane.style.display = isNewOrder ? "block" : "none";
   if (addLineWrap) addLineWrap.style.display = isNewOrder ? "block" : "none";
+  { const fb = document.getElementById("orderAddLineFootBtn"); if (fb) fb.style.display = isNewOrder ? "" : "none"; }
   document.getElementById("orderSaveBtn").textContent = isNewOrder ? "Siparişleri Kaydet" : "Siparişi Kaydet";
   closeAllModals();
   modal.classList.remove("hidden");
@@ -5974,7 +6039,6 @@ function renderProductsView() {
       <td>${escapeHtml(p.name)}</td>
       <td>${escapeHtml(p.category) || "-"}</td>
       <td>${escapeHtml(p.unit) || "-"}</td>
-      <td>${p.price ? "₺" + escapeHtml(p.price) : "-"}</td>
       <td class="stock-cell-readonly">${typeof p.stock === "number" ? p.stock : "-"}</td>
       <td>${escapeHtml(p.description) || "-"}</td>
       <td class="col-actions"><button class="menu-trigger" data-id="${p.id}">⋯</button></td>
@@ -5986,7 +6050,7 @@ function renderProductsView() {
         <div class="order-card-customer">${escapeHtml(p.name)}</div>
         <button class="menu-trigger" data-id="${p.id}">⋯</button>
       </div>
-      <div class="order-card-product">${escapeHtml(p.category) || "-"}${p.price ? " · ₺" + escapeHtml(p.price) : ""}${typeof p.stock === "number" ? " · Stok: " + p.stock : ""}</div>
+      <div class="order-card-product">${escapeHtml(p.category) || "-"}${typeof p.stock === "number" ? " · Stok: " + p.stock : ""}</div>
     </div>
   `).join("");
 
@@ -6073,7 +6137,7 @@ function renderStockView() {
       <td>${escapeHtml(p.unit) || "-"}</td>
       <td>${stockControlHtml(p)}</td>
       <td>${reserved || "-"}</td>
-      <td class="stock-cell-readonly">${available === null ? "-" : available}</td>
+      <td class="stock-cell-readonly">${available === null ? "-" : available < 0 ? `<span class="v96-neg" title="Stok yetersiz: ${-available} eksik">${available}</span>` : available}</td>
     </tr>
   `;
   }).join("");
@@ -6085,7 +6149,7 @@ function renderStockView() {
       <div class="order-card-top">
         <div class="order-card-customer">${escapeHtml(p.name)}</div>
       </div>
-      <div class="order-card-product">${escapeHtml(p.category) || "-"}${(() => { const s = lastSupplierForProduct(p); return s ? " · " + escapeHtml(s) : ""; })()}${reserved ? " · Rezerve: " + reserved : ""}${available !== null ? " · Kullanılabilir: " + available : ""}</div>
+      <div class="order-card-product">${escapeHtml(p.category) || "-"}${(() => { const s = lastSupplierForProduct(p); return s ? " · " + escapeHtml(s) : ""; })()}${reserved ? " · Rezerve: " + reserved : ""}${available !== null ? (available < 0 ? ` · <span class="v96-neg">Eksik: ${-available}</span>` : " · Kullanılabilir: " + available) : ""}</div>
       <div style="margin-top:10px;">${stockControlHtml(p)}</div>
     </div>
   `;
@@ -6120,7 +6184,14 @@ function renderStockView() {
       const product = allProducts.find((p) => p.id === id);
       if (!product) return;
       const oldVal = typeof product.stock === "number" ? product.stock : 0;
-      const newVal = input.value === "" ? null : Math.max(0, parseInt(input.value, 10) || 0);
+      const raw = String(input.value || "").trim();
+      if (raw !== "" && (!/^\d+$/.test(raw) || Number(raw) > 100000000)) {
+        input.value = typeof product.stock === "number" ? product.stock : "";
+        showToast(/^-/.test(raw) ? "Stok eksi olamaz. Azaltmak için − butonunu veya yeni stok adedini kullanın." : "Stok adedi 0 veya daha büyük tam sayı olmalı.");
+        return;
+      }
+      if (raw === "" && typeof product.stock === "number") { input.value = product.stock; showToast("Stok adedi boş bırakılamaz."); return; }
+      const newVal = raw === "" ? null : Number(raw);
       const delta = (newVal === null ? 0 : newVal) - oldVal;
       product.stock = newVal;
       await dbPut("products", { id: product.id, stock: newVal });
@@ -7533,6 +7604,59 @@ function v93ReadHistoryRange() {
 }
 
 
+
+/* ===== v96: arayüz düzeltmeleri ===== */
+function v96OpenGroupOrOrder(groups, key) { const g = groups.find((x) => x.key === key); if (!g) return; if (g.lineCount === 1) openDetailModal(g.first.id); else openOrderGroupModal(g.key); }
+function v96BindListBadges(root, groups) {
+  root.querySelectorAll(".status-badge-btn").forEach((btn) => {
+    if (btn.dataset.statusBound === "1") return; btn.dataset.statusBound = "1";
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const host = btn.closest("[data-group-key]"); const g = host && groups.find((x) => x.key === host.dataset.groupKey);
+      if (!g) return;
+      if (g.lineCount === 1) showStatusMenu(btn, g.first); else openOrderGroupModal(g.key);
+    });
+  });
+}
+function v96Labelize(root) {
+  root.querySelectorAll("table").forEach((t) => {
+    const heads = Array.from(t.querySelectorAll("thead th")).map((th) => th.textContent.trim());
+    t.classList.add("v96-cardable");
+    t.querySelectorAll("tbody tr").forEach((tr) => Array.from(tr.children).forEach((td, i) => { if (heads[i]) td.setAttribute("data-label", heads[i]); else td.setAttribute("data-label", ""); }));
+  });
+}
+/* Farklı Kaydet: masaüstü programda gerçek PDF; tarayıcıda kaydetme penceresi (yazdırma penceresi yok) */
+async function v96SaveAs(spec) {
+  let handle = null;
+  if (window.showSaveFilePicker) {
+    try { handle = await window.showSaveFilePicker({ suggestedName: spec.name, types: [{ description: "PDF", accept: { "application/pdf": [".pdf"] } }] }); }
+    catch (e) { if (e && e.name === "AbortError") return; handle = null; }
+  }
+  const b = document.getElementById("pdfDownloadBtn"); if (b) b.disabled = true;
+  try {
+    const blob = await spec.blob();
+    if (handle) { const w = await handle.createWritable(); await w.write(blob); await w.close(); showToast("PDF kaydedildi."); }
+    else { v90DownloadBlob(blob, spec.name); showToast("PDF indirildi."); }
+  } catch (e) { showToast((e && e.message) || "PDF kaydedilemedi."); }
+  finally { if (b) b.disabled = false; }
+}
+/* Esc: en üstteki pencereyi kapatır (kaydedilmemiş bilgi varsa önce sorar) */
+const V96_CLOSE = { confirmModal: "confirmCancelBtn", pdfModal: "pdfCloseBtn", detailModal: "detailModalClose", orderGroupModal: "orderGroupModalClose", entityHistoryModal: "entityHistoryClose", orderTrashModal: "orderTrashClose", productTrashModal: "productTrashClose", entityModal: "entityModalClose", stockInModal: "stockInModalClose", orderModal: "orderModalClose" };
+document.addEventListener("keydown", (e) => {
+  if (e.key !== "Escape" || e.defaultPrevented) return;
+  const menu = document.getElementById("rowMenu");
+  if (menu && !menu.classList.contains("hidden")) { hideRowMenu(); e.preventDefault(); return; }
+  if (document.querySelector(".v93-ov, .modal-overlay:not([id]):not(.hidden)")) return;   // PDF ayarları / paylaş kendi Esc'ini kullanır
+  const open = Object.keys(V96_CLOSE).map((id) => document.getElementById(id)).filter((m) => m && !m.classList.contains("hidden") && m.getClientRects().length);
+  if (!open.length) return;
+  open.sort((a, b) => (parseInt(getComputedStyle(b).zIndex, 10) || 0) - (parseInt(getComputedStyle(a).zIndex, 10) || 0) || (a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING ? 1 : -1));
+  const btn = document.getElementById(V96_CLOSE[open[0].id]);
+  if (btn) { e.preventDefault(); btn.click(); }
+});
+(function () {
+  const bind = () => { const fb = document.getElementById("orderAddLineFootBtn"); if (fb && !fb.dataset.b) { fb.dataset.b = "1"; fb.addEventListener("click", (e) => { e.preventDefault(); document.getElementById("orderAddLineBtn")?.click(); }); } };
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", bind); else bind();
+})();
 /* ===== v95: PDF türüne göre ayarlar ===== */
 const V95_ORIENT={grup:"landscape",musteri:"landscape",tedarikci:"landscape",sevkiyat:"landscape",teslim:"portrait",urun:"portrait"};
 function v95Def(kind){return {size:"A4",orient:V95_ORIENT[kind]||"portrait",logoPos:"left",logoSize:"m"};}
@@ -7594,14 +7718,15 @@ async function v94Output(kind, spec) {
     }
     return v93DesktopShare((reveal) => make({ ask: false, reveal }), spec.name, spec.contact || spec.customer);
   }
-  if (kind === "download") { showToast('Açılan pencerede hedef olarak "PDF olarak kaydet"i seçin.'); return v94Output("print", spec); }
+  if (kind === "download") return v96SaveAs(spec);
+  if (!(d && d.saveFile) && !navigator.share) { showToast("Bu tarayıcı dosya paylaşmayı desteklemiyor. PDF butonuyla kaydedip gönderebilirsiniz."); return; }
   const b = document.getElementById("pdfShareBtn"); if (b) b.disabled = true;
   try {
     const blob = await spec.blob();
     if (d && d.saveFile) return v93DesktopShare(blob, spec.name, spec.contact || spec.customer);
     const file = new File([blob], spec.name, { type: "application/pdf" });
     if (navigator.share && (!navigator.canShare || navigator.canShare({ files: [file] }))) await navigator.share({ title: spec.title || spec.name, files: [file] });
-    else { v90DownloadBlob(blob, spec.name); showToast("Bu cihazda doğrudan paylaşım desteklenmiyor; PDF indirildi."); }
+    else showToast("Bu tarayıcı dosya paylaşmayı desteklemiyor. PDF butonuyla kaydedip gönderebilirsiniz.");
   } catch (e) { if (!e || e.name !== "AbortError") showToast((e && e.message) || "PDF paylaşılamadı."); }
   finally { if (b) b.disabled = false; }
 }
