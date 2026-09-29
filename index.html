@@ -6665,7 +6665,7 @@ function renderShipmentView() {
 }
 
 function bindShipmentEvents() {
-  document.getElementById("shipmentPdfBtn")?.addEventListener("click", v91OpenShipmentPdf);
+  document.getElementById("shipmentPdfBtn")?.addEventListener("click", () => v91OpenShipmentPdf());
   document.getElementById("shipmentHiddenToggleBtn").addEventListener("click", () => { shipmentShowHidden = !shipmentShowHidden; shipmentSelectedIds.clear(); renderShipmentView(); });
   document.getElementById("shipmentSearch").addEventListener("input", (e) => { shipmentSearch = sanitizeSearchText(e.target.value, 100); e.target.value = shipmentSearch; renderShipmentView(); });
   document.getElementById("shipmentCityFilter").addEventListener("change", (e) => { shipmentCityFilter = e.target.value; renderShipmentView(); });
@@ -6702,7 +6702,7 @@ function getSelectedDeliveryFormGroup() {
 
 function renderDeliveryForm() {
   const deliveryPdfBtn = document.getElementById("deliveryFormPdfBtn");
-  if (deliveryPdfBtn) deliveryPdfBtn.onclick = v91OpenDeliveryFormPdf;
+  if (deliveryPdfBtn) deliveryPdfBtn.onclick = () => v91OpenDeliveryFormPdf();
   const list = document.getElementById("deliveryFormShipmentList");
   const empty = document.getElementById("deliveryFormShipmentEmpty");
   const detailCard = document.getElementById("deliveryFormDetailCard");
@@ -7605,6 +7605,337 @@ function v93ReadHistoryRange() {
 
 
 
+/* ===== v97: B (Sade) şablonu — tek içerik modeli, iki çıktı:
+   1) önizleme / yazdır / masaüstü program: HTML → Chrome motoru (gerçek, yazısı seçilebilen PDF)
+   2) tarayıcı / telefon PDF ve Paylaş: pdfmake ile doğrudan gerçek PDF (resim değil) ===== */
+const V97_ORIENT = { tek: "portrait", grup: "landscape", musteri: "landscape", tedarikci: "landscape", urun: "portrait", sevkiyat: "landscape", teslim: "portrait" };
+const V97_LOGO_H = { s: 34, m: 52, l: 76 };
+const V97_PHOTO = { s: 56, m: 88, l: 130 };
+function v97Def(kind) { return { lang: "tr", size: "A4", orient: V97_ORIENT[kind] || "portrait", foto: "m", logoPos: "left", logoSize: "l" }; }
+function v97Clean(kind, o) {
+  const r = v97Def(kind); o = o || {};
+  if (o.lang === "tr" || o.lang === "en") r.lang = o.lang;
+  if (o.size === "A4" || o.size === "A3") r.size = o.size;
+  if (o.orient === "portrait" || o.orient === "landscape") r.orient = o.orient;
+  if (["s", "m", "l"].includes(o.foto)) r.foto = o.foto;
+  if (["left", "center", "right"].includes(o.logoPos)) r.logoPos = o.logoPos;
+  if (["s", "m", "l"].includes(o.logoSize)) r.logoSize = o.logoSize;
+  if (kind !== "tek") { r.lang = "tr"; r.foto = "m"; }
+  return r;
+}
+function v97Get(kind) { try { return v97Clean(kind, JSON.parse(localStorage.getItem("pronto_v97_pdf_" + kind) || "{}")); } catch (_) { return v97Def(kind); } }
+function v97Save(kind, o) { try { localStorage.setItem("pronto_v97_pdf_" + kind, JSON.stringify(v97Clean(kind, o))); } catch (_) {} }
+function v97Keys(kind) { return kind === "tek" ? ["lang", "size", "orient", "foto", "logoPos", "logoSize"] : ["size", "orient", "logoPos", "logoSize"]; }
+function v97LogoSrc() { return v90PdfLogo() || ""; }
+function v97Txt(v) { return v == null || v === "" ? "-" : String(v); }
+function v97Upper(v) { return String(v || "").toLocaleUpperCase("tr-TR"); }
+
+/* ---------- İçerik modelleri ---------- */
+function v97ModelOrder(order, o, photo) {
+  const en = o.lang === "en";
+  const L = en ? { photo: "Photo", product: "Product", color: "Color / Fabric", qty: "Qty", orderDate: "Order Date", delivery: "Delivery Date", status: "Status", supplier: "Supplier", desc: "Description", nophoto: "No photo" }
+               : { photo: "Fotoğraf", product: "Ürün", color: "Renk / Kumaş", qty: "Adet", orderDate: "Sipariş Tarihi", delivery: "Teslim Tarihi", status: "Durum", supplier: "Tedarikçi", desc: "Açıklama", nophoto: "Fotoğraf Yok" };
+  const ps = V97_PHOTO[o.foto] || 88;
+  return {
+    kind: "tek", docNo: orderNo(order), previewTitle: orderNo(order), filename: v90PdfFileName(order),
+    contact: { type: "supplier", name: order.supplier },
+    kv: [[L.orderDate, formatDate(order.orderDate)], [L.delivery, formatDate(order.deliveryDate)], [L.status, v97Txt(order.status)], [L.supplier, v97Txt(order.supplier)]],
+    sections: [
+      { table: { cols: [{ h: L.photo, w: ps + 10 }, { h: L.product, w: "*" }, { h: L.color, w: "*" }, { h: L.qty, w: 50, align: "r" }],
+        rows: [[{ img: photo || "", size: ps, alt: L.nophoto }, { text: v97Txt(order.product), bold: true }, v97Txt([order.colorCode, order.fabricCode].filter(Boolean).join(" / ")), { text: v97Txt(order.quantity), bold: true }]] } },
+      { note: { title: L.desc, text: v97Txt(getOrderDescription(order)) } }
+    ]
+  };
+}
+function v97ModelGroup(group, orders) {
+  const total = orders.reduce((n, x) => n + (Number(x.quantity) || 0), 0);
+  const sel = group.orders.filter((x) => selectedOrderIds.has(x.id)).length;
+  return {
+    kind: "grup", previewTitle: `${group.customer} · ${orders.length} kalem${sel ? ` · ${sel} seçili` : ""}`,
+    filename: `Siparis-Grubu-${v91PdfSafeName(group.customer || "Grup")}${sel ? `-${sel}-Secili` : ""}.pdf`, customer: group.customer,
+    title: `${group.customer} · ${orders.length} KALEM`, sub: `Sipariş Grubu · Hazırlanma tarihi: ${formatDate(todayISO())}`,
+    kv: [["Teslim", formatDate(orders[0]?.deliveryDate || group.deliveryDate)], ["Sip. Adet", String(total)]],
+    sections: [{ heading: "Sipariş Kalemleri", table: {
+      cols: [{ h: "Sipariş No", w: "auto" }, { h: "Sipariş Tarihi", w: "auto" }, { h: "Müşteri", w: "*" }, { h: "Ürün", w: "*" }, { h: "Tedarikçi", w: "*" }, { h: "Renk/Kumaş", w: "*" }, { h: "Adet", w: "auto", align: "r" }, { h: "Teslim", w: "auto" }, { h: "Durum", w: "auto" }],
+      rows: orders.map((x) => [{ text: orderNo(x), bold: true }, formatDate(x.orderDate), v97Txt(x.customer), { text: v97Txt(x.product), bold: true }, v97Txt(x.supplier), v97Txt(colorFabricText(x)), String(x.quantity ?? "-"), formatDate(x.deliveryDate), v97Txt(x.status)]) } }]
+  };
+}
+function v97ModelEntity(type, entity, range) {
+  const field = type === "customer" ? "customer" : "supplier";
+  const rows = activeOrdersList().filter((x) => normName(x[field]) === normName(entity.name) && v93InRange(x.orderDate, range)).sort((a, b) => a.id - b.id);
+  const title = type === "customer" ? "MÜŞTERİ SİPARİŞ RAPORU" : "TEDARİKÇİ SİPARİŞ RAPORU";
+  const other = type === "customer" ? "Tedarikçi" : "Müşteri";
+  const total = rows.reduce((n, x) => n + (Number(pricingTotals(x).qty) || 0), 0);
+  return {
+    kind: type === "customer" ? "musteri" : "tedarikci", count: rows.length, previewTitle: title,
+    filename: `${type === "customer" ? "Musteri" : "Tedarikci"}-Siparis-Raporu-${v91PdfSafeName(entity.name)}${range && (range.from || range.to) ? `-${range.from || "bas"}_${range.to || "bugun"}` : ""}.pdf`,
+    title, sub: `${entity.name} · ${v93RangeText(range)} · Rapor tarihi: ${formatDate(todayISO())}`,
+    meta: [[type === "customer" ? "Müşteri" : "Tedarikçi", entity.name], ["İletişim", [entity.phone, entity.email].filter(Boolean).join(" · ") || "-"], ["Sipariş Sayısı", String(rows.length)], ["Rapor Tarihi", formatDate(todayISO())]],
+    sections: [{ table: {
+      cols: [{ h: "Sipariş No", w: "auto" }, { h: "Sipariş", w: "auto" }, { h: "Ürün", w: "*" }, { h: "Renk", w: "*" }, { h: "Adet", w: "auto", align: "r" }, { h: other, w: "*" }, { h: "Teslim Edildi", w: "auto" }, { h: "Durum", w: "auto" }],
+      rows: rows.map((x) => [{ text: orderNo(x), bold: true }, formatDate(x.orderDate), v97Txt(x.product), v97Txt(x.colorCode), String(pricingTotals(x).qty), v97Txt(type === "customer" ? x.supplier : x.customer), v97Txt(String(formatActualDelivery(x) || "").replace(/<[^>]*>/g, "")), v97Txt(x.status)]),
+      empty: "İlgili sipariş bulunamadı." } }],
+    totals: [["Toplam Adet", String(total)]]
+  };
+}
+function v97ModelProduct(p) {
+  const reserved = reservedQtyForProduct(p.name);
+  const avail = typeof p.stock === "number" ? p.stock - reserved : null;
+  const mv = allStockMovements.filter((m) => m.productId === p.id).sort((a, b) => b.id - a.id);
+  const rel = activeOrdersList().filter((x) => normName(x.product) === normName(p.name)).sort(compareOrderDateDesc);
+  const meta = [["Kategori", v97Txt(p.category)], ["Birim", v97Txt(p.unit)], ["Stok Adedi", typeof p.stock === "number" ? String(p.stock) : "-"], ["Rezerve", String(reserved)], ["Kullanılabilir", avail === null ? "-" : String(avail)]];
+  if (p.description) meta.push(["Açıklama", String(p.description).replace(PRODUCT_TRASH_MARKER_RE, "").trim() || "-", true]);
+  return {
+    kind: "urun", previewTitle: `${p.name} · İlgili Siparişler`, filename: `Ilgili-Siparisler-${v91PdfSafeName(p.name)}.pdf`,
+    title: p.name, sub: `Ürün geçmişi · İlgili siparişler ve stok hareketleri · ${formatDate(todayISO())}`, meta,
+    sections: [
+      { heading: `Stok Hareketleri (${mv.length})`, table: { cols: [{ h: "Tarih", w: "auto" }, { h: "Hareket", w: "auto" }, { h: "Tedarikçi / Not", w: "*" }, { h: "Miktar", w: "auto", align: "r" }, { h: "Sonuç", w: "auto", align: "r" }],
+        rows: mv.map((m) => [formatDate(m.date), movementTypeLabel(m.type), v97Txt([m.supplier, m.note].filter(Boolean).join(" · ")), (m.delta >= 0 ? "+" : "") + m.delta, v97Txt(m.resultingStock)]), empty: "Henüz stok hareketi yok." } },
+      { heading: `İlgili Siparişler (${rel.length})`, table: { cols: [{ h: "Sipariş No", w: "auto" }, { h: "Müşteri", w: "*" }, { h: "Sipariş Tarihi", w: "auto" }, { h: "Teslim", w: "auto" }, { h: "Durum", w: "auto" }],
+        rows: rel.map((x) => [{ text: orderNo(x), bold: true }, v97Txt(x.customer), formatDate(x.orderDate), formatDate(x.deliveryDate), v97Txt(x.status)]), empty: "Bu ürünle ilişkili sipariş yok." } }
+    ]
+  };
+}
+function v97ModelShipment(selected) {
+  const byCity = new Map(); selected.forEach((g) => { if (!byCity.has(g.city)) byCity.set(g.city, []); byCity.get(g.city).push(g); });
+  return {
+    kind: "sevkiyat", previewTitle: "Sevkiyat", filename: "Sevkiyat.pdf",
+    title: "SEVKİYAT LİSTESİ", sub: `Hazırlanma tarihi: ${formatDate(todayISO())} · ${selected.length} sevkiyat`,
+    sections: Array.from(byCity.entries()).map(([city, gs]) => ({ heading: `${city} — ${gs.length} sevkiyat`, table: {
+      cols: [{ h: "Müşteri / Ünvan", w: "*" }, { h: "Telefon", w: "auto" }, { h: "Adres", w: "*" }, { h: "Teslim Tarihi", w: "auto" }, { h: "Nakliye Durumu", w: "auto" }],
+      rows: gs.map((g) => [{ text: v97Txt(g.customerName), bold: true }, v97Txt(g.phone), v97Txt(g.address), g.deliveryDate ? formatDate(g.deliveryDate) : "-", v97Upper(g.shipmentType || "-")]) } }))
+  };
+}
+function v97ModelDelivery(group, orders, receiver, deliverer, note) {
+  const qty = orders.reduce((n, x) => n + (Number(x.quantity) || 0), 0);
+  const customer = group.customerName || group.customer || orders[0]?.customer || "-";
+  return {
+    kind: "teslim", previewTitle: `Teslim Formu · ${customer}`, filename: `Teslim-Formu-${v91PdfSafeName(customer)}.pdf`,
+    title: "TESLİM FORMU", sub: "OFİSCHİ BÜRO MOBİLYALARI · PRONTO",
+    meta: [["Müşteri", customer], ["Teslim Tarihi", formatDate(todayISO())], ["Telefon", v97Txt(group.phone || orders[0]?.phone)], ["Adres", v97Txt(group.address || orders[0]?.deliveryAddress), true]],
+    sections: [
+      { heading: "Teslim Edilen Ürünler", headRight: `${orders.length} KALEM · ${qty} ADET`, table: {
+        cols: [{ h: "Sipariş No", w: "auto" }, { h: "Ürün", w: "*" }, { h: "Renk / Kumaş", w: "*" }, { h: "Adet", w: 50, align: "r" }],
+        rows: orders.map((x) => [{ text: orderNo(x), bold: true }, v97Txt(x.product), v97Txt(colorFabricText(x)), String(x.quantity ?? "-")]) } },
+      { note: { title: "Teslimat Notu", text: note || "Ürünler eksiksiz ve teslimat koşullarına uygun şekilde teslim alınmıştır." } }
+    ],
+    signs: [{ title: "Teslim Alan", name: receiver }, { title: "Teslim Eden", name: deliverer }]
+  };
+}
+
+/* ---------- HTML çıktı (önizleme, yazdırma, masaüstü gerçek PDF) ---------- */
+const V97_CSS = `.v97p{--ink:#222;--mut:#8b9098;--line:#e8e8e8;background:#fff;color:var(--ink);font:10.5px/1.45 "Helvetica Neue",Helvetica,Arial,sans-serif;box-sizing:border-box;position:relative;padding:16mm 16mm 22mm;text-align:left}
+.v97p *{box-sizing:border-box}
+.v97p .lg{display:flex;margin-bottom:5mm}.v97p .lg img{display:block;width:auto;object-fit:contain}
+.v97p .hd{display:flex;justify-content:space-between;align-items:flex-start;gap:10mm;margin-bottom:8mm}
+.v97p .hd .lg{margin:0}
+.v97p .hr{margin-left:auto;text-align:right}
+.v97p .no{font-size:28px;font-weight:300;letter-spacing:.02em;line-height:1.1}
+.v97p .kv{border-collapse:collapse;margin:6px 0 0 auto;font-size:10.5px}
+.v97p .kv td{padding:1.5px 0 1.5px 16px;border:0;text-align:left}
+.v97p .kv td:first-child{color:var(--mut);text-transform:uppercase;font-size:8px;letter-spacing:.05em;text-align:right}
+.v97p h1{font-size:24px;font-weight:300;margin:0 0 3px;letter-spacing:.01em;line-height:1.2}
+.v97p .sub{font-size:10px;color:var(--mut)}
+.v97p .meta{display:flex;flex-wrap:wrap;gap:4mm 12mm;border-top:1px solid var(--ink);padding-top:4mm;margin:6mm 0 7mm}
+.v97p .meta div{min-width:30mm}.v97p .meta .wide{flex-basis:100%}
+.v97p .meta span{display:block;font-size:8px;color:var(--mut);text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px}
+.v97p .meta b{font-size:11.5px;font-weight:500}
+.v97p h2{display:flex;justify-content:space-between;font-size:8.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--mut);font-weight:500;margin:7mm 0 2mm}
+.v97p h2 em{font-style:normal}
+.v97p table.t{width:100%;border-collapse:collapse;font-size:10px}
+.v97p .t th{text-align:left;font-weight:500;color:var(--mut);font-size:8px;text-transform:uppercase;letter-spacing:.05em;padding:5px 8px 5px 0;border-bottom:1px solid var(--ink);white-space:nowrap}
+.v97p .t td{padding:7px 8px 7px 0;border-bottom:1px solid var(--line);vertical-align:top}
+.v97p .t .r{text-align:right}.v97p .t .b{font-weight:600}
+.v97p .t .e{color:var(--mut)}
+.v97p .ph{border:1px solid #eee;display:flex;align-items:center;justify-content:center;color:#bbb;font-size:8px;text-align:center}
+.v97p .ph img{width:100%;height:100%;object-fit:contain}
+.v97p .tot{margin:6mm 0 0 auto;width:60mm;border-top:1px solid var(--ink);padding-top:5px;display:flex;justify-content:space-between;font-size:11.5px}
+.v97p .note{margin-top:8mm}.v97p .note span{display:block;font-size:8px;color:var(--mut);text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px}
+.v97p .note div{white-space:pre-wrap;font-size:10.5px}
+.v97p .signs{display:grid;grid-template-columns:1fr 1fr;gap:20mm;margin-top:24mm}
+.v97p .signs div{border-top:1px solid #999;padding-top:3mm;text-align:center;font-size:9px}
+.v97p .signs b{display:block;font-weight:500;font-size:10.5px;margin-bottom:1px}.v97p .signs span{color:var(--mut)}
+.v97p .ft{position:absolute;left:16mm;right:16mm;bottom:9mm;display:flex;justify-content:space-between;font-size:8px;color:#a3a7ad;letter-spacing:.06em}
+@media print{.v97p{width:auto!important;min-height:0!important;padding:0!important;margin:0!important}.v97p .ft{display:none}.v97p tr,.v97p .meta div,.v97p .signs,.v97p .note{break-inside:avoid;page-break-inside:avoid}.v97p thead{display:table-header-group}.v97p h2{break-after:avoid}}`;
+function v97Dims(o) { const a3 = o.size === "A3", l = o.orient === "landscape"; return l ? (a3 ? [420, 297] : [297, 210]) : (a3 ? [297, 420] : [210, 297]); }
+function v97Cell(c, col) {
+  if (c && typeof c === "object" && "img" in c) {
+    const s = c.size || 88;
+    return `<td style="width:${s + 10}px"><div class="ph" style="width:${s}px;height:${s}px">${c.img ? `<img src="${escapeHtml(c.img)}" alt="">` : escapeHtml(c.alt || "")}</div></td>`;
+  }
+  const t = c && typeof c === "object" ? c.text : c, b = c && typeof c === "object" && c.bold;
+  const cls = [col.align === "r" ? "r" : "", b ? "b" : ""].filter(Boolean).join(" ");
+  return `<td${cls ? ` class="${cls}"` : ""}>${escapeHtml(v97Txt(t))}</td>`;
+}
+function v97Html(m, o) {
+  const [w, h] = v97Dims(o), lh = V97_LOGO_H[o.logoSize] || 76, src = v97LogoSrc();
+  const logo = src ? `<img src="${escapeHtml(src)}" alt="OFİSCHİ" style="height:${lh}px;max-width:${lh * 4}px">` : `<b style="font-size:20px">OFİSCHİ</b>`;
+  const right = (m.docNo || (m.kv && m.kv.length)) ? `<div class="hr">${m.docNo ? `<div class="no">${escapeHtml(m.docNo)}</div>` : ""}${m.kv && m.kv.length ? `<table class="kv">${m.kv.map(([k, v]) => `<tr><td>${escapeHtml(k)}</td><td>${escapeHtml(v97Txt(v))}</td></tr>`).join("")}</table>` : ""}</div>` : "";
+  const head = o.logoPos === "left" ? `<div class="hd"><div class="lg">${logo}</div>${right}</div>`
+    : `<div class="lg" style="justify-content:${o.logoPos === "center" ? "center" : "flex-end"}">${logo}</div>${right ? `<div class="hd"><div></div>${right}</div>` : ""}`;
+  const title = m.title ? `<h1>${escapeHtml(m.title)}</h1>${m.sub ? `<div class="sub">${escapeHtml(m.sub)}</div>` : ""}` : "";
+  const meta = m.meta && m.meta.length ? `<div class="meta">${m.meta.map(([k, v, wide]) => `<div${wide ? ' class="wide"' : ""}><span>${escapeHtml(k)}</span><b>${escapeHtml(v97Txt(v))}</b></div>`).join("")}</div>` : "";
+  const secs = (m.sections || []).map((s) => {
+    let out = s.heading ? `<h2><span>${escapeHtml(s.heading)}</span>${s.headRight ? `<em>${escapeHtml(s.headRight)}</em>` : ""}</h2>` : "";
+    if (s.table) {
+      const cols = s.table.cols;
+      out += `<table class="t"><thead><tr>${cols.map((c) => `<th${c.align === "r" ? ' class="r"' : ""}>${escapeHtml(c.h)}</th>`).join("")}</tr></thead><tbody>${s.table.rows.length ? s.table.rows.map((r) => `<tr>${r.map((c, i) => v97Cell(c, cols[i])).join("")}</tr>`).join("") : `<tr><td class="e" colspan="${cols.length}">${escapeHtml(s.table.empty || "Kayıt yok.")}</td></tr>`}</tbody></table>`;
+    }
+    if (s.note) out += `<div class="note"><span>${escapeHtml(s.note.title)}</span><div>${escapeHtml(s.note.text)}</div></div>`;
+    return out;
+  }).join("");
+  const tot = m.totals && m.totals.length ? m.totals.map(([k, v]) => `<div class="tot"><span>${escapeHtml(k)}</span><b>${escapeHtml(v)}</b></div>`).join("") : "";
+  const signs = m.signs ? `<div class="signs">${m.signs.map((s) => `<div>${s.name ? `<b>${escapeHtml(s.name)}</b>` : ""}${escapeHtml(v97Upper(s.title))}<br><span>Ad Soyad / İmza</span></div>`).join("")}</div>` : "";
+  return `<div class="v97p" style="width:${w}mm;min-height:${h}mm"><style>${V97_CSS}</style>${head}${title}${meta}${secs}${tot}${signs}<div class="ft"><span>OFİSCHİ BÜRO MOBİLYALARI</span><span>PRONTO · Sayfa 1/1</span></div></div>`;
+}
+function v97Fill(spec) {
+  const root = document.getElementById("pdfPrintRoot"); root.innerHTML = spec.html;
+  const o = spec.o || {}, size = o.size === "A3" ? "A3" : "A4", orient = o.orient === "landscape" ? "landscape" : "portrait";
+  const ps = document.createElement("style");
+  ps.textContent = `@page{size:${size} ${orient};margin:14mm 14mm 16mm;
+@bottom-left{content:"OFİSCHİ BÜRO MOBİLYALARI";font:7.5px Arial,sans-serif;color:#a3a7ad;letter-spacing:.06em}
+@bottom-right{content:"PRONTO · Sayfa " counter(page) "/" counter(pages);font:7.5px Arial,sans-serif;color:#a3a7ad;letter-spacing:.06em}}
+@media print{html,body{background:#fff!important;margin:0!important;padding:0!important}body::before,body::after{display:none!important;content:none!important;background:none!important}body>*:not(#pdfPrintRoot){display:none!important}#pdfPrintRoot{display:block!important}#pdfPrintRoot *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}}`;
+  root.appendChild(ps);
+  return () => { root.innerHTML = ""; };
+}
+
+/* ---------- Gerçek PDF (pdfmake) ---------- */
+let v97PdfmakeP = null;
+function v97EnsurePdfmake() {
+  if (window.pdfMake && window.pdfMake.vfs && window.pdfMake.vfs["Roboto-Regular.ttf"]) return Promise.resolve();
+  const load = (src) => new Promise((ok, no) => { const el = document.createElement("script"); el.src = src; el.onload = ok; el.onerror = () => no(new Error("PDF motoru yüklenemedi. İnternet bağlantısını kontrol edin.")); document.head.appendChild(el); });
+  v97PdfmakeP ||= load("https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.10/pdfmake.min.js")
+    .then(() => load("https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.10/vfs_fonts.js"))
+    .catch((e) => { v97PdfmakeP = null; throw e; });
+  return v97PdfmakeP;
+}
+async function v97ToPng(src, max, fmt) {
+  if (!src) return null;
+  try {
+    let url = src, revoke = null;
+    if (!/^data:/.test(src)) { const r = await fetch(src); if (!r.ok) return null; url = URL.createObjectURL(await r.blob()); revoke = url; }
+    const img = new Image(); img.decoding = "async"; img.src = url; await img.decode();
+    const k = Math.min(1, max / Math.max(img.naturalWidth, img.naturalHeight));
+    const c = document.createElement("canvas"); c.width = Math.max(1, Math.round(img.naturalWidth * k)); c.height = Math.max(1, Math.round(img.naturalHeight * k));
+    const g = c.getContext("2d"); if (fmt === "jpeg") { g.fillStyle = "#fff"; g.fillRect(0, 0, c.width, c.height); } g.drawImage(img, 0, 0, c.width, c.height);
+    if (revoke) URL.revokeObjectURL(revoke);
+    return { data: c.toDataURL(fmt === "jpeg" ? "image/jpeg" : "image/png", 0.88), w: c.width, h: c.height };
+  } catch (_) { return null; }
+}
+async function v97Pdf(m, o) {
+  await v97EnsurePdfmake();
+  const MUT = "#8b9098", INK = "#222222", LINE = "#e8e8e8", px = (v) => v * 0.75;
+  const lh = px(V97_LOGO_H[o.logoSize] || 76);
+  const logo = await v97ToPng(v97LogoSrc(), 900, "png");
+  const imgs = {};
+  for (const s of m.sections || []) for (const r of (s.table ? s.table.rows : [])) for (const c of r) if (c && typeof c === "object" && c.img && !imgs[c.img]) imgs[c.img] = await v97ToPng(c.img, 700, "jpeg");
+  const logoNode = logo ? { image: logo.data, width: Math.min(lh * logo.w / logo.h, lh * 4), height: Math.min(lh, lh * 4 * logo.h / logo.w) } : { text: "OFİSCHİ", fontSize: 16, bold: true };
+  const right = [];
+  if (m.docNo) right.push({ text: m.docNo, fontSize: 21, color: INK, alignment: "right", characterSpacing: 0.4 });
+  if (m.kv && m.kv.length) right.push({ margin: [0, 4, 0, 0], table: { body: m.kv.map(([k, v]) => [{ text: v97Upper(k), fontSize: 6, color: MUT, characterSpacing: 0.3, alignment: "right", margin: [0, 1.5, 0, 0] }, { text: v97Txt(v), fontSize: 8 }]) }, layout: { hLineWidth: () => 0, vLineWidth: () => 0, paddingLeft: (i) => (i ? 10 : 0), paddingRight: () => 0, paddingTop: () => 1, paddingBottom: () => 1 } });
+  const rightNode = right.length ? { width: "auto", stack: right } : null;
+  const content = [];
+  if (o.logoPos === "left") content.push({ columns: [Object.assign({ width: "auto" }, logoNode), { width: "*", text: "" }].concat(rightNode ? [rightNode] : []), margin: [0, 0, 0, 22] });
+  else { content.push(Object.assign({}, logoNode, { alignment: o.logoPos === "center" ? "center" : "right", margin: [0, 0, 0, 14] })); if (rightNode) content.push({ columns: [{ width: "*", text: "" }, rightNode], margin: [0, 0, 0, 22] }); }
+  if (m.title) { content.push({ text: m.title, fontSize: 18, color: INK, characterSpacing: 0.2 }); if (m.sub) content.push({ text: m.sub, fontSize: 7.5, color: MUT, margin: [0, 2, 0, 0] }); }
+  if (m.meta && m.meta.length) {
+    const cell = ([k, v]) => ({ stack: [{ text: v97Upper(k), fontSize: 6, color: MUT, characterSpacing: 0.3, margin: [0, 0, 0, 2] }, { text: v97Txt(v), fontSize: 8.6 }] });
+    const normal = m.meta.filter((x) => !x[2]), wide = m.meta.filter((x) => x[2]);
+    const rows = [];
+    for (let i = 0; i < normal.length; i += 4) { const r = normal.slice(i, i + 4).map(cell); while (r.length < 4) r.push({ text: "" }); rows.push(r); }
+    wide.forEach((x) => rows.push([Object.assign(cell(x), { colSpan: 4 }), {}, {}, {}]));
+    content.push({ margin: [0, 16, 0, 16], table: { widths: ["*", "*", "*", "*"], body: rows }, layout: { hLineWidth: (i) => (i === 0 ? 0.8 : 0), hLineColor: () => INK, vLineWidth: () => 0, paddingLeft: () => 0, paddingRight: () => 10, paddingTop: (i) => (i === 0 ? 9 : 5), paddingBottom: () => 3 } });
+  }
+  for (const s of m.sections || []) {
+    if (s.heading) content.push({ columns: [{ text: v97Upper(s.heading), fontSize: 6.5, color: MUT, characterSpacing: 0.3 }, s.headRight ? { text: s.headRight, fontSize: 6.5, color: MUT, characterSpacing: 0.3, alignment: "right" } : { text: "" }], margin: [0, 16, 0, 5] });
+    if (s.table) {
+      const cols = s.table.cols;
+      const head = cols.map((c) => ({ text: v97Upper(c.h), fontSize: 6, color: MUT, characterSpacing: 0.3, alignment: c.align === "r" ? "right" : "left", noWrap: true }));
+      const body = [head].concat(s.table.rows.length ? s.table.rows.map((r) => r.map((c, i) => {
+        if (c && typeof c === "object" && "img" in c) { const im = imgs[c.img], sz = px(c.size || 88); return im ? { image: im.data, fit: [sz, sz] } : { text: c.alt || "", fontSize: 6.5, color: "#aaaaaa" }; }
+        const t = c && typeof c === "object" ? c.text : c;
+        return { text: v97Txt(t), bold: !!(c && typeof c === "object" && c.bold), alignment: cols[i].align === "r" ? "right" : "left", fontSize: 7.6 };
+      })) : [[{ text: s.table.empty || "Kayıt yok.", colSpan: cols.length, color: MUT, fontSize: 7.6 }].concat(cols.slice(1).map(() => ({})))]);
+      content.push({ table: { headerRows: 1, dontBreakRows: true, widths: cols.map((c) => (typeof c.w === "number" ? px(c.w) : c.w || "*")), body },
+        layout: { hLineWidth: (i, node) => (i === 0 ? 0 : i === 1 ? 0.8 : 0.5), hLineColor: (i) => (i === 1 ? INK : LINE), vLineWidth: () => 0, paddingLeft: (i) => (i === 0 ? 0 : 3), paddingRight: () => 6, paddingTop: () => 5, paddingBottom: () => 5 } });
+    }
+    if (s.note) content.push({ margin: [0, 18, 0, 0], unbreakable: true, stack: [{ text: v97Upper(s.note.title), fontSize: 6, color: MUT, characterSpacing: 0.3, margin: [0, 0, 0, 3] }, { text: s.note.text, fontSize: 8 }] });
+  }
+  for (const [k, v] of m.totals || []) content.push({ columns: [{ width: "*", text: "" }, { width: 170, table: { widths: ["*", "auto"], body: [[{ text: k, fontSize: 8.6 }, { text: v, fontSize: 8.6, bold: true }]] }, layout: { hLineWidth: (i) => (i === 0 ? 0.8 : 0), hLineColor: () => INK, vLineWidth: () => 0, paddingLeft: () => 0, paddingRight: () => 0, paddingTop: () => 5, paddingBottom: () => 2 } }], margin: [0, 16, 0, 0] });
+  if (m.signs) content.push({ margin: [0, 60, 0, 0], unbreakable: true, columns: m.signs.map((s) => ({ width: "*", stack: [{ canvas: [{ type: "line", x1: 0, y1: 0, x2: 200, y2: 0, lineWidth: 0.6, lineColor: "#999999" }] }, s.name ? { text: s.name, fontSize: 8, alignment: "center", margin: [0, 6, 0, 0] } : { text: "", margin: [0, 6, 0, 0] }, { text: v97Upper(s.title), fontSize: 7, alignment: "center", margin: [0, 2, 0, 0] }, { text: "Ad Soyad / İmza", fontSize: 6.5, color: MUT, alignment: "center" }] })), columnGap: 60 });
+  const dd = {
+    info: { title: m.previewTitle || m.title || "PRONTO", author: "OFİSCHİ BÜRO MOBİLYALARI", creator: "PRONTO", producer: "PRONTO" },
+    pageSize: o.size === "A3" ? "A3" : "A4", pageOrientation: o.orient === "landscape" ? "landscape" : "portrait",
+    pageMargins: [40, 40, 40, 46],
+    defaultStyle: { font: "Roboto", fontSize: 8, color: INK, lineHeight: 1.2 },
+    footer: (cur, total) => ({ columns: [{ text: "OFİSCHİ BÜRO MOBİLYALARI", fontSize: 6, color: "#a3a7ad", characterSpacing: 0.4 }, { text: `PRONTO · Sayfa ${cur}/${total}`, fontSize: 6, color: "#a3a7ad", alignment: "right", characterSpacing: 0.4 }], margin: [40, 18, 40, 0] }),
+    content
+  };
+  return new Promise((ok, no) => { try { window.pdfMake.createPdf(dd).getBlob((b) => ok(b)); } catch (e) { no(e); } });
+}
+
+/* ---------- Önizleme penceresi ---------- */
+function v97Open(kind, build) {
+  const m = document.getElementById("pdfModal"), host = document.getElementById("pdfZoom");
+  if (!m || !host) return showToast("PDF penceresi bulunamadı.");
+  const state = { o: v97Get(kind), zoom: null, kind, build };
+  v91GenericPdfState = state;
+  const redraw = () => { state.model = build(state.o); host.innerHTML = v97Html(state.model, state.o); state.zoom = v93ApplyZoom(host, state.zoom); const zl = document.getElementById("pdfZoomLabel"); if (zl) zl.textContent = Math.round(state.zoom * 100) + "%"; };
+  const spec = () => { const md = build(state.o); return { o: { ...state.o }, name: md.filename, contact: md.contact, customer: md.customer, title: md.previewTitle, html: v97Html(md, state.o), fill: v97Fill, blob: () => v97Pdf(md, state.o) }; };
+  m.classList.remove("hidden"); m.setAttribute("aria-hidden", "false"); document.body.classList.add("pronto-modal-lock");
+  redraw();
+  document.getElementById("pdfModalTitle").textContent = state.model.previewTitle || "PDF";
+  document.getElementById("pdfCloseBtn").onclick = () => { m.classList.add("hidden"); m.setAttribute("aria-hidden", "true"); host.innerHTML = ""; v91GenericPdfState = null; if (!document.querySelector(".modal-overlay:not(.hidden):not(#pdfModal)")) document.body.classList.remove("pronto-modal-lock"); };
+  document.getElementById("pdfSettingsBtn").onclick = () => v90PdfSettingsModal(state.o, (no) => { state.o = v97Clean(kind, no); redraw(); }, { keys: v97Keys(kind), save: (x) => v97Save(kind, x), def: v97Def(kind) });
+  document.getElementById("pdfDownloadBtn").onclick = () => v94Output("download", spec());
+  document.getElementById("pdfPrintBtn").onclick = () => v94Output("print", spec());
+  document.getElementById("pdfShareBtn").onclick = () => v94Output("share", spec());
+  m.querySelectorAll("[data-pdf-zoom]").forEach((b) => b.onclick = () => { state.zoom = Math.min(2.5, Math.max(.25, state.zoom + Number(b.dataset.pdfZoom) * .15)); redraw(); });
+  return state;
+}
+/* Eski çağrılar yeni şablona yönlenir */
+async function v97OpenOrder(id) {
+  const order = allOrders.find((x) => x.id === id); if (!order) return;
+  let photo = ""; try { photo = await getOrderPhotoSignedUrl(order.id) || ""; } catch (_) {}
+  v97Open("tek", (o) => v97ModelOrder(order, o, photo));
+}
+function v97OpenGroup(group) {
+  if (!group) return; const orders = v91GetGroupPdfOrders(group);
+  if (!orders.length) return showToast("PDF için sipariş bulunamadı.");
+  v97Open("grup", () => v97ModelGroup(group, orders));
+}
+function v97OpenEntity(type, id, range) {
+  const list = { customer: allCustomers, supplier: allSuppliers, product: allProducts }[type];
+  const entity = (list || []).find((x) => x.id === id);
+  if (!entity) { if (type !== "product") showToast("Kayıt bulunamadı."); return; }
+  if (type === "product") return v97Open("urun", () => v97ModelProduct(entity));
+  const first = v97ModelEntity(type, entity, range);
+  if (!first.count && range && (range.from || range.to)) return showToast("Bu tarih aralığında sipariş yok.");
+  v97Open(first.kind, () => v97ModelEntity(type, entity, range));
+}
+function v97OpenShipment() {
+  const groups = buildShipmentGroups();
+  const selected = selectedShipmentGroups(groups).filter((g) => shipmentShowHidden ? g.hasHidden : isShipmentGroupCandidate(g)).sort((a, b) => a.city.localeCompare(b.city, "tr") || (a.deliveryDate || "").localeCompare(b.deliveryDate || "") || a.customerName.localeCompare(b.customerName, "tr"));
+  if (!selected.length) return showToast("Önce sevkiyata çıkacak müşterileri seç.");
+  v97Open("sevkiyat", () => v97ModelShipment(selected));
+}
+function v97OpenDelivery() {
+  const group = getSelectedDeliveryFormGroup();
+  if (!group) return showToast("Önce bir teslim formu seçin.");
+  const ids = new Set(Array.from(deliveryFormSelectedOrderIds || []).map(String));
+  const all = Array.isArray(group.orders) ? group.orders : [];
+  const orders = ids.size ? all.filter((x) => ids.has(String(x.id))) : all;
+  if (!orders.length) return showToast("Teslim formunda ürün bulunamadı.");
+  const rv = document.getElementById("deliveryFormReceiver")?.value || "", dv = document.getElementById("deliveryFormDeliverer")?.value || "", nt = document.getElementById("deliveryFormNote")?.value || "";
+  v97Open("teslim", () => v97ModelDelivery(group, orders, rv.trim(), dv.trim(), nt.trim()));
+}
+window.v90OpenPdf = v97OpenOrder;
+window.v91OpenOrderGroupPdf = v97OpenGroup;
+window.v91OpenEntityHistoryPdf = v97OpenEntity;
+window.v91OpenShipmentPdf = v97OpenShipment;
+window.v91OpenDeliveryFormPdf = v97OpenDelivery;
+
 /* ===== v96: arayüz düzeltmeleri ===== */
 function v96OpenGroupOrOrder(groups, key) { const g = groups.find((x) => x.key === key); if (!g) return; if (g.lineCount === 1) openDetailModal(g.first.id); else openOrderGroupModal(g.key); }
 function v96BindListBadges(root, groups) {
@@ -7698,13 +8029,13 @@ function v94Fill(spec) {
 async function v94Output(kind, spec) {
   const d = window.prontoDesktop, real = !!(d && typeof d.printPdf === "function");
   if (kind === "print") {
-    const clear = v94Fill(spec);
+    const clear = (spec.fill || v94Fill)(spec);
     const done = () => { clear(); window.removeEventListener("afterprint", done); };
     window.addEventListener("afterprint", done); setTimeout(() => window.print(), 80); return;
   }
   if (real) {
     const make = async (opts) => {
-      const clear = v94Fill(spec);
+      const clear = (spec.fill || v94Fill)(spec);
       try {
         await Promise.all(Array.from(document.querySelectorAll("#pdfPrintRoot img")).map((i) => i.decode().catch(() => {})));
         return await d.printPdf({ fileName: spec.name, pageSize: spec.o && spec.o.size === "A3" ? "A3" : "A4", landscape: !!(spec.o && spec.o.orient === "landscape"), ...opts });
