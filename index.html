@@ -1462,7 +1462,7 @@ body::after {
 table.pd-t{width:100%;border-collapse:collapse;font-size:9pt}.pd-t thead{display:table-header-group}.pd-t th{background:#eceef1;color:#1a1d24;text-align:left;padding:6px 7px;font-weight:700;border-bottom:1px solid #d5d8dd}.pd-t th.r,.pd-t td.r{text-align:right}.pd-t tbody{break-inside:avoid;page-break-inside:avoid}.pd-t td{padding:7px;vertical-align:top;border-bottom:1px solid #e6e8eb}.pd-t td.pcell{line-height:0}.pd-t td.pcell img{display:block;object-fit:contain;border-radius:3px}.pd-t .nofoto{display:grid;line-height:1.2;place-items:center;background:#f0f1f3;color:#8a8f99;font-size:7.5pt;border-radius:3px}.pd-t .nm{font-weight:700}.pd-t .ds{padding-top:0;color:#4a4f5a;white-space:pre-wrap;overflow-wrap:anywhere}
 .pd-sum{display:flex;justify-content:space-between;gap:10mm;margin-top:7mm;break-inside:avoid;page-break-inside:avoid}.pd-pay{font-size:9pt;min-width:0}.pd-tot{min-width:70mm;font-size:9.5pt}.pd-tot div{display:flex;justify-content:space-between;gap:10mm;padding:2.5px 0}.pd-tot div span:first-child{color:#4a4f5a}.pd-tot .g{border-top:1.5px solid #1a1d24;margin-top:3px;padding-top:5px;font-weight:700}.pd-tot .g span:first-child{color:#1a1d24}.pd-foot{position:absolute;left:12mm;right:12mm;bottom:9mm;border-top:1px solid #d5d8dd;padding-top:3mm;font-size:8pt;color:#4a4f5a;display:flex;justify-content:space-between;gap:10px}.pd-foot .pg{white-space:nowrap}
 #pdfPrintRoot{display:none}
-@media print{html,body{height:auto!important;overflow:visible!important;background:#fff!important}body>*:not(#pdfPrintRoot){display:none!important}#pdfPrintRoot{display:block!important}#pdfPrintRoot .pdoc{box-shadow:none;width:auto;min-height:0;padding:0;margin:0}}
+@media print{html,body{height:auto!important;overflow:visible!important;background:#fff!important}body>*:not(#pdfPrintRoot){display:none!important}#pdfPrintRoot{display:block!important}#pdfPrintRoot .pdoc{box-shadow:none;width:auto;min-height:0;padding:0;margin:0}#pdfPrintRoot .pd-foot{position:static;margin-top:8mm;left:auto;right:auto;bottom:auto}}
 </style>
 
 <style id="pronto-global-full-width">
@@ -4977,10 +4977,10 @@ async function saveOrderFromForm(allowWarnings = false, allowConflict = false) {
 
 const V90_PDF_KEY="pronto_v90_pdf_settings";const V90_PDF_DEF={lang:"tr",size:"A4",orient:"portrait",foto:"m",logoPos:"center",logoSize:"m"};
 function v90PdfSettings(){try{return {...V90_PDF_DEF,...JSON.parse(localStorage.getItem(V90_PDF_KEY)||"{}")} }catch(_){return {...V90_PDF_DEF}}}function saveV90PdfSettings(o){localStorage.setItem(V90_PDF_KEY,JSON.stringify(o))}function v90PdfEsc(v){return escapeHtml(v==null?"":String(v))}function v90PdfLogo(){return document.querySelector(".mobile-logo")?.src||""}function v90PdfPhotoSize(o){return ({s:56,m:88,l:130}[o.foto]||88)}function v90PdfLogoSize(o){return ({s:34,m:52,l:76}[o.logoSize]||52)}
-function v90PdfDoc(order,o,photoUrl=""){const p=pricingTotals(order),customer=allCustomers.find(c=>normName(c.name)===normName(order.customer))||{},logo=v90PdfLogo(),L=o.lang==="en"?{photo:"Photo",product:"Product",color:"Color / Fabric",qty:"Qty",unit:"Unit Price",total:"Total",orderDate:"Order Date",delivery:"Delivery Date",status:"Status",desc:"Description",subtotal:"Subtotal",vat:"VAT",grand:"Grand Total"}:{photo:"Fotoğraf",product:"Ürün",color:"Renk / Kumaş",qty:"Adet",unit:"Birim Fiyat",total:"Toplam",orderDate:"Sipariş Tarihi",delivery:"Teslim Tarihi",status:"Durum",desc:"Açıklama",subtotal:"Ara Toplam",vat:"KDV",grand:"Genel Toplam"},logoPos=o.logoPos==="right"?"justify-content:flex-end":o.logoPos==="left"?"":"justify-content:center",ps=v90PdfPhotoSize(o),photo=photoUrl?`<img src="${v90PdfEsc(photoUrl)}" crossorigin="anonymous" style="width:${ps}px;height:${ps}px;object-fit:contain;border-radius:3px">`:`<div class="nofoto" style="width:${ps}px;height:${ps}px">Fotoğraf Yok</div>`;return `<div class="pdoc ${o.size} ${o.orient==="landscape"?"land":""}"><div class="pd-head"><div style="flex:1"><div class="pd-logo" style="${logoPos}">${logo?`<img src="${v90PdfEsc(logo)}" style="height:${v90PdfLogoSize(o)}px;width:auto;max-width:190px">`:`<div class="fn">OFİSCHİ</div>`}</div><div class="pd-cust"><b>${v90PdfEsc(order.customer||"-")}</b>${v90PdfEsc(customer.address||order.deliveryAddress||"")}<br>${v90PdfEsc(customer.phone||order.phone||"")}</div></div><div class="pd-right"><div class="pd-no">${v90PdfEsc(orderNo(order))}</div><table class="pd-kv"><tr><td>${L.orderDate}</td><td>${v90PdfEsc(formatDate(order.orderDate))}</td></tr><tr><td>${L.delivery}</td><td>${v90PdfEsc(formatDate(order.deliveryDate))}</td></tr><tr><td>${L.status}</td><td>${v90PdfEsc(order.status||"-")}</td></tr></table></div></div><table class="pd-t"><thead><tr><th style="width:76px">${L.photo}</th><th>${L.product}</th><th>${L.color}</th><th class="r">${L.qty}</th></tr></thead><tbody><tr><td class="pcell">${photo}</td><td><div class="nm">${v90PdfEsc(order.product||"-")}</div><div class="ds">${v90PdfEsc(order.supplier||"-")}</div></td><td>${v90PdfEsc([order.colorCode,order.fabricCode].filter(Boolean).join(" / ")||"-")}</td><td class="r">${v90PdfEsc(order.quantity??"-")}</td></tr></tbody></table><div class="pd-sum"><div class="pd-pay"><b>${L.desc}</b><div style="margin-top:5px;white-space:pre-wrap;max-width:110mm">${v90PdfEsc(getOrderDescription(order)||"-")}</div></div></div><div class="pd-foot"><span>OFİSCHİ BÜRO MOBİLYALARI</span></div></div>`}
+function v90PdfDoc(order,o,photoUrl=""){const p=pricingTotals(order),customer=allCustomers.find(c=>normName(c.name)===normName(order.customer))||{},logo=v90PdfLogo(),L=o.lang==="en"?{photo:"Photo",product:"Product",color:"Color / Fabric",qty:"Qty",unit:"Unit Price",total:"Total",orderDate:"Order Date",delivery:"Delivery Date",status:"Status",desc:"Description",subtotal:"Subtotal",vat:"VAT",grand:"Grand Total"}:{photo:"Fotoğraf",product:"Ürün",color:"Renk / Kumaş",qty:"Adet",unit:"Birim Fiyat",total:"Toplam",orderDate:"Sipariş Tarihi",delivery:"Teslim Tarihi",status:"Durum",desc:"Açıklama",subtotal:"Ara Toplam",vat:"KDV",grand:"Genel Toplam"},logoPos=o.logoPos==="right"?"justify-content:flex-end":o.logoPos==="left"?"":"justify-content:center",ps=v90PdfPhotoSize(o),photo=photoUrl?`<img src="${v90PdfEsc(photoUrl)}" crossorigin="anonymous" style="width:${ps}px;height:${ps}px;object-fit:contain;border-radius:3px">`:`<div class="nofoto" style="width:${ps}px;height:${ps}px">Fotoğraf Yok</div>`;return `<div class="pdoc ${o.size} ${o.orient==="landscape"?"land":""}"><div class="pd-head"><div style="flex:1"><div class="pd-logo" style="${logoPos}">${logo?`<img src="${v90PdfEsc(logo)}" style="height:${v90PdfLogoSize(o)}px;width:auto;max-width:190px">`:`<div class="fn">OFİSCHİ</div>`}</div></div><div class="pd-right"><div class="pd-no">${v90PdfEsc(orderNo(order))}</div><table class="pd-kv"><tr><td>${L.orderDate}</td><td>${v90PdfEsc(formatDate(order.orderDate))}</td></tr><tr><td>${L.delivery}</td><td>${v90PdfEsc(formatDate(order.deliveryDate))}</td></tr><tr><td>${L.status}</td><td>${v90PdfEsc(order.status||"-")}</td></tr></table></div></div><table class="pd-t"><thead><tr><th style="width:76px">${L.photo}</th><th>${L.product}</th><th>${L.color}</th><th class="r">${L.qty}</th></tr></thead><tbody><tr><td class="pcell">${photo}</td><td><div class="nm">${v90PdfEsc(order.product||"-")}</div><div class="ds">${v90PdfEsc(order.supplier||"-")}</div></td><td>${v90PdfEsc([order.colorCode,order.fabricCode].filter(Boolean).join(" / ")||"-")}</td><td class="r">${v90PdfEsc(order.quantity??"-")}</td></tr></tbody></table><div class="pd-sum"><div class="pd-pay"><b>${L.desc}</b><div style="margin-top:5px;white-space:pre-wrap;max-width:110mm">${v90PdfEsc(getOrderDescription(order)||"-")}</div></div></div><div class="pd-foot"><span>OFİSCHİ BÜRO MOBİLYALARI</span></div></div>`}
 async function v90BuildPdfBlob(order,o,photoUrl=""){await ensurePdfLibs();if(!window.html2canvas||!window.jspdf?.jsPDF)throw new Error("PDF motoru yüklenemedi. İnternet bağlantısını kontrol edin.");const host=document.createElement("div");host.style.cssText="position:fixed;left:-100000px;top:0;width:max-content;background:#fff;z-index:-1";host.innerHTML=v90PdfDoc(order,o,photoUrl);document.body.appendChild(host);try{return await v93RenderPdf(host.firstElementChild,o)}finally{host.remove()}}
 function v90PdfFileName(o){return `Siparis-${String(orderNo(o)||o.id).replace(/[^0-9A-Za-zÇĞİÖŞÜçğıöşü_-]+/g,"-")}.pdf`}function v90DownloadBlob(b,n){const u=URL.createObjectURL(b),a=document.createElement("a");a.href=u;a.download=n;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),1500)}async function v90DownloadPdf(o,s,p){v90DownloadBlob(await v90BuildPdfBlob(o,s,p),v90PdfFileName(o));showToast("PDF indirildi.")}async function v90SharePdf(o,s,p){const b=await v90BuildPdfBlob(o,s,p);if(window.prontoDesktop?.saveFile){v93DesktopShare(b,v90PdfFileName(o),o.customer);return}const f=new File([b],v90PdfFileName(o),{type:"application/pdf"});if(navigator.share&&(!navigator.canShare||navigator.canShare({files:[f]}))){await navigator.share({title:orderNo(o),files:[f]});return}v90DownloadBlob(b,v90PdfFileName(o));showToast("Bu cihazda doğrudan paylaşım desteklenmiyor; PDF indirildi.")}function v90PrintPdf(o,s,p){const r=document.getElementById("pdfPrintRoot");r.innerHTML=v90PdfDoc(o,s,p);const c=()=>{r.innerHTML="";window.removeEventListener("afterprint",c)};window.addEventListener("afterprint",c);setTimeout(()=>window.print(),80)}
-function v90PdfSettingsModal(cur,apply){const o={...cur},fields=[["lang","PDF dili",[["tr","Türkçe"],["en","İngilizce"]]],["size","Sayfa",[["A4","A4"],["A3","A3"]]],["orient","Yön",[["portrait","Dikey"],["landscape","Yatay"]]],["foto","Fotoğraf boyutu",[["s","Küçük"],["m","Orta"],["l","Büyük"]]],["logoPos","Logo konumu",[["left","Sol"],["center","Orta"],["right","Sağ"]]],["logoSize","Logo boyutu",[["s","Küçük"],["m","Orta"],["l","Büyük"]]]],ov=document.createElement("div");ov.className="modal-overlay";ov.style.zIndex="1100";ov.innerHTML=`<div class="modal" style="max-width:620px"><div class="modal-head"><h2>PDF Ayarları</h2><button class="icon-btn" data-x>✕</button></div><div class="modal-body">${fields.map(([k,l,opts])=>`<div class="form-field" style="margin-bottom:14px"><label>${l}</label><div class="seg" data-k="${k}">${opts.map(([v,t])=>`<button type="button" class="btn ${o[k]===v?"btn-primary":"btn-ghost"}" data-v="${v}">${t}</button>`).join("")}</div></div>`).join("")}</div><div class="modal-foot"><button class="btn btn-ghost" data-def>Varsayılan</button><button class="btn btn-primary" data-ok>Uygula</button></div></div>`;document.body.appendChild(ov);const redraw=()=>ov.querySelectorAll("[data-k]").forEach(g=>g.querySelectorAll("button").forEach(b=>{const on=o[g.dataset.k]===b.dataset.v;b.classList.toggle("btn-primary",on);b.classList.toggle("btn-ghost",!on)}));ov.addEventListener("click",e=>{const b=e.target.closest("[data-v]");if(b){o[b.closest("[data-k]").dataset.k]=b.dataset.v;redraw()}if(e.target.closest("[data-x]"))ov.remove();if(e.target.closest("[data-def]")){Object.assign(o,V90_PDF_DEF);redraw()}if(e.target.closest("[data-ok]")){saveV90PdfSettings(o);ov.remove();apply({...o})}})}
+function v90PdfSettingsModal(cur,apply,opt){const o={...cur},fields=[["lang","PDF dili",[["tr","Türkçe"],["en","İngilizce"]]],["size","Sayfa",[["A4","A4"],["A3","A3"]]],["orient","Yön",[["portrait","Dikey"],["landscape","Yatay"]]],["foto","Fotoğraf boyutu",[["s","Küçük"],["m","Orta"],["l","Büyük"]]],["logoPos","Logo konumu",[["left","Sol"],["center","Orta"],["right","Sağ"]]],["logoSize","Logo boyutu",[["s","Küçük"],["m","Orta"],["l","Büyük"]]]].filter(f=>!(opt&&opt.keys)||opt.keys.includes(f[0])),ov=document.createElement("div");ov.className="modal-overlay";ov.style.zIndex="1100";ov.innerHTML=`<div class="modal" style="max-width:620px"><div class="modal-head"><h2>PDF Ayarları</h2><button class="icon-btn" data-x>✕</button></div><div class="modal-body">${fields.map(([k,l,opts])=>`<div class="form-field" style="margin-bottom:14px"><label>${l}</label><div class="seg" data-k="${k}">${opts.map(([v,t])=>`<button type="button" class="btn ${o[k]===v?"btn-primary":"btn-ghost"}" data-v="${v}">${t}</button>`).join("")}</div></div>`).join("")}</div><div class="modal-foot"><button class="btn btn-ghost" data-def>Varsayılan</button><button class="btn btn-primary" data-ok>Uygula</button></div></div>`;document.body.appendChild(ov);const redraw=()=>ov.querySelectorAll("[data-k]").forEach(g=>g.querySelectorAll("button").forEach(b=>{const on=o[g.dataset.k]===b.dataset.v;b.classList.toggle("btn-primary",on);b.classList.toggle("btn-ghost",!on)}));ov.addEventListener("click",e=>{const b=e.target.closest("[data-v]");if(b){o[b.closest("[data-k]").dataset.k]=b.dataset.v;redraw()}if(e.target.closest("[data-x]"))ov.remove();if(e.target.closest("[data-def]")){Object.assign(o,(opt&&opt.def)||V90_PDF_DEF);redraw()}if(e.target.closest("[data-ok]")){((opt&&opt.save)||saveV90PdfSettings)(o);ov.remove();apply({...o})}})}
 /* =======================================================
    V24 PDF MOTORU — GENEL PENCERE/SEKME PDF ÇIKTILARI
    Aynı html2canvas + jsPDF motorunu kullanır.
@@ -5027,18 +5027,19 @@ function v91PdfPageGeometry(el,o){
     el.style.borderRadius="0";
   }
 }
-function v91OpenElementPdf(el,title,filename,orient="portrait"){
+function v91OpenElementPdf(el,title,filename,orient="portrait",kind){
   if(!el) return showToast("PDF içeriği bulunamadı.");
   if(el.nodeType===1 && el.tagName==="STYLE"){const next=el.nextElementSibling;if(next) el=next;}
   const m=document.getElementById("pdfModal"),host=document.getElementById("pdfZoom");
   if(!m||!host) return showToast("PDF penceresi bulunamadı.");
-  const state={el,title:String(title||"PDF"),filename:`${v91PdfSafeName(filename||title||"PDF")}.pdf`,o:v90PdfSettings(),zoom:null,orient};
-  state.o.orient=orient;
+  const state={el,title:String(title||"PDF"),filename:`${v91PdfSafeName(filename||title||"PDF")}.pdf`,o:kind?v95Get(kind):v90PdfSettings(),zoom:null,orient};
+  if(!kind) state.o.orient=orient;
   v91GenericPdfState=state;
   const redraw=()=>{
     host.innerHTML="";
     const css=v91PdfCssForElement();
     if(css){const style=document.createElement("style");style.textContent=css;host.appendChild(style);}
+    v95ApplyLogo(state.el,state.o);
     const clone=state.el.cloneNode(true);
     v91PdfPageGeometry(clone,state.o);
     host.appendChild(clone);
@@ -5051,32 +5052,10 @@ function v91OpenElementPdf(el,title,filename,orient="portrait"){
   document.getElementById("pdfModalTitle").textContent=state.title;
   redraw();
   document.getElementById("pdfCloseBtn").onclick=()=>{m.classList.add("hidden");m.setAttribute("aria-hidden","true");host.innerHTML="";v91GenericPdfState=null;document.body.classList.remove("pronto-modal-lock");};
-  document.getElementById("pdfSettingsBtn").onclick=()=>v90PdfSettingsModal(state.o,no=>{state.o={...no};redraw()});
-  document.getElementById("pdfDownloadBtn").onclick=async()=>{
-    const b=document.getElementById("pdfDownloadBtn");b.disabled=true;
-    try{v90DownloadBlob(await v91BuildElementPdfBlob(state.el,state.o),state.filename);showToast("PDF indirildi.");}
-    catch(e){showToast(e.message||"PDF indirilemedi.");}finally{b.disabled=false;}
-  };
-  document.getElementById("pdfShareBtn").onclick=async()=>{
-    const b=document.getElementById("pdfShareBtn");b.disabled=true;
-    try{
-      const blob=await v91BuildElementPdfBlob(state.el,state.o);if(window.prontoDesktop?.saveFile){v93DesktopShare(blob,state.filename,state.customer);return;}const file=new File([blob],state.filename,{type:"application/pdf"});
-      if(navigator.share&&(!navigator.canShare||navigator.canShare({files:[file]}))) await navigator.share({title:state.title,files:[file]});
-      else {v90DownloadBlob(blob,state.filename);showToast("Bu cihazda doğrudan paylaşım desteklenmiyor; PDF indirildi.");}
-    }catch(e){showToast(e.message||"PDF paylaşılamadı.");}finally{b.disabled=false;}
-  };
-  document.getElementById("pdfPrintBtn").onclick=async()=>{
-    try{
-      const root=document.getElementById("pdfPrintRoot");if(!root)return;
-      root.innerHTML="";
-      const css=v91PdfCssForElement();if(css){const style=document.createElement("style");style.textContent=css;root.appendChild(style);}
-      const page=state.el.cloneNode(true);v91PdfPageGeometry(page,state.o);root.appendChild(page);
-      const printStyle=document.createElement("style");printStyle.textContent=`@page{size:${state.o.size||"A4"} ${state.o.orient||"portrait"};margin:0}html,body{background:#fff!important;margin:0!important;padding:0!important}body>*:not(#pdfPrintRoot){display:none!important}#pdfPrintRoot{display:block!important}`;
-      root.appendChild(printStyle);
-      const cleanup=()=>{root.innerHTML="";window.removeEventListener("afterprint",cleanup);};
-      window.addEventListener("afterprint",cleanup);setTimeout(()=>window.print(),80);
-    }catch(e){showToast(e.message||"Yazdırılamadı.");}
-  };
+  document.getElementById("pdfSettingsBtn").onclick=()=>v90PdfSettingsModal(state.o,no=>{state.o={...no};redraw()},kind?v95ModalOpt(kind):undefined);
+  document.getElementById("pdfDownloadBtn").onclick=()=>v94Output("download",v94Spec(state));
+  document.getElementById("pdfPrintBtn").onclick=()=>v94Output("print",v94Spec(state));
+  document.getElementById("pdfShareBtn").onclick=()=>v94Output("share",v94Spec(state));
   m.querySelectorAll("[data-pdf-zoom]").forEach(b=>b.onclick=()=>{state.zoom=Math.min(2.5,Math.max(.25,state.zoom+Number(b.dataset.pdfZoom)*.15));redraw();});
 }
 function v92PdfTemplateStyle(){return `<style>
@@ -5111,45 +5090,29 @@ async function v91OpenOrderGroupPdf(group){
   const filename=`Siparis-Grubu-${safeGroupName}${selectedCount?`-${selectedCount}-Secili`:""}.pdf`;
   const wrap=document.createElement("div");wrap.innerHTML=v91BuildV24GroupPdfHtml(group,orders);
   const source=wrap.firstElementChild;if(!source)return showToast("PDF ön izleme içeriği oluşturulamadı.");
-  const state={el:source,title,filename,o:v90PdfSettings(),zoom:null,customer:group.customer};
-  state.o.orient="landscape";v91GenericPdfState=state;
+  const state={el:source,title,filename,o:v95Get("grup"),zoom:null,customer:group.customer};
+  v91GenericPdfState=state;
   const redraw=()=>{
     host.innerHTML="";
     const css=v91PdfCssForElement();if(css){const st=document.createElement("style");st.textContent=css;host.appendChild(st);}
-    const clone=state.el.cloneNode(true);v91PdfPageGeometry(clone,state.o);host.appendChild(clone);
+    v95ApplyLogo(state.el,state.o);const clone=state.el.cloneNode(true);v91PdfPageGeometry(clone,state.o);host.appendChild(clone);
     state.zoom=v93ApplyZoom(host,state.zoom);
     const zl=document.getElementById("pdfZoomLabel");if(zl)zl.textContent=Math.round(state.zoom*100)+"%";
   };
   modal.classList.remove("hidden");modal.setAttribute("aria-hidden","false");document.body.classList.add("pronto-modal-lock");
   document.getElementById("pdfModalTitle").textContent=title;redraw();
   document.getElementById("pdfCloseBtn").onclick=()=>{modal.classList.add("hidden");modal.setAttribute("aria-hidden","true");host.innerHTML="";v91GenericPdfState=null;document.body.classList.remove("pronto-modal-lock");};
-  document.getElementById("pdfSettingsBtn").onclick=()=>v90PdfSettingsModal(state.o,no=>{state.o={...no};state.o.orient=no.orient||"landscape";redraw();});
-  document.getElementById("pdfDownloadBtn").onclick=async()=>{
-    const b=document.getElementById("pdfDownloadBtn");b.disabled=true;
-    try{v90DownloadBlob(await v91BuildElementPdfBlob(state.el,state.o),state.filename);showToast("PDF oluşturuldu ve indirildi.");}
-    catch(e){showToast(e.message||"PDF oluşturulamadı.");}finally{b.disabled=false;}
-  };
-  document.getElementById("pdfPrintBtn").onclick=async()=>{
-    try{
-      const root=document.getElementById("pdfPrintRoot");root.innerHTML="";
-      const css=v91PdfCssForElement();if(css){const st=document.createElement("style");st.textContent=css;root.appendChild(st);}
-      const page=state.el.cloneNode(true);v91PdfPageGeometry(page,state.o);root.appendChild(page);
-      const ps=document.createElement("style");ps.textContent=`@page{size:${state.o.size} ${state.o.orient};margin:0}html,body{background:#fff!important;margin:0!important;padding:0!important}body>*:not(#pdfPrintRoot){display:none!important}#pdfPrintRoot{display:block!important}`;root.appendChild(ps);
-      const cleanup=()=>{root.innerHTML="";window.removeEventListener("afterprint",cleanup)};window.addEventListener("afterprint",cleanup);setTimeout(()=>window.print(),80);
-    }catch(e){showToast(e.message||"Yazdırılamadı.");}
-  };
-  document.getElementById("pdfShareBtn").onclick=async()=>{
-    const b=document.getElementById("pdfShareBtn");b.disabled=true;
-    try{const blob=await v91BuildElementPdfBlob(state.el,state.o);if(window.prontoDesktop?.saveFile){v93DesktopShare(blob,state.filename,state.customer);return;}const file=new File([blob],state.filename,{type:"application/pdf"});if(navigator.share&&(!navigator.canShare||navigator.canShare({files:[file]}))){await navigator.share({title,files:[file]});}else{v90DownloadBlob(blob,state.filename);showToast("Bu cihazda doğrudan paylaşım desteklenmiyor; PDF indirildi.");}}
-    catch(e){showToast(e.message||"PDF paylaşılamadı.");}finally{b.disabled=false;}
-  };
+  document.getElementById("pdfSettingsBtn").onclick=()=>v90PdfSettingsModal(state.o,no=>{state.o={...no};redraw();},v95ModalOpt("grup"));
+  document.getElementById("pdfDownloadBtn").onclick=()=>v94Output("download",v94Spec(state));
+  document.getElementById("pdfPrintBtn").onclick=()=>v94Output("print",v94Spec(state));
+  document.getElementById("pdfShareBtn").onclick=()=>v94Output("share",v94Spec(state));
   modal.querySelectorAll("[data-pdf-zoom]").forEach(btn=>btn.onclick=()=>{state.zoom=Math.min(2.5,Math.max(.25,state.zoom+Number(btn.dataset.pdfZoom)*.15));redraw();});
 }
 function v91OpenEntityHistoryPdf(type,id,range){
   const list={customer:allCustomers,supplier:allSuppliers,product:allProducts}[type];
   const entity=(list||[]).find(x=>x.id===id);
   if(!entity){ if(type!=="product") showToast("Kayıt bulunamadı."); return; }
-  if(type==="product"){ const body=document.getElementById("entityHistoryBody"); if(body) v91OpenElementPdf(body,`${entity.name} · İlgili Siparişler`,`Ilgili-Siparisler-${entity.name}`); return; }
+  if(type==="product"){ const body=document.getElementById("entityHistoryBody"); if(body){ const wrap=document.createElement("div"); wrap.className=body.className; wrap.innerHTML=`<div style="padding:4px 0 10px;border-bottom:2px solid #111;margin-bottom:12px"><div style="font-size:18px;font-weight:800">${escapeHtml(entity.name)}</div><div style="font-size:11px;color:#555">Ürün geçmişi · İlgili siparişler ve stok hareketleri · ${formatDate(todayISO())}</div></div>`; Array.from(body.childNodes).forEach(n=>wrap.appendChild(n.cloneNode(true))); wrap.querySelectorAll(".detail-item").forEach(d=>{if(/fiyat/i.test(d.querySelector(".detail-label")?.textContent||""))d.remove();}); v91OpenElementPdf(wrap,`${entity.name} · İlgili Siparişler`,`Ilgili-Siparisler-${entity.name}`,"portrait","urun"); } return; }
   const orderField=type==="customer"?"customer":"supplier";
   const rows=activeOrdersList().filter(o=>normName(o[orderField])===normName(entity.name)&&v93InRange(o.orderDate,range)).sort((a,b)=>a.id-b.id).map(o=>({o,t:pricingTotals(o)}));
   const title=type==="customer"?"MÜŞTERİ SİPARİŞ RAPORU":"TEDARİKÇİ SİPARİŞ RAPORU";
@@ -5158,7 +5121,7 @@ function v91OpenEntityHistoryPdf(type,id,range){
   if(!rows.length&&range&&(range.from||range.to)){showToast("Bu tarih aralığında sipariş yok.");return;}
   const purchase=rows.reduce((s,r)=>s+r.t.purchaseTotal,0), sale=rows.reduce((s,r)=>s+r.t.tlGrand,0);
   const html=v92PdfShell(`<div class="v92-pdf-head"><div>${v92PdfLogoHtml()}<h1 class="v92-pdf-title">${title}</h1><div class="v92-pdf-sub">${escapeHtml(entity.name)} · ${escapeHtml(v93RangeText(range))} · Rapor tarihi: ${formatDate(todayISO())}</div></div></div><div class="v92-pdf-meta"><div class="v92-pdf-meta-item"><span>${type==="customer"?"Müşteri":"Tedarikçi"}</span><strong>${escapeHtml(entity.name)}</strong></div><div class="v92-pdf-meta-item"><span>İletişim</span><strong>${escapeHtml([entity.phone,entity.email].filter(Boolean).join(" · ")||"-")}</strong></div><div class="v92-pdf-meta-item"><span>Sipariş Sayısı</span><strong>${rows.length}</strong></div><div class="v92-pdf-meta-item"><span>Rapor Tarihi</span><strong>${formatDate(todayISO())}</strong></div></div><table class="v92-pdf-table"><thead><tr>${header}</tr></thead><tbody>${body||`<tr><td colspan="10">İlgili sipariş bulunamadı.</td></tr>`}</tbody></table><div class="v92-pdf-total"><div class="v92-pdf-total-box"><div class="v92-pdf-total-row"><span>Toplam Adet</span><strong>${rows.reduce((n,r)=>n+(Number(r.t.qty)||0),0)}</strong></div></div></div><div class="v92-pdf-foot"><span>OFİSCHİ BÜRO MOBİLYALARI</span><span>PRONTO</span></div>`);
-  const host=document.createElement("div");host.innerHTML=html;v91OpenElementPdf(host.firstElementChild,title,`${type==="customer"?"Musteri":"Tedarikci"}-Siparis-Raporu-${entity.name}${range&&(range.from||range.to)?`-${range.from||"bas"}_${range.to||"bugun"}`:""}`,"landscape");
+  const host=document.createElement("div");host.innerHTML=html;v91OpenElementPdf(host.firstElementChild,title,`${type==="customer"?"Musteri":"Tedarikci"}-Siparis-Raporu-${entity.name}${range&&(range.from||range.to)?`-${range.from||"bas"}_${range.to||"bugun"}`:""}`,"landscape",type==="customer"?"musteri":"tedarikci");
 }
 
 function v91OpenShipmentPdf(){
@@ -5168,7 +5131,7 @@ function v91OpenShipmentPdf(){
   const byCity=new Map();selected.forEach(g=>{if(!byCity.has(g.city))byCity.set(g.city,[]);byCity.get(g.city).push(g)});
   const cityHtml=Array.from(byCity.entries()).map(([city,gs])=>`<div class="v92-pdf-city"><h2>${escapeHtml(city)} — ${gs.length} sevkiyat</h2><table class="v92-pdf-table"><thead><tr><th>Müşteri / Ünvan</th><th>Telefon</th><th>Adres</th><th>Teslim Tarihi</th><th>Nakliye Durumu</th></tr></thead><tbody>${gs.map(g=>`<tr><td>${escapeHtml(g.customerName)}</td><td>${escapeHtml(g.phone)}</td><td>${escapeHtml(g.address)}</td><td>${g.deliveryDate?formatDate(g.deliveryDate):"-"}</td><td>${escapeHtml(String(g.shipmentType||"-").toUpperCase())}</td></tr>`).join("")}</tbody></table></div>`).join("");
   const html=v92PdfShell(`<div class="v92-pdf-head"><div>${v92PdfLogoHtml()}<h1 class="v92-pdf-title">SEVKİYAT LİSTESİ</h1><div class="v92-pdf-sub">Hazırlanma tarihi: ${formatDate(todayISO())} · ${selected.length} sevkiyat</div></div><div style="font-size:10px;text-align:right">OFİSCHİ<br>PRONTO</div></div>${cityHtml}<div class="v92-pdf-foot"><span>Bu liste PRONTO sipariş takip sisteminden oluşturulmuştur.</span><span>OFİSCHİ</span></div>`,true);
-  const host=document.createElement("div");host.innerHTML=html;v91OpenElementPdf(host.firstElementChild,"Sevkiyat","Sevkiyat","landscape");
+  const host=document.createElement("div");host.innerHTML=html;v91OpenElementPdf(host.firstElementChild,"Sevkiyat","Sevkiyat","landscape","sevkiyat");
 }
 function v91OpenDeliveryFormPdf(){
   const group=getSelectedDeliveryFormGroup();
@@ -5185,13 +5148,13 @@ function v91OpenDeliveryFormPdf(){
   const receiver=document.getElementById("deliveryFormReceiver")?.value||"";
   const deliverer=document.getElementById("deliveryFormDeliverer")?.value||"";
   const note=document.getElementById("deliveryFormNote")?.value||"";
-  const rows=orders.map(o=>`<tr><td><strong>${escapeHtml(orderNo(o))}</strong></td><td>${escapeHtml(o.product||"-")}</td><td>${escapeHtml(o.supplier||"-")}</td><td>${escapeHtml(colorFabricText(o)||"-")}</td><td style="text-align:right">${escapeHtml(o.quantity??"-")}</td></tr>`).join("");
-  const html=`<div class="pronto-delivery-pdf-page"><div class="pdp-top"><div>${v92PdfLogoHtml()}</div><div class="pdp-badge">TESLİM FORMU</div></div><div class="pdp-title">TESLİM FORMU</div><div class="pdp-sub">OFİSCHİ BÜRO MOBİLYALARI · PRONTO</div><div class="pdp-info"><div><span>MÜŞTERİ</span><strong>${escapeHtml(customer)}</strong></div><div><span>TESLİM TARİHİ</span><strong>${formatDate(deliveryDate)}</strong></div><div><span>TELEFON</span><strong>${escapeHtml(phone)}</strong></div><div class="wide"><span>ADRES</span><strong>${escapeHtml(address)}</strong></div></div><div class="pdp-section-title">TESLİM EDİLEN ÜRÜNLER <em>${orders.length} KALEM · ${totalQty} ADET</em></div><table class="pdp-table"><thead><tr><th>SİPARİŞ NO</th><th>ÜRÜN</th><th>TEDARİKÇİ</th><th>RENK / KUMAŞ</th><th>ADET</th></tr></thead><tbody>${rows}</tbody></table>${note?`<div class="pdp-note"><strong>TESLİMAT NOTU</strong><div>${escapeHtml(note)}</div></div>`:`<div class="pdp-note"><strong>TESLİMAT NOTU</strong><div>Ürünler eksiksiz ve teslimat koşullarına uygun şekilde teslim alınmıştır.</div></div>`}<div class="pdp-signs"><div><div class="line"></div><strong>TESLİM ALAN</strong><span>${escapeHtml(receiver||"Ad Soyad / İmza")}</span></div><div><div class="line"></div><strong>TESLİM EDEN</strong><span>${escapeHtml(deliverer||"Ad Soyad / İmza")}</span></div></div><div class="pdp-foot"><span>OFİSCHİ BÜRO MOBİLYALARI</span><span>PRONTO · TESLİM FORMU</span></div></div>`;
+  const rows=orders.map(o=>`<tr><td><strong>${escapeHtml(orderNo(o))}</strong></td><td>${escapeHtml(o.product||"-")}</td><td>${escapeHtml(colorFabricText(o)||"-")}</td><td style="text-align:right">${escapeHtml(o.quantity??"-")}</td></tr>`).join("");
+  const html=`<div class="pronto-delivery-pdf-page"><div class="pdp-top"><div>${v92PdfLogoHtml()}</div><div class="pdp-badge">TESLİM FORMU</div></div><div class="pdp-title">TESLİM FORMU</div><div class="pdp-sub">OFİSCHİ BÜRO MOBİLYALARI · PRONTO</div><div class="pdp-info"><div><span>MÜŞTERİ</span><strong>${escapeHtml(customer)}</strong></div><div><span>TESLİM TARİHİ</span><strong>${formatDate(todayISO())}</strong></div><div><span>TELEFON</span><strong>${escapeHtml(phone)}</strong></div><div class="wide"><span>ADRES</span><strong>${escapeHtml(address)}</strong></div></div><div class="pdp-section-title">TESLİM EDİLEN ÜRÜNLER <em>${orders.length} KALEM · ${totalQty} ADET</em></div><table class="pdp-table"><thead><tr><th>SİPARİŞ NO</th><th>ÜRÜN</th><th>RENK / KUMAŞ</th><th>ADET</th></tr></thead><tbody>${rows}</tbody></table>${note?`<div class="pdp-note"><strong>TESLİMAT NOTU</strong><div>${escapeHtml(note)}</div></div>`:`<div class="pdp-note"><strong>TESLİMAT NOTU</strong><div>Ürünler eksiksiz ve teslimat koşullarına uygun şekilde teslim alınmıştır.</div></div>`}<div class="pdp-signs"><div><div class="line"></div><strong>TESLİM ALAN</strong><span>${escapeHtml(receiver||"Ad Soyad / İmza")}</span></div><div><div class="line"></div><strong>TESLİM EDEN</strong><span>${escapeHtml(deliverer||"Ad Soyad / İmza")}</span></div></div><div class="pdp-foot"><span>OFİSCHİ BÜRO MOBİLYALARI</span><span>PRONTO · TESLİM FORMU</span></div></div>`;
   const wrap=document.createElement("div");wrap.innerHTML=html;
-  v91OpenElementPdf(wrap.firstElementChild,`Teslim Formu · ${customer}`,`Teslim-Formu-${customer}`,"portrait");
+  v91OpenElementPdf(wrap.firstElementChild,`Teslim Formu · ${customer}`,`Teslim-Formu-${customer}`,"portrait","teslim");
 }
 
-async function v90OpenPdf(id){const order=allOrders.find(o=>o.id===id);if(!order)return;const m=document.getElementById("pdfModal"),host=document.getElementById("pdfZoom");if(!m||!host)return;let o=v90PdfSettings(),zoom=null;m.classList.remove("hidden");document.getElementById("pdfModalTitle").textContent=orderNo(order);const photo=await getOrderPhotoSignedUrl(order.id);if(m.classList.contains("hidden"))return;const redraw=()=>{host.innerHTML=v90PdfDoc(order,o,photo);zoom=v93ApplyZoom(host,zoom)};redraw();document.getElementById("pdfCloseBtn").onclick=()=>m.classList.add("hidden");document.getElementById("pdfSettingsBtn").onclick=()=>v90PdfSettingsModal(o,no=>{o=no;redraw()});document.getElementById("pdfDownloadBtn").onclick=async()=>{const b=document.getElementById("pdfDownloadBtn");b.disabled=true;try{await v90DownloadPdf(order,o,photo)}catch(e){showToast(e.message||"PDF indirilemedi.")}finally{b.disabled=false}};document.getElementById("pdfShareBtn").onclick=async()=>{const b=document.getElementById("pdfShareBtn");b.disabled=true;try{await v90SharePdf(order,o,photo)}catch(e){showToast(e.message||"PDF paylaşılamadı.")}finally{b.disabled=false}};document.getElementById("pdfPrintBtn").onclick=()=>v90PrintPdf(order,o,photo);m.querySelectorAll("[data-pdf-zoom]").forEach(b=>b.onclick=()=>{zoom=Math.min(2.5,Math.max(.25,zoom+Number(b.dataset.pdfZoom)*.15));redraw()})}
+async function v90OpenPdf(id){const order=allOrders.find(o=>o.id===id);if(!order)return;const m=document.getElementById("pdfModal"),host=document.getElementById("pdfZoom");if(!m||!host)return;let o=v90PdfSettings(),zoom=null;m.classList.remove("hidden");document.getElementById("pdfModalTitle").textContent=orderNo(order);const photo=await getOrderPhotoSignedUrl(order.id);if(m.classList.contains("hidden"))return;const redraw=()=>{host.innerHTML=v90PdfDoc(order,o,photo);zoom=v93ApplyZoom(host,zoom)};redraw();document.getElementById("pdfCloseBtn").onclick=()=>m.classList.add("hidden");document.getElementById("pdfSettingsBtn").onclick=()=>v90PdfSettingsModal(o,no=>{o=no;redraw()});const v94s=()=>({html:v90PdfDoc(order,o,photo),o,name:v90PdfFileName(order),contact:{type:"supplier",name:order.supplier},title:orderNo(order),blob:()=>v90BuildPdfBlob(order,o,photo)});document.getElementById("pdfDownloadBtn").onclick=()=>v94Output("download",v94s());document.getElementById("pdfShareBtn").onclick=()=>v94Output("share",v94s());document.getElementById("pdfPrintBtn").onclick=()=>v94Output("print",v94s());m.querySelectorAll("[data-pdf-zoom]").forEach(b=>b.onclick=()=>{zoom=Math.min(2.5,Math.max(.25,zoom+Number(b.dataset.pdfZoom)*.15));redraw()})}
 
 function openDetailModal(id) {
   const order = allOrders.find((o) => o.id === id);
@@ -7525,12 +7488,13 @@ function v93WaPhone(gsm) {
 }
 function v93DesktopShare(blob, filename, customerName) {
   const d = window.prontoDesktop;
-  const cust = customerName ? allCustomers.find((c) => normName(c.name) === normName(customerName)) : null;
+  const tgt = customerName && typeof customerName === "object" ? customerName : { type: "customer", name: customerName };
+  const cust = tgt.name ? (tgt.type === "supplier" ? allSuppliers : allCustomers).find((c) => normName(c.name) === normName(tgt.name)) : null;
   const phone = v93WaPhone(cust && cust.phone), mail = cust && /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(cust.email || "") ? cust.email : "";
   const ov = document.createElement("div"); ov.className = "v93-ov";
   ov.innerHTML = `<div class="v93-box" role="dialog" aria-modal="true"><h3>PDF paylaş</h3><p>PDF hazırlanıp <b>panoya kopyalanır</b>. Açılan sohbete veya e-postaya <b>Ctrl+V</b> ile yapıştırın.</p><div class="v93-grid">
     <button type="button" class="btn btn-primary" data-k="wa">WhatsApp ile PDF gönder</button>
-    ${phone ? `<button type="button" class="btn btn-secondary" data-k="waCari">WhatsApp — ${escapeHtml(cust.name)} (${escapeHtml(cust.phone)})</button>` : ""}
+    ${phone ? `<button type="button" class="btn btn-secondary" data-k="waCari">WhatsApp — ${tgt.type === "supplier" ? "Tedarikçi: " : ""}${escapeHtml(cust.name)} (${escapeHtml(cust.phone)})</button>` : ""}
     <button type="button" class="btn btn-secondary" data-k="mail">E-posta${mail ? ` (${escapeHtml(mail)})` : ""}</button>
     <button type="button" class="btn btn-ghost" data-k="file">PDF'i klasörde göster</button>
     <button type="button" class="btn btn-ghost" data-v93-close>Vazgeç</button></div></div>`;
@@ -7542,8 +7506,7 @@ function v93DesktopShare(blob, filename, customerName) {
     const b = e.target.closest("[data-k]"); if (!b) return;
     const k = b.dataset.k; ov.querySelectorAll("button").forEach((x) => x.disabled = true);
     try {
-      const bytes = new Uint8Array(await blob.arrayBuffer());
-      const r = await d.saveFile(bytes, filename, { ask: false, reveal: k === "file" });
+      const r = typeof blob === "function" ? await blob(k === "file") : await d.saveFile(new Uint8Array(await blob.arrayBuffer()), filename, { ask: false, reveal: k === "file" });
       if (!r || !r.ok) throw new Error((r && r.error) || "PDF kaydedilemedi");
       if (k === "file") { showToast("PDF klasörde gösterildi."); return close(); }
       const copied = await d.copyFile(r.path);
@@ -7568,6 +7531,81 @@ function v93ReadHistoryRange() {
   if (f && t && f > t) { showToast("Başlangıç tarihi bitiş tarihinden sonra olamaz."); return false; }
   return { from: f, to: t };
 }
+
+
+/* ===== v95: PDF türüne göre ayarlar ===== */
+const V95_ORIENT={grup:"landscape",musteri:"landscape",tedarikci:"landscape",sevkiyat:"landscape",teslim:"portrait",urun:"portrait"};
+function v95Def(kind){return {size:"A4",orient:V95_ORIENT[kind]||"portrait",logoPos:"left",logoSize:"m"};}
+function v95Clean(kind,o){const d=v95Def(kind),r={...d};if(o&&(o.size==="A4"||o.size==="A3"))r.size=o.size;if(o&&(o.orient==="portrait"||o.orient==="landscape"))r.orient=o.orient;if(o&&["left","center","right"].includes(o.logoPos))r.logoPos=o.logoPos;if(o&&["s","m","l"].includes(o.logoSize))r.logoSize=o.logoSize;return r;}
+function v95Get(kind){try{return v95Clean(kind,JSON.parse(localStorage.getItem("pronto_v95_pdf_"+kind)||"{}"));}catch(_){return v95Def(kind);}}
+function v95Save(kind,o){try{localStorage.setItem("pronto_v95_pdf_"+kind,JSON.stringify(v95Clean(kind,o)));}catch(_){}}
+function v95Keys(kind){return kind==="urun"?["size","orient"]:["size","orient","logoPos","logoSize"];}
+function v95ModalOpt(kind){return {keys:v95Keys(kind),save:(o)=>v95Save(kind,o),def:v95Def(kind)};}
+function v95ApplyLogo(el,o){
+  if(!el||!o)return;
+  const img=el.querySelector("img.v92-pdf-logo,img.pronto-v24-preview-logo");if(!img)return;
+  const h={s:34,l:76}[o.logoSize];
+  img.style.maxHeight=h?h+"px":"";img.style.height=h?h+"px":"";img.style.maxWidth=h?(h*4)+"px":"";img.style.width=h?"auto":"";
+  const p=img.parentElement;if(p&&p.dataset.v95f==null){p.dataset.v95f=p.style.flex||"";p.dataset.v95w=p.style.minWidth||"";}
+  if(o.logoPos==="center"||o.logoPos==="right"){img.style.display="block";img.style.marginLeft="auto";img.style.marginRight=o.logoPos==="center"?"auto":"0";if(p){p.style.flex="1";p.style.minWidth="0";}}
+  else{img.style.display="";img.style.marginLeft="";img.style.marginRight="";if(p){p.style.flex=p.dataset.v95f;p.style.minWidth=p.dataset.v95w;}}
+}
+/* ===== v94: gerçek PDF ===== */
+function v94Fill(spec) {
+  const root = document.getElementById("pdfPrintRoot"); root.innerHTML = "";
+  const o = spec.o || {}, size = o.size === "A3" ? "A3" : "A4", orient = o.orient === "landscape" ? "landscape" : "portrait";
+  let page;
+  if (spec.html) { const w = document.createElement("div"); w.innerHTML = spec.html; page = w.firstElementChild; }
+  else {
+    const css = v91PdfCssForElement(); if (css) { const st = document.createElement("style"); st.textContent = css; root.appendChild(st); }
+    page = spec.el.cloneNode(true); v91PdfPageGeometry(page, o);
+    page.style.minHeight = "0"; page.style.paddingTop = "0"; page.style.paddingBottom = "0";
+  }
+  root.appendChild(page);
+  const ps = document.createElement("style");
+  ps.textContent = `@page{size:${size} ${orient};margin:${spec.html ? "12mm" : "10mm 0 12mm"}}
+@media print{html,body{background:#fff!important;margin:0!important;padding:0!important}body::before,body::after{display:none!important;content:none!important;background:none!important}body>*:not(#pdfPrintRoot){display:none!important}#pdfPrintRoot{display:block!important}
+#pdfPrintRoot *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+#pdfPrintRoot tr,#pdfPrintRoot .history-item,#pdfPrintRoot .v92-pdf-meta-item,#pdfPrintRoot .pdp-info>div,#pdfPrintRoot img{break-inside:avoid;page-break-inside:avoid}
+#pdfPrintRoot thead{display:table-header-group}#pdfPrintRoot h1,#pdfPrintRoot h2,#pdfPrintRoot h3{break-after:avoid}}`;
+  root.appendChild(ps);
+  return () => { root.innerHTML = ""; };
+}
+async function v94Output(kind, spec) {
+  const d = window.prontoDesktop, real = !!(d && typeof d.printPdf === "function");
+  if (kind === "print") {
+    const clear = v94Fill(spec);
+    const done = () => { clear(); window.removeEventListener("afterprint", done); };
+    window.addEventListener("afterprint", done); setTimeout(() => window.print(), 80); return;
+  }
+  if (real) {
+    const make = async (opts) => {
+      const clear = v94Fill(spec);
+      try {
+        await Promise.all(Array.from(document.querySelectorAll("#pdfPrintRoot img")).map((i) => i.decode().catch(() => {})));
+        return await d.printPdf({ fileName: spec.name, pageSize: spec.o && spec.o.size === "A3" ? "A3" : "A4", landscape: !!(spec.o && spec.o.orient === "landscape"), ...opts });
+      } finally { clear(); }
+    };
+    if (kind === "download") {
+      const b = document.getElementById("pdfDownloadBtn"); if (b) b.disabled = true;
+      try { const r = await make({ ask: true }); if (r && r.ok) showToast("PDF kaydedildi."); else if (!(r && r.canceled)) showToast("PDF kaydedilemedi: " + ((r && r.error) || "")); }
+      finally { if (b) b.disabled = false; }
+      return;
+    }
+    return v93DesktopShare((reveal) => make({ ask: false, reveal }), spec.name, spec.contact || spec.customer);
+  }
+  if (kind === "download") { showToast('Açılan pencerede hedef olarak "PDF olarak kaydet"i seçin.'); return v94Output("print", spec); }
+  const b = document.getElementById("pdfShareBtn"); if (b) b.disabled = true;
+  try {
+    const blob = await spec.blob();
+    if (d && d.saveFile) return v93DesktopShare(blob, spec.name, spec.contact || spec.customer);
+    const file = new File([blob], spec.name, { type: "application/pdf" });
+    if (navigator.share && (!navigator.canShare || navigator.canShare({ files: [file] }))) await navigator.share({ title: spec.title || spec.name, files: [file] });
+    else { v90DownloadBlob(blob, spec.name); showToast("Bu cihazda doğrudan paylaşım desteklenmiyor; PDF indirildi."); }
+  } catch (e) { if (!e || e.name !== "AbortError") showToast((e && e.message) || "PDF paylaşılamadı."); }
+  finally { if (b) b.disabled = false; }
+}
+function v94Spec(state) { return { el: state.el, o: state.o, name: state.filename, customer: state.customer, title: state.title, blob: () => v91BuildElementPdfBlob(state.el, state.o) }; }
 </script>
 </body>
 </html>
