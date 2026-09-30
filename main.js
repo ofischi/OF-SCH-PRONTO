@@ -9,6 +9,8 @@ const { autoUpdater } = require('electron-updater');
 const APP_URL = (!app.isPackaged && process.env.PRONTO_URL) || 'https://ofischi.github.io/OF-SCH-PRONTO/';
 const NO_CACHE = { extraHeaders: 'pragma: no-cache\ncache-control: no-cache\n' };
 if (!app.requestSingleInstanceLock()) app.quit();
+// Sadece PRONTO'nun kendi adresi (aynı köken + yol öneki) güvenilir sayılır
+const sameApp = (u) => { try { const a = new URL(u), b = new URL(APP_URL); return a.origin === b.origin && a.pathname.startsWith(b.pathname); } catch { return false; } };
 
 let mainWindow;
 
@@ -16,15 +18,17 @@ function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1440, height: 900, minWidth: 1100, minHeight: 700, show: false,
     backgroundColor: '#f6f7fb', autoHideMenuBar: true,
-    webPreferences: { preload: path.join(__dirname, 'preload.js'), contextIsolation: true, nodeIntegration: false, sandbox: true }
+    webPreferences: { preload: path.join(__dirname, 'preload.js'), contextIsolation: true, nodeIntegration: false, sandbox: true, devTools: !app.isPackaged, webviewTag: false }
   });
 
   mainWindow.once('ready-to-show', () => mainWindow.show());
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
-    if (/^(https?:|mailto:|whatsapp:)/i.test(url)) shell.openExternal(url);
+    if (/^(https:|mailto:|whatsapp:)/i.test(url)) shell.openExternal(url);
     return { action: 'deny' };
   });
-  mainWindow.webContents.on('will-navigate', (e, url) => { if (!url.startsWith(APP_URL)) e.preventDefault(); });
+  mainWindow.webContents.on('will-navigate', (e, url) => { if (!sameApp(url)) e.preventDefault(); });
+  mainWindow.webContents.on('will-redirect', (e, url) => { if (!sameApp(url)) e.preventDefault(); });
+  mainWindow.webContents.on('will-attach-webview', (e) => e.preventDefault());
 
   // İnternet yoksa boş ekran yerine açıklama
   mainWindow.webContents.on('did-fail-load', (_e, code, _d, url) => {
@@ -155,6 +159,10 @@ function setupAutoUpdate() {
 
 if (process.platform === 'win32') app.setAppUserModelId('com.ofischi.pronto');
 app.whenReady().then(() => {
+  const { session } = require('electron');
+  const IZIN = new Set(['clipboard-sanitized-write', 'fullscreen']);
+  session.defaultSession.setPermissionRequestHandler((wc, perm, cb) => cb(IZIN.has(perm) && sameApp(wc.getURL())));
+  session.defaultSession.setPermissionCheckHandler((wc, perm) => IZIN.has(perm));
   Menu.setApplicationMenu(null);
   createWindow();
   setupAutoUpdate();
