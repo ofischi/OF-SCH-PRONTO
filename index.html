@@ -5840,7 +5840,7 @@ function openEntityHistory(type, id) {
     const movementsHtml = movements.length ? movements.map((m) => `
       <div class="history-item">
         <div class="history-item-left">
-          <span>${movementTypeLabel(m.type)} ${m.supplier ? "· " + escapeHtml(m.supplier) : ""}${m.note ? " · " + escapeHtml(m.note) : ""}</span>
+          <span>${escapeHtml(movementTypeLabel(m.type))} ${m.supplier ? "· " + escapeHtml(m.supplier) : ""}${m.note ? " · " + escapeHtml(m.note) : ""}</span>
           <span>${formatDate(m.date)} · Sonuç: ${m.resultingStock ?? "-"}</span>
         </div>
         <span class="status-badge ${m.delta >= 0 ? "status-teslim" : "status-gecikti"}">${m.delta >= 0 ? "+" : ""}${m.delta}</span>
