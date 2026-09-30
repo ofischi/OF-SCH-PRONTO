@@ -154,6 +154,8 @@ input, select, textarea { font-family: inherit; }
   width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center;
 }
 .icon-btn:hover { background: var(--color-bg); color: var(--color-text); }
+.v100-cop { position: relative; padding-left: 0; padding-right: 0; width: 44px; justify-content: center; }
+.v100-nokta { position: absolute; top: 7px; right: 8px; width: 8px; height: 8px; border-radius: 50%; background: #D93025; box-shadow: 0 0 0 2px var(--color-surface-solid, #fff); }
 
 /* ===================== LOCK SCREEN ===================== */
 .lock-screen {
@@ -1837,7 +1839,7 @@ table.v98-t{width:100%;border-collapse:collapse;font-size:13px}
             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
             Excel'e Aktar
           </button>
-          <button id="orderTrashBtn" class="btn btn-ghost hidden" type="button">🗑 Çöp Kutusu</button>
+          <button id="orderTrashBtn" class="btn btn-ghost v100-cop" type="button" title="Çöp Kutusu" aria-label="Çöp Kutusu"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg><i class="v100-nokta hidden" id="orderTrashDot"></i></button>
           <button id="newOrderBtn" class="btn btn-primary">+ Yeni Sipariş</button>
         </div>
       </div>
@@ -3280,7 +3282,7 @@ function orderNo(order) {
 // Ürün çöp kutusu mevcut Supabase şemasını değiştirmeden çalışır.
 // Silinen ürünün açıklamasına gizli bir zaman damgası eklenir.
 // Böylece 10 kullanıcılı ortak sistemde ürün yine Supabase üzerinde kalır;
-// sipariş geçmişleri bozulmaz ve 24 saat içinde geri alınabilir.
+// sipariş geçmişleri bozulmaz; ürünler 24 saat, siparişler 30 gün içinde geri alınabilir.
 const PRODUCT_TRASH_MARKER_RE = /\[\[COPKUTUSU:(\d+)\]\]/i;
 const ORDER_TRASH_MARKER_RE = /\[\[SIPARISCOP:(\d+)\]\]/i;
 function productTrashTimestamp(product) {
@@ -5367,8 +5369,14 @@ async function moveOrderToTrash(id) {
   await dbPut("orders", order);
 }
 
+const ORDER_TRASH_MS = 30 * 24 * 60 * 60 * 1000;   /* silinen sipariş 30 gün çöp kutusunda kalır */
+function formatOrderTrashRemaining(ts) {
+  const kalan = Math.max(0, ORDER_TRASH_MS - (Date.now() - ts));
+  const gun = Math.floor(kalan / 86400000), saat = Math.floor((kalan % 86400000) / 3600000);
+  return gun ? `${gun} gün ${saat} saat kaldı` : `${saat} saat ${Math.floor((kalan % 3600000) / 60000)} dk kaldı`;
+}
 async function cleanupExpiredDeletedOrders() {
-  const cutoff = Date.now() - 24 * 60 * 60 * 1000;
+  const cutoff = Date.now() - ORDER_TRASH_MS;
   const expired = deletedOrdersList().filter((o) => orderTrashTimestamp(o) > 0 && orderTrashTimestamp(o) <= cutoff);
   if (!expired.length) return;
   for (const order of expired) {
@@ -5382,7 +5390,10 @@ async function cleanupExpiredDeletedOrders() {
 function renderOrderTrashButton() {
   const btn = document.getElementById("orderTrashBtn");
   if (!btn) return;
-  btn.classList.toggle("hidden", deletedOrdersList().length === 0);
+  const n = deletedOrdersList().length;
+  btn.classList.remove("hidden");
+  btn.title = n ? `Çöp Kutusu (${n})` : "Çöp Kutusu (boş)";
+  document.getElementById("orderTrashDot")?.classList.toggle("hidden", n === 0);
 }
 
 function renderOrderTrash() {
@@ -5399,7 +5410,7 @@ function renderOrderTrash() {
     return `<div class="trash-item" data-id="${o.id}">
       <div class="trash-item-main">
         <div class="trash-item-name">${escapeHtml(orderNo(o))} · ${escapeHtml(o.customer || "Müşteri yok")}</div>
-        <div class="trash-item-meta">${escapeHtml(o.product || "Ürün yok")} · ${formatTrashRemaining(ts)}</div>
+        <div class="trash-item-meta">${escapeHtml(o.product || "Ürün yok")} · ${formatOrderTrashRemaining(ts)}</div>
       </div>
       <div class="trash-item-actions">
         <button type="button" class="btn btn-ghost order-trash-restore" data-id="${o.id}">Geri Yükle</button>
@@ -5445,7 +5456,7 @@ function openOrderTrash() {
 function confirmDeleteOrder(id) {
   const order = allOrders.find((o) => o.id === id);
   if (!order || isDeletedOrder(order)) return;
-  showConfirm(`“${orderNo(order)}” siparişi çöp kutusuna taşınsın mı? 24 saat içinde geri yükleyebilirsin.`, async () => {
+  showConfirm(`“${orderNo(order)}” siparişi çöp kutusuna taşınsın mı? 30 gün içinde geri yükleyebilirsin.`, async () => {
     await moveOrderToTrash(id);
     await reloadAll();
     closeAllModals();
@@ -5649,16 +5660,19 @@ function bindOrderEvents() {
   });
   document.getElementById("bulkDeleteBtn").addEventListener("click", () => {
     const ids = Array.from(selectedOrderIds);
-    showConfirm(`${ids.length} sipariş kalıcı olarak silinsin mi? Bu işlem geri alınamaz.`, async () => {
-      if (!ids.length) return;
+    if (!ids.length) return showToast("Önce sipariş seçin.");
+    showConfirm(`${ids.length} sipariş çöp kutusuna taşınsın mı? 30 gün içinde geri yükleyebilirsin.`, async () => {
+      let tasinan = 0;
       try {
-        await dbDeleteMany("orders", ids);
-        selectedOrderIds.clear();
-        renderOrdersView();
-        showToast(`${ids.length} sipariş hızlıca silindi.`);
-      } catch (e) {
-        showToast("Toplu silme başarısız.");
-      }
+        for (let i = 0; i < ids.length; i += 20) {
+          const parca = ids.slice(i, i + 20);
+          await Promise.all(parca.map((id) => moveOrderToTrash(id).then(() => { tasinan++; })));
+        }
+      } catch (e) { console.warn("Toplu çöp kutusuna taşıma:", e); }
+      selectedOrderIds.clear();
+      await reloadAll();
+      renderOrdersView();
+      showToast(tasinan === ids.length ? `${tasinan} sipariş çöp kutusuna taşındı.` : `${tasinan}/${ids.length} sipariş çöp kutusuna taşındı; kalanlar için tekrar deneyin.`);
     });
   });
 
