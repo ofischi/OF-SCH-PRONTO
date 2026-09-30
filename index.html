@@ -7734,18 +7734,34 @@ function v98ListeAc() {
   const m = v98Ov(`<div class="modal-head"><h2>Gelen Siparişler</h2><button class="icon-btn" data-x aria-label="Kapat">✕</button></div><div class="modal-body" id="v98Liste">${v98ListeHtml()}</div><div class="modal-foot"><button class="btn btn-ghost" data-x>Kapat</button></div>`);
   m.ov.addEventListener("click", (e) => { const b = e.target.closest("[data-ac]"); if (b) { m.close(); v98Onay(Number(b.dataset.ac)); } });
 }
+/* v100: aynı anda gelen birden fazla sipariş tek bildirimde, gönderim sırasıyla toplanır
+   (hiçbiri kaybolmaz; Windows bildirimi de birbirini ezmez) */
+let v98Yeniler = [], v98YeniT = null;
+function v98Duyur(g) {
+  v98Yeniler.push(g);
+  if (v98YeniT) return;
+  v98YeniT = setTimeout(() => {
+    const l = v98Yeniler.sort((a, b) => Number(a.id) - Number(b.id)); v98Yeniler = []; v98YeniT = null;
+    if (!l.length) return;
+    const tek = (x) => `${v98TurTxt(x.tur)}: Teklif ${x.teklif_no} · ${x.musteri}`;
+    if (l.length === 1) {
+      showToast("📥 " + tek(l[0]));
+      try { window.prontoDesktop?.notify?.({ title: "PRONTO — Onay bekleyen sipariş", body: tek(l[0]) }); } catch (_) {}
+      return;
+    }
+    showToast(`📥 ${l.length} sipariş onay bekliyor: ` + l.map((x) => "Teklif " + x.teklif_no).join(", "));
+    const body = l.slice(0, 4).map((x) => `${x.teklif_no} · ${x.musteri}`).join("\n") + (l.length > 4 ? `\n+${l.length - 4} sipariş daha` : "");
+    try { window.prontoDesktop?.notify?.({ title: `PRONTO — ${l.length} sipariş onay bekliyor`, body }); } catch (_) {}
+  }, 2100);
+}
 function v98Canli(p) {
   if (!p || p.id == null) return;
   const i = v98Gelen.findIndex((g) => g.id === p.id);
   if (p.durum === "bekliyor") {
     const yeni = i < 0;
     const g = { id: p.id, teklif_no: p.teklif_no, tur: p.tur, durum: p.durum, musteri: p.musteri || "", kalem: p.kalem || 0, created_at: i >= 0 ? v98Gelen[i].created_at : new Date().toISOString() };
-    if (i >= 0) v98Gelen[i] = g; else v98Gelen.push(g);
-    if (yeni) {
-      const msg = `${v98TurTxt(g.tur)}: Teklif ${g.teklif_no} · ${g.musteri}`;
-      showToast("📥 " + msg);
-      try { window.prontoDesktop?.notify?.({ title: "PRONTO — Onay bekleyen sipariş", body: msg }); } catch (_) {}
-    }
+    if (i >= 0) v98Gelen[i] = g; else { v98Gelen.push(g); v98Gelen.sort((a, b) => Number(a.id) - Number(b.id)); }
+    if (yeni) v98Duyur(g);
   } else {
     if (i >= 0) v98Gelen.splice(i, 1);
     const acik = document.querySelector(`.v98-ov[data-gelen="${p.id}"]`);
