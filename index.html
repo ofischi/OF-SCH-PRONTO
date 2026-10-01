@@ -1736,6 +1736,50 @@ table.v98-t{width:100%;border-collapse:collapse;font-size:13px}
 .v98-sup.v98-err{border-color:#D93025;box-shadow:0 0 0 3px rgba(217,48,37,.15)}
 .v98-warn{margin:0 0 12px;padding:10px 12px;border-radius:10px;background:rgba(217,48,37,.08);border:1px solid rgba(217,48,37,.35);font-size:13px}
 .v98-red{color:#C0392B !important}
+.v101-tabs{display:flex;gap:6px;margin:0 0 14px;border-bottom:1px solid var(--color-border)}
+.v101-tab{appearance:none;border:0;background:none;padding:10px 14px;font:inherit;font-weight:700;font-size:14px;color:var(--color-text-muted);cursor:pointer;border-bottom:2.5px solid transparent;margin-bottom:-1px}
+.v101-tab.active{color:var(--color-text);border-bottom-color:var(--color-accent)}
+.v101-tab .v101-n{font-weight:600;color:var(--color-text-muted);margin-left:4px}
+#view-suppliers.v101-esl-on .v101-l{display:none !important}
+#view-suppliers:not(.v101-esl-on) #v101EslPanel{display:none}
+.v101-bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+.v101-bar .search-box{flex:1;min-width:220px}
+.v101-info{font-size:12.5px;color:var(--color-text-muted);margin:0 0 12px;line-height:1.45}
+.v101-kat{border:1px solid var(--color-border);border-radius:14px;background:var(--color-surface-solid);margin-bottom:12px;overflow:hidden}
+.v101-kat-h{display:flex;align-items:center;gap:8px;padding:10px 14px;background:var(--color-row-alt);font-weight:800;font-size:14px}
+.v101-kat-h span{font-weight:600;color:var(--color-text-muted);font-size:12.5px}
+.v101-kat-h button{margin-left:auto}
+.v101-row{display:grid;grid-template-columns:minmax(150px,1.2fr) minmax(150px,1fr) minmax(120px,1.4fr) auto;gap:10px;align-items:center;padding:10px 14px;border-top:1px solid var(--color-border);font-size:13.5px}
+.v101-row .v101-m i{color:var(--color-text-muted)}
+.v101-row .v101-d b{font-weight:800}
+.v101-row .v101-y{font-size:12.5px;color:var(--color-text-muted)}
+.v101-row .v101-a{display:flex;gap:6px;justify-content:flex-end}
+.v101-sm{height:32px !important;padding:0 10px !important;font-size:12.5px !important}
+.v101-lbl{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--color-text-muted);display:block}
+.v101-k{display:inline-block;font-size:11px;font-weight:700;padding:2px 7px;border-radius:999px;margin-top:4px;white-space:nowrap}
+.v101-k-model{background:var(--status-teslim-bg);color:var(--status-teslim-text)}
+.v101-k-kat{background:var(--status-hazir-bg);color:var(--status-hazir-text)}
+.v101-k-haf,.v101-k-sip{background:var(--status-beklemede-bg);color:var(--status-beklemede-text)}
+.v101-k-gec{background:rgba(120,70,170,.13);color:#6A3FA0}
+.v101-k-yok{background:rgba(230,178,42,.28);color:#6B4A00}
+.v98-sup.v101-bos{border-color:#E6B22A;background:rgba(230,178,42,.12)}
+.v101-yed{margin-top:5px;display:flex;flex-wrap:wrap;gap:4px;align-items:center;font-size:11.5px;color:var(--color-text-muted)}
+.v101-chip{appearance:none;border:1px solid var(--color-border);background:var(--color-surface-solid);color:var(--color-text);border-radius:999px;padding:2px 8px;font:inherit;font-size:11.5px;cursor:pointer}
+.v101-chip:hover{border-color:var(--color-accent)}
+.v101-vk{display:flex;align-items:center;gap:6px;margin-top:6px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap}
+.v101-vk[hidden]{display:none}
+.v101-form{display:grid;grid-template-columns:1fr 1fr;gap:10px 12px}
+.v101-form .v101-full{grid-column:1/-1}
+.v101-ot{max-height:52vh;overflow:auto;border:1px solid var(--color-border);border-radius:12px}
+.v101-ot .v98-sup{min-width:150px;width:100%}
+.v101-karisik{color:#A93226;font-weight:700}
+.v101-tk-l .history-item{cursor:pointer}
+@media screen and (max-width:760px){
+ .v101-row{grid-template-columns:1fr 1fr}
+ .v101-row .v101-y{grid-column:1/-1}
+ .v101-row .v101-a{grid-column:1/-1;justify-content:flex-start}
+ .v101-form{grid-template-columns:1fr}
+}
 @media screen and (max-width:1024px){
  .v98-grid{grid-template-columns:1fr}
  table.v98-t thead{display:none}
@@ -2040,9 +2084,26 @@ table.v98-t{width:100%;border-collapse:collapse;font-size:13px}
     <section class="view hidden" id="view-suppliers">
       <div class="page-header">
         <div><h1>Tedarikçiler</h1><p class="subtitle">Sipariş formlarında seçilebilecek tedarikçi listesi.</p></div>
-        <div class="header-actions"><button class="btn btn-primary" id="newSupplierBtn">+ Yeni Tedarikçi</button></div>
+        <div class="header-actions"><button class="btn btn-primary v101-l" id="newSupplierBtn">+ Yeni Tedarikçi</button></div>
       </div>
-      <div class="toolbar">
+      <div class="v101-tabs" role="tablist">
+        <button type="button" class="v101-tab active" role="tab" data-sup-tab="list">Tedarikçiler</button>
+        <button type="button" class="v101-tab" role="tab" data-sup-tab="esl">Ürün Eşleştirmeleri<span class="v101-n" id="v101EslSay"></span></button>
+      </div>
+      <div id="v101EslPanel">
+        <div class="v101-bar">
+          <div class="search-box">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+            <input type="text" id="v101EslAra" maxlength="100" placeholder="Kategori, model veya tedarikçi ara…">
+          </div>
+          <button type="button" class="btn btn-secondary" id="v101EslOner">Geçmişten öner</button>
+          <button type="button" class="btn btn-ghost" id="v101EslExcel">Excel</button>
+          <button type="button" class="btn btn-primary" id="v101EslYeni">+ Yeni Eşleştirme</button>
+        </div>
+        <p class="v101-info">Teklif'ten sipariş gelince tedarikçi buradan önerilir: önce <b>modelin</b> eşleştirmesine, yoksa <b>kategorinin varsayılanına</b> bakılır. Varsayılan tedarikçi çalışmazsa yedekler onay ekranında tek tıkla seçilir.</p>
+        <div id="v101EslListe"></div>
+      </div>
+      <div class="toolbar v101-l">
         <div class="search-box">
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
           <input type="text" id="supplierSearchInput" placeholder="Tedarikçi adı, telefon veya e-posta ara…">
@@ -2054,15 +2115,15 @@ table.v98-t{width:100%;border-collapse:collapse;font-size:13px}
           <button type="button" class="pill" data-supplier-sort="za">Z-A</button>
         </div>
       </div>
-      <div class="table-wrap" id="suppliersTableWrap">
+      <div class="table-wrap v101-l" id="suppliersTableWrap">
         <table class="orders-table">
           <thead><tr><th>Tedarikçi Adı</th><th>Telefon</th><th>E-posta</th><th>Adres</th><th></th></tr></thead>
           <tbody id="suppliersTableBody"></tbody>
         </table>
       </div>
-      <div class="cards-wrap" id="suppliersCardsWrap"></div>
-      <div class="pagination hidden" id="suppliersPagination"></div>
-      <div class="empty-state hidden" id="suppliersEmptyState">
+      <div class="cards-wrap v101-l" id="suppliersCardsWrap"></div>
+      <div class="pagination hidden v101-l" id="suppliersPagination"></div>
+      <div class="empty-state hidden v101-l" id="suppliersEmptyState">
         <p>Henüz tedarikçi eklenmedi.</p>
         <button class="btn btn-primary" id="suppliersEmptyBtn">+ İlk Tedarikçiyi Ekle</button>
       </div>
@@ -3130,6 +3191,7 @@ function subscribeToChanges() {
     })
     .on("broadcast", { event: "gelen" }, ({ payload }) => { try { v98Canli(payload); } catch (_) {} })
     .on("broadcast", { event: "foto" }, ({ payload }) => { try { v99FotoGeldi(payload); } catch (_) {} })
+    .on("broadcast", { event: "esl" }, () => { try { v101Geldi(); } catch (_) {} })
     .on("broadcast", { event: "reload" }, ({ payload }) => {
       const store = payload && payload.store;
       if (!TABLES[store] || (store === "stockMovements" && !stockLoaded)) return;
@@ -5894,6 +5956,7 @@ function openEntityHistory(type, id) {
 
   closeAllModals();
   document.getElementById("entityHistoryModal").classList.remove("hidden");
+  if (type === "supplier") v101TedKart(entity);
 }
 
 async function saveEntityFromForm() {
@@ -7790,12 +7853,20 @@ async function v98Onay(id) {
     if (data.durum !== "bekliyor") { v98Canli({ id, durum: data.durum, teklif_no: data.teklif_no }); return showToast("Bu kayıt artık onay beklemiyor."); }
     row = data; }
   const v = row.veri || {}, c = v.cari || {}, kal = Array.isArray(v.kalemler) ? v.kalemler : [];
-  const anah = []; kal.forEach((k) => { anah.push("urun:" + v98TrAlt(k.urun), "kat:" + v98TrAlt(k.kategori)); });
-  const [haf, esk] = await Promise.all([
-    supa.from("pronto_tedarikci_hafiza").select("anahtar,tedarikci").in("anahtar", Array.from(new Set(anah)).slice(0, 400)),
+  // v101: öneri tek istekle (model → kategori varsayılanı → son seçilen → geçmiş siparişler)
+  const p_kalemler = kal.slice(0, 300).map((k) => ({ uid: String(k.uid || "").slice(0, 60), kategori: String(k.kategori || "").slice(0, 200), model: String(k.model || "").slice(0, 200), urun: String(k.urun || "").slice(0, 200) }));
+  const [eslR, esk] = await Promise.all([
+    supa.rpc("pronto_eslesme_getir", { p_kalemler }).then((r) => r, (e) => ({ error: e })),
     row.tur === "guncelleme" ? supa.from("orders").select("id,teklif_kalem,status,product,quantity,color_code,supplier,description").eq("teklif_id", row.teklif_id) : Promise.resolve({ data: [] })
   ]);
-  const hm = new Map((haf.data || []).map((h) => [h.anahtar, h.tedarikci]));
+  const eslVar = !eslR.error && !!eslR.data && typeof eslR.data === "object" && !Array.isArray(eslR.data);
+  const esl = eslVar ? eslR.data : {};
+  if (!eslVar) { // eşleştirme SQL'i henüz kurulmadıysa eski hafıza
+    const anah = []; kal.forEach((k) => { anah.push("urun:" + v98TrAlt(k.urun), "kat:" + v98TrAlt(k.kategori)); });
+    const haf = await supa.from("pronto_tedarikci_hafiza").select("anahtar,tedarikci").in("anahtar", Array.from(new Set(anah)).slice(0, 400));
+    const hm = new Map((haf.data || []).map((h) => [h.anahtar, h.tedarikci]));
+    kal.forEach((k) => { const t = hm.get("urun:" + v98TrAlt(k.urun)) || hm.get("kat:" + v98TrAlt(k.kategori)) || ""; esl[k.uid] = { tedarikci: t, kaynak: t ? "hafiza" : "", yedekler: [] }; });
+  }
   const eski = new Map(); (esk.data || []).forEach((o) => { if (o.teklif_kalem && (!eski.has(o.teklif_kalem) || o.id > eski.get(o.teklif_kalem).id)) eski.set(o.teklif_kalem, o); });
   const uidSet = new Set(kal.map((k) => k.uid));
   const cikan = Array.from(eski.values()).filter((o) => !uidSet.has(o.teklif_kalem) && o.status !== "Teslim Edildi" && o.status !== "İptal");
@@ -7805,8 +7876,8 @@ async function v98Onay(id) {
   const adres = [c.adres, c.ilce, c.sehir].filter(Boolean).join(", ");
   const supList = `<datalist id="v98Sup">${allSuppliers.map((s) => `<option value="${escapeHtml(s.name)}">`).join("")}</datalist>`;
   const durumOf = (k) => { const o = eski.get(k.uid); if (!o) return row.tur === "guncelleme" ? ["Yeni", "status-teslim"] : ["", ""]; const ch = o.product !== k.urun || Number(o.quantity) !== Number(k.adet) || (o.color_code || "") !== (k.renk || ""); return ch ? ["Değişti", "status-uretimde"] : ["Aynı", "status-beklemede"]; };
-  const rows = kal.map((k) => { const [dt, dc] = durumOf(k); const o = eski.get(k.uid); const sup = o ? o.supplier : (hm.get("urun:" + v98TrAlt(k.urun)) || hm.get("kat:" + v98TrAlt(k.kategori)) || "");
-    return `<tr data-uid="${escapeHtml(k.uid)}"><td class="v98-ph" data-foto="${escapeHtml(k.foto || "")}">${k.foto ? "…" : "—"}</td><td><b>${escapeHtml(k.urun)}</b>${dt ? ` <span class="status-badge ${dc}">${dt}</span>` : ""}${o ? `<div class="v98-s">${escapeHtml(orderNo(o))} · ${escapeHtml(o.status || "")}${dt === "Değişti" ? ` · şu an: ${escapeHtml(o.product)} × ${escapeHtml(o.quantity)}${o.color_code ? " · " + escapeHtml(o.color_code) : ""}` : ""}</div>` : ""}</td><td data-l="Ölçü">${escapeHtml(k.olcu || "—")}</td><td data-l="Renk">${escapeHtml(k.renk || "—")}</td><td data-l="Yön">${escapeHtml(k.yon || "—")}</td><td class="num" data-l="Adet"><b>${escapeHtml(k.adet)}</b></td><td class="v98-ac" data-l="Açıklama">${escapeHtml(k.aciklama || "—")}</td><td data-l="Tedarikçi *"><input class="v98-sup" list="v98Sup" value="${escapeHtml(sup)}" placeholder="Tedarikçi seçin" maxlength="200" aria-label="Tedarikçi"></td></tr>`; }).join("");
+  const rows = kal.map((k) => { const [dt, dc] = durumOf(k); const o = eski.get(k.uid); const e1 = esl[k.uid] || {}; const sup = o ? o.supplier : String(e1.tedarikci || ""); const kay = o ? "sip" : String(e1.kaynak || "");
+    return `<tr data-uid="${escapeHtml(k.uid)}"><td class="v98-ph" data-foto="${escapeHtml(k.foto || "")}">${k.foto ? "…" : "—"}</td><td><b>${escapeHtml(k.urun)}</b>${dt ? ` <span class="status-badge ${dc}">${dt}</span>` : ""}${o ? `<div class="v98-s">${escapeHtml(orderNo(o))} · ${escapeHtml(o.status || "")}${dt === "Değişti" ? ` · şu an: ${escapeHtml(o.product)} × ${escapeHtml(o.quantity)}${o.color_code ? " · " + escapeHtml(o.color_code) : ""}` : ""}</div>` : ""}</td><td data-l="Ölçü">${escapeHtml(k.olcu || "—")}</td><td data-l="Renk">${escapeHtml(k.renk || "—")}</td><td data-l="Yön">${escapeHtml(k.yon || "—")}</td><td class="num" data-l="Adet"><b>${escapeHtml(k.adet)}</b></td><td class="v98-ac" data-l="Açıklama">${escapeHtml(k.aciklama || "—")}</td><td data-l="Tedarikçi *" data-sug="${escapeHtml(sup)}" data-kay="${escapeHtml(kay)}" data-kat="${escapeHtml(k.kategori || "")}">${v101OnayHucre(sup, kay, e1.yedekler, eslVar)}</td></tr>`; }).join("");
   const cikanHtml = cikan.length ? `<div class="v98-warn"><b>Tekliften çıkarılan ${cikan.length} kalem</b> onaylanınca <b>İptal</b> yapılacak (silinmez): ${cikan.map((o) => escapeHtml(orderNo(o) + " " + o.product)).join(", ")}</div>` : "";
   const m = v98Ov(`<div class="modal-head"><h2>Teklif ${escapeHtml(row.teklif_no)} — ${v98TurTxt(row.tur)}</h2><button class="icon-btn" data-x aria-label="Kapat">✕</button></div>
     <div class="modal-body">
@@ -7818,10 +7889,11 @@ async function v98Onay(id) {
       </div>
       ${cikanHtml}
       <div class="v98-tw"><table class="v98-t"><thead><tr><th>Foto</th><th>Ürün</th><th>Ölçü</th><th>Renk</th><th>Yön</th><th class="num">Adet</th><th>Açıklama</th><th>Tedarikçi *</th></tr></thead><tbody>${rows}</tbody></table></div>${supList}
-      <div class="v98-s" style="margin-top:8px">Tedarikçi, ürün ve kategori için en son seçileni hatırlar. Listede olmayan bir ad yazarsanız tedarikçi listesine eklenir.</div>
+      <div class="v98-s" style="margin-top:8px">${eslVar ? "Öneriler <b>Tedarikçiler → Ürün Eşleştirmeleri</b> listesinden gelir. Farklı bir tedarikçi seçerseniz “Bundan sonra varsayılan olsun” ile listeye kaydedebilirsiniz." : "Tedarikçi, ürün ve kategori için en son seçileni hatırlar."} Listede olmayan bir ad yazarsanız tedarikçi listesine eklenir.</div>
     </div>
     <div class="modal-foot"><button class="btn btn-ghost v98-red" data-red>Reddet</button><span style="flex:1"></span><button class="btn btn-ghost" data-x>Sonra</button><button class="btn btn-primary" data-ok>Onayla</button></div>`, true);
   m.ov.dataset.gelen = String(id);
+  v101OnayBagla(m.ov);
   // fotoğraflar (sadece bu ekranda, tek istek)
   if (kal.some((k) => k.foto)) {
     supa.rpc("pronto_gelen_foto", { p_id: id }).then(({ data }) => {
@@ -7837,10 +7909,14 @@ async function v98Onay(id) {
     if (eksik) { eksik.querySelector(".v98-sup").focus(); return showToast("Her ürün için tedarikçi seçin."); }
     const teslim = m.$("#v98Teslim").value; if (!teslim) return showToast("Teslim tarihi seçin.");
     const custId = m.$("#v98Cust").value ? Number(m.$("#v98Cust").value) : null;
+    const vars = {}; m.ov.querySelectorAll("tbody tr[data-uid]").forEach((tr) => { const cb = tr.querySelector(".v101-vk:not([hidden]) input"); if (cb && cb.checked && ted[tr.dataset.uid]) vars[tr.dataset.uid] = true; });
     const btn = m.$("[data-ok]"); btn.disabled = true; btn.textContent = "Onaylanıyor…";
     try {
-      const { data, error } = await supa.rpc("pronto_gelen_onayla", { p_id: id, p_tedarikci: ted, p_musteri_id: custId, p_teslim: teslim });
+      const args = { p_id: id, p_tedarikci: ted, p_musteri_id: custId, p_teslim: teslim };
+      if (eslVar) args.p_varsayilan = vars;
+      const { data, error } = await supa.rpc("pronto_gelen_onayla", args);
       if (error) throw error;
+      if (Object.keys(vars).length) { v101Esl = null; v101Sinyal(); }
       const ords = (data && data.orders) || [];
       if (data && data.customer) { const cu = fromRow("customers", data.customer); upsertLocalStore("customers", cu); liveSend("customers", "INSERT", [data.customer]); }
       if (data && data.suppliers && data.suppliers.length) { upsertLocalStore("suppliers", data.suppliers.map((s) => fromRow("suppliers", s))); liveSend("suppliers", "INSERT", data.suppliers); }
@@ -7888,6 +7964,242 @@ function v98Reddet(row, parent) {
     showToast(`Teklif ${row.teklif_no} reddedildi.`);
   });
 }
+
+/* ===== v101: Ürün ↔ Tedarikçi eşleştirmeleri =====
+   Trafik: sekme (ya da tedarikçi kartı) ilk açıldığında 1 okuma, sonra bellekte kalır.
+   Değişiklik = 1 istek + canlı kanala küçük "esl" sinyali; diğer bilgisayarlar yalnızca
+   sekme açıksa bir kez yeniden okur, değilse sadece önbelleği unutur. */
+let v101Esl = null, v101EslP = null, v101Tab = "list", v101Ara = "", v101Yok = false, v101GeldiT = null;
+const V101_KAYNAK = { model: ["Model eşleştirmesi", "v101-k-model"], kategori: ["Kategori varsayılanı", "v101-k-kat"], hafiza: ["Son seçilen", "v101-k-haf"], gecmis: ["Geçmiş siparişlerden", "v101-k-gec"], sip: ["Mevcut sipariş", "v101-k-sip"], "": ["Eşleştirme yok — seçin", "v101-k-yok"] };
+const v101Temiz = (x, n) => String(x == null ? "" : x).replace(/[\u0000-\u001f\u007f<>]/g, " ").replace(/\s+/g, " ").trim().slice(0, n || 200);
+const v101Anahtar = (x) => v98TrAlt(x).replace(/\s+/g, " ");
+async function v101Yukle(force) {
+  if (v101Esl && !force) return v101Esl;
+  if (v101EslP) return v101EslP;
+  v101EslP = (async () => {
+    const { data, error } = await supa.from("pronto_urun_tedarikci").select("id,kategori,model,kat_anahtar,model_anahtar,tedarikci,sira").order("kat_anahtar").order("model_anahtar").order("sira").limit(5000);
+    if (error) {
+      if (/does not exist|schema cache|relation|permission|42P01|PGRST205/i.test((error.message || "") + " " + (error.code || ""))) { v101Yok = true; v101Esl = []; return v101Esl; }
+      throw new Error(error.message || "okunamadı");
+    }
+    v101Yok = false; v101Esl = Array.isArray(data) ? data : []; return v101Esl;
+  })().finally(() => { v101EslP = null; });
+  return v101EslP;
+}
+function v101Sinyal() { try { if (liveChannel) liveChannel.send({ type: "broadcast", event: "esl", payload: { t: Date.now() } }).catch(() => {}); } catch (_) {} }
+function v101Geldi() {
+  v101Esl = null;
+  clearTimeout(v101GeldiT);
+  v101GeldiT = setTimeout(() => { if (currentView === "suppliers" && v101Tab === "esl") v101Ciz(true); }, 1200);
+}
+function v101Gruplar() {
+  const m = new Map();
+  for (const r of v101Esl || []) {
+    const k = r.kat_anahtar + "|" + r.model_anahtar; let g = m.get(k);
+    if (!g) m.set(k, (g = { key: k, ka: r.kat_anahtar, ma: r.model_anahtar, kategori: r.kategori, model: r.model || "", list: [] }));
+    g.list.push(r);
+  }
+  const out = Array.from(m.values());
+  out.forEach((g) => g.list.sort((a, b) => a.sira - b.sira));
+  out.sort((a, b) => a.ka.localeCompare(b.ka, "tr") || (a.ma === "" ? -1 : b.ma === "" ? 1 : a.ma.localeCompare(b.ma, "tr")));
+  return out;
+}
+function v101SekmeAc(t) {
+  v101Tab = t === "esl" ? "esl" : "list";
+  const sec = document.getElementById("view-suppliers"); if (!sec) return;
+  sec.classList.toggle("v101-esl-on", v101Tab === "esl");
+  sec.querySelectorAll("[data-sup-tab]").forEach((b) => { const on = b.dataset.supTab === v101Tab; b.classList.toggle("active", on); b.setAttribute("aria-selected", on ? "true" : "false"); });
+  if (v101Tab === "esl") v101Ciz(false);
+}
+async function v101Ciz(force) {
+  const box = document.getElementById("v101EslListe"); if (!box) return;
+  if (!v101Esl || force) {
+    if (!v101Esl) box.innerHTML = `<div class="history-empty" style="padding:22px;text-align:center">Yükleniyor…</div>`;
+    try { await v101Yukle(force); } catch (e) { box.innerHTML = `<div class="history-empty" style="padding:22px">Eşleştirmeler okunamadı: ${escapeHtml(e.message || e)}</div>`; return; }
+  }
+  const say = document.getElementById("v101EslSay");
+  const gs = v101Gruplar();
+  if (say) say.textContent = v101Yok ? "" : `(${gs.length})`;
+  ["v101EslOner", "v101EslYeni", "v101EslExcel"].forEach((id) => { const b = document.getElementById(id); if (b) b.disabled = v101Yok; });
+  if (v101Yok) { box.innerHTML = `<div class="v98-warn">Eşleştirme tablosu henüz kurulmamış. Supabase'de <b>pronto-tedarikci-eslesme.sql</b> dosyasını bir kez çalıştırın.</div>`; return; }
+  const q = v101Anahtar(v101Ara);
+  const f = q ? gs.filter((g) => g.ka.includes(q) || g.ma.includes(q) || g.list.some((r) => v101Anahtar(r.tedarikci).includes(q))) : gs;
+  if (!gs.length) { box.innerHTML = `<div class="history-empty" style="padding:26px;text-align:center">Henüz eşleştirme yok.<br><b>Geçmişten öner</b> ile geçmiş siparişlere bakarak hızlıca doldurabilir ya da <b>+ Yeni Eşleştirme</b> ile tek tek ekleyebilirsiniz.</div>`; return; }
+  if (!f.length) { box.innerHTML = `<div class="history-empty" style="padding:26px;text-align:center">Aramanla eşleşen kayıt yok.</div>`; return; }
+  const LIM = 400, goster = f.slice(0, LIM), kats = [];
+  for (const g of goster) { const son = kats[kats.length - 1]; if (son && son.ka === g.ka) son.gs.push(g); else kats.push({ ka: g.ka, ad: g.kategori, gs: [g] }); }
+  box.innerHTML = kats.map((k) => `<div class="v101-kat"><div class="v101-kat-h">${escapeHtml(k.ad)} <span>${k.gs.length} kayıt</span><button type="button" class="btn btn-ghost v101-sm" data-yk="${escapeHtml(k.ad)}">+ Model ekle</button></div>` +
+    k.gs.map((g) => `<div class="v101-row" data-k="${escapeHtml(g.key)}"><div class="v101-m">${g.model ? `<b>${escapeHtml(g.model)}</b>` : `<i>Kategori varsayılanı</i><div class="v98-s">Modeli eşleştirilmemiş tüm ürünler</div>`}</div>` +
+      `<div class="v101-d"><span class="v101-lbl">Varsayılan</span><b>${escapeHtml(g.list[0] ? g.list[0].tedarikci : "-")}</b></div>` +
+      `<div class="v101-y"><span class="v101-lbl">Yedekler</span>${g.list.length > 1 ? g.list.slice(1).map((r) => escapeHtml(r.tedarikci)).join(", ") : "—"}</div>` +
+      `<div class="v101-a"><button type="button" class="btn btn-secondary v101-sm" data-ed>Düzenle</button><button type="button" class="btn btn-ghost v98-red v101-sm" data-rm>Kaldır</button></div></div>`).join("") + `</div>`).join("") +
+    (f.length > LIM ? `<div class="v98-s" style="text-align:center;padding:8px">${f.length - LIM} kayıt daha var — aramayı daraltın.</div>` : "");
+}
+function v101Kategoriler() {
+  const m = new Map();
+  (allProducts || []).forEach((p) => { const c = v101Temiz(p.category); if (c) m.set(v101Anahtar(c), c); });
+  (v101Esl || []).forEach((r) => m.set(r.kat_anahtar, r.kategori));
+  return Array.from(m.values()).sort((a, b) => a.localeCompare(b, "tr"));
+}
+function v101SupDl(id) { return `<datalist id="${id}">${allSuppliers.slice().sort((a, b) => String(a.name).localeCompare(String(b.name), "tr")).map((s) => `<option value="${escapeHtml(s.name)}">`).join("")}</datalist>`; }
+async function v101TedEksik(names) {
+  const eks = Array.from(new Set((names || []).map((x) => v101Temiz(x)).filter(Boolean))).filter((n) => !allSuppliers.some((s) => normName(s.name) === normName(n)));
+  if (!eks.length) return;
+  try {
+    const { data } = await supa.from("suppliers").select("*").in("name", eks.slice(0, 100));
+    if (data && data.length) { upsertLocalStore("suppliers", data.map((x) => fromRow("suppliers", x))); liveSend("suppliers", "INSERT", data); refreshDatalists(true); if (currentView === "suppliers") renderSuppliersView(); }
+  } catch (_) {}
+}
+function v101Yerel(ka, ma, yeni) {
+  v101Esl = (v101Esl || []).filter((r) => !(r.kat_anahtar === ka && r.model_anahtar === ma));
+  if (yeni && yeni.length) v101Esl = v101Esl.filter((r) => !(r.kat_anahtar === yeni[0].kat_anahtar && r.model_anahtar === yeni[0].model_anahtar)).concat(yeni);
+}
+function v101Duzenle(g, katOn) {
+  if (v101Yok) return;
+  const list = g ? g.list.map((r) => r.tedarikci) : [];
+  const yed = list.slice(1); while (yed.length < 5) yed.push("");
+  const katDl = `<datalist id="v101KatDl">${v101Kategoriler().map((c) => `<option value="${escapeHtml(c)}">`).join("")}</datalist>`;
+  const m = v98Ov(`<div class="modal-head"><h2>${g ? "Eşleştirmeyi düzenle" : "Yeni eşleştirme"}</h2><button class="icon-btn" data-x aria-label="Kapat">✕</button></div>
+    <div class="modal-body"><div class="v101-form">
+      <div><label class="v98-l">Kategori *</label><input class="v98-in" id="v101fKat" list="v101KatDl" maxlength="200" value="${escapeHtml(g ? g.kategori : (katOn || ""))}" placeholder="Örn. MASA TAKIMLARI"></div>
+      <div><label class="v98-l">Model</label><input class="v98-in" id="v101fModel" maxlength="200" value="${escapeHtml(g ? g.model : "")}" placeholder="Boş = kategorinin varsayılanı"></div>
+      <div class="v101-full"><label class="v98-l">Varsayılan tedarikçi *</label><input class="v98-in" id="v101fDef" list="v101SupDl" maxlength="200" value="${escapeHtml(list[0] || "")}" placeholder="Tedarikçi seçin"></div>
+      ${yed.map((y, i) => `<div><label class="v98-l">Yedek ${i + 1}</label><input class="v98-in v101-fy" list="v101SupDl" maxlength="200" value="${escapeHtml(y)}"></div>`).join("")}
+    </div>${katDl}${v101SupDl("v101SupDl")}
+    <div class="v98-s" style="margin-top:10px">Model boş bırakılırsa bu tedarikçi, kategorideki eşleştirmesi olmayan tüm ürünler için önerilir. Listede olmayan tedarikçi adı yazarsanız tedarikçi listesine eklenir.</div></div>
+    <div class="modal-foot"><button class="btn btn-ghost" data-x>Vazgeç</button><button class="btn btn-primary" data-kay>Kaydet</button></div>`);
+  m.ov.style.zIndex = "1200";
+  setTimeout(() => m.$(g ? "#v101fDef" : (katOn ? "#v101fModel" : "#v101fKat")).focus(), 30);
+  m.ov.addEventListener("click", async (e) => {
+    if (!e.target.closest("[data-kay]")) return;
+    const kat = v101Temiz(m.$("#v101fKat").value), model = v101Temiz(m.$("#v101fModel").value);
+    const adlar = [m.$("#v101fDef").value].concat(Array.from(m.ov.querySelectorAll(".v101-fy")).map((x) => x.value)).map((x) => v101Temiz(x));
+    if (!kat) { m.$("#v101fKat").focus(); return showToast("Kategori yazın."); }
+    if (!adlar[0]) { m.$("#v101fDef").focus(); return showToast("Varsayılan tedarikçiyi seçin."); }
+    const seen = new Set(), liste = []; adlar.forEach((a) => { if (a && !seen.has(normName(a))) { seen.add(normName(a)); liste.push(a); } });
+    const b = m.$("[data-kay]"); b.disabled = true; b.textContent = "Kaydediliyor…";
+    try {
+      const { data, error } = await supa.rpc("pronto_eslesme_kaydet", { p_kategori: kat, p_model: model, p_tedarikciler: liste.slice(0, 10) });
+      if (error) throw error;
+      const yeni = Array.isArray(data) ? data : [];
+      const yk = yeni[0] ? yeni[0].kat_anahtar + "|" + yeni[0].model_anahtar : "";
+      if (g && yk && yk !== g.key) { const r2 = await supa.rpc("pronto_eslesme_kaldir", { p_kategori: g.kategori, p_model: g.model }); if (r2.error) showToast("Eski kayıt kaldırılamadı: " + r2.error.message); }
+      if (g) v101Yerel(g.ka, g.ma, null);
+      if (yeni[0]) v101Yerel(yeni[0].kat_anahtar, yeni[0].model_anahtar, yeni);
+      m.close(); v101Sinyal(); v101Ciz(false); v101TedEksik(liste);
+      showToast(`Kaydedildi: ${kat}${model ? " — " + model : " (kategori varsayılanı)"} → ${liste[0]}`);
+    } catch (er) { b.disabled = false; b.textContent = "Kaydet"; showToast("Kaydedilemedi: " + ((er && er.message) || er)); }
+  });
+}
+function v101Kaldir(g) {
+  showConfirm(`"${g.kategori}${g.model ? " — " + g.model : " (kategori varsayılanı)"}" eşleştirmesi kaldırılsın mı? Siparişler etkilenmez.`, async () => {
+    const { error } = await supa.rpc("pronto_eslesme_kaldir", { p_kategori: g.kategori, p_model: g.model });
+    if (error) return showToast("Kaldırılamadı: " + error.message);
+    v101Yerel(g.ka, g.ma, null); v101Sinyal(); v101Ciz(false); showToast("Eşleştirme kaldırıldı.");
+  });
+}
+async function v101Oner(btn) {
+  if (btn) btn.disabled = true;
+  let list;
+  try { const { data, error } = await supa.rpc("pronto_eslesme_oneri"); if (error) throw error; list = Array.isArray(data) ? data : []; }
+  catch (er) { showToast("Öneriler alınamadı: " + ((er && er.message) || er)); return; }
+  finally { if (btn) btn.disabled = false; }
+  if (!list.length) return showToast("Önerilecek yeni eşleştirme yok — geçmişteki ürünlerin hepsi zaten eşleştirilmiş.");
+  const satir = (o, i) => { const oran = o.toplam ? o.adet / o.toplam : 1;
+    return `<tr data-i="${i}"><td><input type="checkbox" class="v101-oc" aria-label="Seç"></td><td><b>${escapeHtml(o.kategori)}</b></td><td>${o.model ? escapeHtml(o.model) : "<i>Kategori varsayılanı</i>"}</td><td><input class="v98-sup v101-ot-t" list="v101OnerDl" maxlength="200" value="${escapeHtml(o.tedarikci)}"></td><td class="num${oran < 0.6 ? " v101-karisik" : ""}" title="Bu tedarikçiye verilen / toplam sipariş">${escapeHtml(o.adet)} / ${escapeHtml(o.toplam)}</td></tr>`; };
+  const m = v98Ov(`<div class="modal-head"><h2>Geçmişten öneriler (${list.length})</h2><button class="icon-btn" data-x aria-label="Kapat">✕</button></div>
+    <div class="modal-body"><p class="v101-info" style="margin-top:0">Geçmiş siparişlerde her model ve kategori için <b>en çok kullanılan tedarikçi</b> önerilir. Doğru olanları işaretleyip kaydedin — <b>hiçbir şey kendiliğinden kaydedilmez</b>. Kırmızı oranlar, o üründe tedarikçilerin karışık olduğunu gösterir.</p>
+      <label class="v101-vk" style="margin:0 0 8px"><input type="checkbox" id="v101OnerTum"> Tümünü seç</label>
+      <div class="v101-ot"><table class="v98-t"><thead><tr><th></th><th>Kategori</th><th>Model</th><th>Önerilen tedarikçi</th><th class="num">Sipariş</th></tr></thead><tbody>${list.map(satir).join("")}</tbody></table></div>${v101SupDl("v101OnerDl")}</div>
+    <div class="modal-foot"><span class="v98-s" id="v101OnerSay">0 seçili</span><span style="flex:1"></span><button class="btn btn-ghost" data-x>Vazgeç</button><button class="btn btn-primary" data-kay disabled>Seçilenleri kaydet</button></div>`, true);
+  const guncel = () => { const n = m.ov.querySelectorAll(".v101-oc:checked").length; m.$("#v101OnerSay").textContent = n + " seçili"; m.$("[data-kay]").disabled = !n; m.$("#v101OnerTum").checked = n === list.length; };
+  m.ov.addEventListener("change", (e) => { if (e.target.id === "v101OnerTum") m.ov.querySelectorAll(".v101-oc").forEach((c) => (c.checked = e.target.checked)); guncel(); });
+  m.ov.addEventListener("click", async (e) => {
+    if (!e.target.closest("[data-kay]")) return;
+    const sec = Array.from(m.ov.querySelectorAll("tbody tr[data-i]")).filter((tr) => tr.querySelector(".v101-oc").checked).map((tr) => { const o = list[Number(tr.dataset.i)]; return { kategori: v101Temiz(o.kategori), model: v101Temiz(o.model), tedarikci: v101Temiz(tr.querySelector(".v101-ot-t").value) }; }).filter((x) => x.kategori && x.tedarikci);
+    if (!sec.length) return showToast("Tedarikçisi boş olmayan en az bir satır seçin.");
+    const b = m.$("[data-kay]"); b.disabled = true; b.textContent = "Kaydediliyor…";
+    try {
+      const { data, error } = await supa.rpc("pronto_eslesme_toplu", { p_liste: sec.slice(0, 2000) });
+      if (error) throw error;
+      m.close(); v101Sinyal(); await v101Ciz(true); v101TedEksik(sec.map((x) => x.tedarikci));
+      showToast(`${Number(data) || 0} eşleştirme kaydedildi.`);
+    } catch (er) { b.disabled = false; b.textContent = "Seçilenleri kaydet"; showToast("Kaydedilemedi: " + ((er && er.message) || er)); }
+  });
+}
+async function v101Excel() {
+  if (!v101Esl || !v101Esl.length) return showToast("Dışa aktarılacak eşleştirme yok.");
+  try {
+    await ensureXlsx();
+    const rows = v101Gruplar().map((g) => ({ "Kategori": g.kategori, "Model": g.model || "(Kategori varsayılanı)", "Varsayılan tedarikçi": g.list[0] ? g.list[0].tedarikci : "", "Yedek tedarikçiler": g.list.slice(1).map((r) => r.tedarikci).join(", ") }));
+    const ws = XLSX.utils.json_to_sheet(rows); const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Eşleştirmeler");
+    XLSX.writeFile(wb, `urun-tedarikci-eslestirmeleri-${todayISO()}.xlsx`);
+  } catch (er) { showToast("Excel oluşturulamadı: " + ((er && er.message) || er)); }
+}
+/* Tedarikçi kartı: bu tedarikçinin verdiği ürünler */
+async function v101TedKart(ent) {
+  const body = document.getElementById("entityHistoryBody"); if (!body || !ent) return;
+  const h3 = Array.from(body.children).find((h) => h.tagName === "H3" && /İlgili Siparişler/.test(h.textContent));
+  const sec = document.createElement("div"); sec.className = "v101-tk";
+  sec.innerHTML = `<h3 style="font-family:var(--font-display); font-size:14px; margin:18px 0 4px;">Verdiği Ürünler</h3><div class="history-list v101-tk-l"><div class="history-empty">Yükleniyor…</div></div>`;
+  body.insertBefore(sec, h3 || null);
+  try { await v101Yukle(false); } catch (_) { sec.querySelector(".v101-tk-l").innerHTML = `<div class="history-empty">Okunamadı.</div>`; return; }
+  if (!sec.isConnected) return;
+  if (v101Yok) { sec.remove(); return; }
+  const gs = v101Gruplar().filter((g) => g.list.some((r) => normName(r.tedarikci) === normName(ent.name)));
+  const l = sec.querySelector(".v101-tk-l");
+  sec.querySelector("h3").textContent = `Verdiği Ürünler (${gs.length})`;
+  l.innerHTML = gs.length ? gs.map((g) => { const i = g.list.findIndex((r) => normName(r.tedarikci) === normName(ent.name));
+    return `<div class="history-item" data-k="${escapeHtml(g.key)}"><div class="history-item-left"><span>${escapeHtml(g.kategori)}${g.model ? " — " + escapeHtml(g.model) : " · kategori varsayılanı"}</span><span>${i === 0 ? (g.list.length > 1 ? "Yedekler: " + g.list.slice(1).map((r) => escapeHtml(r.tedarikci)).join(", ") : "Yedeği yok") : "Varsayılan: " + escapeHtml(g.list[0].tedarikci)}</span></div><span class="status-badge ${i === 0 ? "status-teslim" : "status-beklemede"}">${i === 0 ? "Varsayılan" : "Yedek " + i}</span></div>`; }).join("")
+    : `<div class="history-empty">Bu tedarikçiye henüz ürün eşleştirilmedi. <a href="#" data-git>Ürün Eşleştirmeleri</a> sekmesinden ekleyebilirsiniz.</div>`;
+  l.addEventListener("click", (e) => {
+    if (e.target.closest("[data-git]")) { e.preventDefault(); closeAllModals(); switchView("suppliers"); v101SekmeAc("esl"); return; }
+    const it = e.target.closest("[data-k]"); if (!it) return;
+    const g = v101Gruplar().find((x) => x.key === it.dataset.k); if (g) v101Duzenle(g);
+  });
+}
+/* Onay ekranı: tedarikçi hücresi (kaynak etiketi + yedekler + "varsayılan olsun") */
+function v101OnayHucre(sup, kay, yedekler, eslVar) {
+  const [ad, cls] = V101_KAYNAK[kay] || V101_KAYNAK[""];
+  const y = Array.isArray(yedekler) ? yedekler.filter((x) => typeof x === "string" && x && normName(x) !== normName(sup)).slice(0, 8) : [];
+  return `<input class="v98-sup${!sup ? " v101-bos" : ""}" list="v98Sup" value="${escapeHtml(sup)}" placeholder="Tedarikçi seçin" maxlength="200" aria-label="Tedarikçi">` +
+    `<div><span class="v101-k ${cls}">${escapeHtml(ad)}</span></div>` +
+    (y.length ? `<div class="v101-yed">Yedek: ${y.map((x) => `<button type="button" class="v101-chip" data-y="${escapeHtml(x)}">${escapeHtml(x)}</button>`).join("")}</div>` : "") +
+    (eslVar ? `<label class="v101-vk" hidden><input type="checkbox"> Bundan sonra varsayılan olsun</label>` : "");
+}
+function v101OnayGuncel(td) {
+  if (!td) return;
+  const inp = td.querySelector(".v98-sup"), vk = td.querySelector(".v101-vk"); if (!inp) return;
+  const val = inp.value.trim(), kay = td.dataset.kay || "";
+  inp.classList.toggle("v101-bos", !val);
+  if (!vk) return;
+  const sabit = kay === "model" || kay === "kategori" || kay === "sip";
+  const goster = !!val && !!v101Temiz(td.dataset.kat) && (!sabit || normName(val) !== normName(td.dataset.sug || ""));
+  vk.hidden = !goster; if (!goster) vk.querySelector("input").checked = false;
+}
+function v101OnayBagla(ov) {
+  ov.querySelectorAll("td[data-kay]").forEach(v101OnayGuncel);
+  ov.addEventListener("input", (e) => { if (e.target.classList && e.target.classList.contains("v98-sup")) v101OnayGuncel(e.target.closest("td")); });
+  ov.addEventListener("click", (e) => { const c = e.target.closest(".v101-chip"); if (!c) return; const td = c.closest("td"); const inp = td.querySelector(".v98-sup"); inp.value = c.dataset.y; inp.classList.remove("v98-err"); v101OnayGuncel(td); });
+}
+(function v101Kur() {
+  const sec = document.getElementById("view-suppliers"); if (!sec) return;
+  sec.addEventListener("click", (e) => {
+    const t = e.target.closest("[data-sup-tab]"); if (t) return v101SekmeAc(t.dataset.supTab);
+    if (!e.target.closest("#v101EslPanel")) return;
+    if (e.target.closest("#v101EslYeni")) return v101Duzenle(null);
+    if (e.target.closest("#v101EslOner")) return v101Oner(e.target.closest("#v101EslOner"));
+    if (e.target.closest("#v101EslExcel")) return v101Excel();
+    const yk = e.target.closest("[data-yk]"); if (yk) return v101Duzenle(null, yk.dataset.yk);
+    const row = e.target.closest(".v101-row[data-k]"); if (!row) return;
+    const g = v101Gruplar().find((x) => x.key === row.dataset.k); if (!g) return;
+    if (e.target.closest("[data-ed]")) return v101Duzenle(g);
+    if (e.target.closest("[data-rm]")) return v101Kaldir(g);
+  });
+  const ara = document.getElementById("v101EslAra");
+  if (ara) ara.addEventListener("input", debounce((e) => { v101Ara = sanitizeSearchText(e.target.value, 100); v101Ciz(false); }, 160));
+})();
 (function v98Kur() {
   const nav = document.querySelector(".sidebar-nav .nav-item[data-view='orders']");
   if (nav && !document.getElementById("v98GelenNav")) {
