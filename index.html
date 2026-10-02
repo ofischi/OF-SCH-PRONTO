@@ -5820,6 +5820,21 @@ function openEntityModal(type, id) {
   closeAllModals();
   document.getElementById("entityModal").classList.remove("hidden");
   entityFormDirty = false;
+  v102KilitKontrol(type, entity);
+}
+/* v102: PRONTO Teklif'e bağlı müşteri kartı — adı ve bilgileri Teklif'ten yönetilir (notlar buradan düzenlenir).
+   Trafik: sadece bağlı olabilecek bir müşterinin düzenleme penceresi açılınca 1 küçük okuma. */
+let v102Kilitli = 0;
+async function v102KilitKontrol(type, entity) {
+  v102Kilitli = 0;
+  if (type !== "customer" || !entity || !supa) return;
+  let r; try { r = await supa.from("pronto_cari_bag").select("cari_id").eq("customer_id", entity.id).limit(1); } catch (_) { return; }
+  if (!r || r.error || !Array.isArray(r.data) || !r.data.length) return;
+  if (document.getElementById("entityId").value !== String(entity.id) || document.getElementById("entityModal").classList.contains("hidden")) return;
+  v102Kilitli = entity.id;
+  ["name", "city", "phone", "email", "taxNo", "address"].forEach((k) => { const el = document.getElementById("ef_" + k); if (el) { el.disabled = true; el.title = "PRONTO Teklif'ten değiştirin"; } });
+  const grid = document.getElementById("entityFormGrid");
+  if (grid && !grid.querySelector(".v102-kilit")) grid.insertAdjacentHTML("afterbegin", `<div class="v102-kilit form-field--wide" style="padding:10px 12px;border-radius:10px;border:1px solid rgba(27,92,153,.35);background:rgba(27,92,153,.08);font-size:13px;line-height:1.45">🔒 Bu müşteri <b>PRONTO Teklif</b>'e bağlı. Adını ve bilgilerini <b>PRONTO Teklif → Müşteriler</b>'den değiştirin; değişiklik buraya ve tüm siparişlere kendiliğinden gelir. Notları buradan düzenleyebilirsiniz.</div>`);
 }
 
 /* =======================================================
@@ -6003,6 +6018,7 @@ async function saveEntityFromForm() {
       if (obj.stock !== was) stockLog = { delta: obj.stock - was, note: idVal ? "Ürün kartından stok düzeltmesi" : "Başlangıç stoku" };
     }
   }
+  if (type === "customer" && idVal && v102Kilitli === Number(idVal)) ["name", "phone", "email", "taxNo", "address"].forEach((k) => delete obj[k]);   // bağlı kart: bu alanlar Teklif'ten yönetilir
   if (idVal) {
     obj.id = Number(idVal);
     await dbPut(config.store, obj);
