@@ -1619,7 +1619,7 @@ table.pd-t{width:100%;border-collapse:collapse;font-size:9pt}.pd-t thead{display
  #view-delivery-form .shipment-table td:nth-child(4)::before{content:"Adres: ";color:var(--color-text-muted);font-weight:600}
  #view-delivery-form .shipment-table td:nth-child(5)::before{content:"Teslim: ";color:var(--color-text-muted);font-weight:600}
  #view-delivery-form .shipment-table td:nth-child(6)::before{content:"Hazır: ";color:var(--color-text-muted);font-weight:600}
- #view-delivery-form .shipment-table td:nth-child(7)::before{content:"Nakliye: ";color:var(--color-text-muted);font-weight:600}
+ #view-delivery-form .shipment-table td:nth-child(7)::before{content:"Şartlar: ";color:var(--color-text-muted);font-weight:600}
  #view-delivery-form .shipment-table td:last-child .btn{width:100%;margin-top:8px}
 }
 /* 15) PDF önizleme: sayfa kutuya sığar, telefonda butonlar tek satır */
@@ -1720,6 +1720,27 @@ table.pd-t{width:100%;border-collapse:collapse;font-size:9pt}.pd-t thead{display
 .v98-l{font-size:11px;font-weight:700;color:var(--color-text-muted);text-transform:uppercase;letter-spacing:.04em}
 .v98-v{font-size:15px;font-weight:800;margin:3px 0 2px}
 .v98-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+.status-ssh{background:#FDE7DF;color:#B03A12}
+.v105-chip{display:inline-block;margin-left:6px;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:700;background:#FFF1E8;color:#B03A12;border:1px solid #F4C7B3;white-space:nowrap;vertical-align:middle}
+.v105-chip--eski{background:#F2F0EC;color:#6B655C;border-color:#DDD8CF}
+.v105-sart{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.v105-sart label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--color-text-muted);font-weight:600}
+.v105-sart select{font-weight:400;width:100%}
+.v105-sart select:disabled{opacity:.75;cursor:not-allowed}
+.v105-not{font-size:12px;color:var(--color-text-muted);margin-top:6px;line-height:1.4}
+.v105-kilit{color:#8A5A00;font-weight:600}
+.v105-ssh{border:1px solid #F4C7B3;background:#FFF8F4;border-radius:12px;padding:12px 14px;margin-top:4px}
+.v105-ssh h4{margin:0 0 8px;font-size:13px;color:#B03A12;text-transform:uppercase;letter-spacing:.04em}
+.v105-kayit{border-top:1px dashed #F0D5C8;padding:8px 0 4px;font-size:13px;line-height:1.45}
+.v105-kayit:first-of-type{border-top:0;padding-top:0}
+.v105-kayit b{font-weight:700}
+.v105-link{background:none;border:0;padding:0;color:#B03A12;font:inherit;font-weight:700;text-decoration:underline;cursor:pointer}
+.v105-check{display:flex;align-items:center;gap:8px;margin:12px 0 8px;font-weight:600;cursor:pointer}
+.v105-parca{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.v105-parca .v105-genis{grid-column:1/-1}
+.v105-foto img{max-width:150px;max-height:105px;border:1px solid var(--color-border);border-radius:10px;object-fit:contain;background:#fff;display:block;margin-top:6px}
+.hidden-v105{display:none!important}
+@media (max-width:720px){.v105-sart,.v105-parca{grid-template-columns:1fr}}
 .v98-card{border:1px solid var(--color-border);border-radius:12px;padding:12px 14px;background:var(--color-surface-solid)}
 .v98-in{width:100%;height:40px;border:1px solid var(--color-border);border-radius:10px;padding:0 10px;background:var(--color-surface-solid);color:var(--color-text);font:inherit;box-sizing:border-box}
 textarea.v98-in{height:auto;padding:10px}
@@ -1983,7 +2004,7 @@ table.v98-t{width:100%;border-collapse:collapse;font-size:13px}
       <div class="page-header">
         <div>
           <h1>Sevkiyat</h1>
-          <p class="subtitle">Tüm kalemleri "Sevkiyata Hazır" olan müşteriler, şehir ve sevkiyat tipine göre burada listelenir.</p>
+          <p class="subtitle">Tüm kalemleri "Sevkiyata Hazır" olan müşteriler, şehir ve teslim şartlarına göre burada listelenir.</p>
         </div>
         <div class="header-actions">
           <button class="btn btn-secondary" id="shipmentPdfBtn">PDF</button>
@@ -2332,7 +2353,16 @@ table.v98-t{width:100%;border-collapse:collapse;font-size:13px}
           <span>Kumaş Kodu</span>
           <input type="text" id="f_fabricCode" list="dl_fabrics">
         </label>
-        <label class="form-field">
+        <div class="form-field form-field--wide hidden-v105" id="f_sartWrap">
+          <span>Teslim Şartları <small id="f_sartKilit" class="v105-kilit"></small></span>
+          <div class="v105-sart">
+            <label>Montaj<select id="f_montaj"><option value="">Belirtilmemiş</option><option value="dahil">Dahil</option><option value="haric">Hariç</option></select></label>
+            <label>Nakliye<select id="f_nakliye"><option value="">Belirtilmemiş</option><option value="dahil">Dahil</option><option value="haric">Hariç</option></select></label>
+            <label>Teslim Yeri<select id="f_teslimYeri"><option value="">Belirtilmemiş</option><option value="fabrika">Fabrika</option><option value="adres">Adrese</option></select></label>
+          </div>
+          <div class="v105-not" id="f_eskiSevk"></div>
+        </div>
+        <label class="form-field" id="f_shipmentTypeWrap">
           <span>Sevkiyat Tipi</span>
           <select id="f_shipmentType">
             <option value="Ofischi Sevkiyat">Ofischi Sevkiyat</option>
@@ -2366,8 +2396,10 @@ table.v98-t{width:100%;border-collapse:collapse;font-size:13px}
             <option value="Üretimde">Üretimde</option>
             <option value="Sevkiyata Hazır">Sevkiyata Hazır</option>
             <option value="Teslim Edildi">Teslim Edildi</option>
+            <option value="SSH" disabled>SSH</option>
             <option value="İptal">İptal</option>
           </select>
+          <small class="v105-not" id="f_statusNot"></small>
         </label>
         <label class="form-field form-field--wide">
           <span>Açıklama</span>
@@ -2427,6 +2459,8 @@ table.v98-t{width:100%;border-collapse:collapse;font-size:13px}
       <div class="modal-foot-right">
         <button class="btn btn-ghost" id="detailEditBtn">Düzenle</button>
         <button class="btn btn-secondary" id="detailPdfBtn" type="button">PDF</button>
+        <button class="btn btn-secondary hidden-v105" id="v105SshAcBtn" type="button">SSH Aç</button>
+        <button class="btn btn-primary hidden-v105" id="v105SshKapatBtn" type="button">SSH Kapat</button>
         <button class="btn btn-primary" id="detailDeliveredBtn">Teslim Edildi</button>
       </div>
     </div>
@@ -2660,16 +2694,17 @@ function ensureXlsx() {
 /* =======================================================
    DURUM AYARLARI
    ======================================================= */
-const STATUS_LIST = ["Beklemede", "Üretimde", "Sevkiyata Hazır", "Teslim Edildi", "İptal"];
+const STATUS_LIST = ["Beklemede", "Üretimde", "Sevkiyata Hazır", "Teslim Edildi", "SSH", "İptal"];
 const STATUS_SLUG = {
   "Beklemede": "beklemede",
   "Üretimde": "uretimde",
   "Sevkiyata Hazır": "hazir",
   "Teslim Edildi": "teslim",
+  "SSH": "ssh",
   "İptal": "iptal",
   "Gecikti": "gecikti"
 };
-const FILTER_LIST = ["Tümü", "Beklemede", "Üretimde", "Sevkiyata Hazır", "Teslim Edildi", "İptal", "Gecikti"];
+const FILTER_LIST = ["Tümü", "Beklemede", "Üretimde", "Sevkiyata Hazır", "Teslim Edildi", "SSH", "İptal", "Gecikti"];
 const PROVINCES = ["Adana","Adıyaman","Afyonkarahisar","Ağrı","Aksaray","Amasya","Ankara","Antalya","Ardahan","Artvin","Aydın","Balıkesir","Bartın","Batman","Bayburt","Bilecik","Bingöl","Bitlis","Bolu","Burdur","Bursa","Çanakkale","Çankırı","Çorum","Denizli","Diyarbakır","Düzce","Edirne","Elazığ","Erzincan","Erzurum","Eskişehir","Gaziantep","Giresun","Gümüşhane","Hakkari","Hatay","Iğdır","Isparta","İstanbul","İzmir","Kahramanmaraş","Karabük","Karaman","Kars","Kastamonu","Kayseri","Kilis","Kırıkkale","Kırklareli","Kırşehir","Kocaeli","Konya","Kütahya","Malatya","Manisa","Mardin","Mersin","Muğla","Muş","Nevşehir","Niğde","Ordu","Osmaniye","Rize","Sakarya","Samsun","Siirt","Sinop","Sivas","Şanlıurfa","Şırnak","Tekirdağ","Tokat","Trabzon","Tunceli","Uşak","Van","Yalova","Yozgat","Zonguldak"];
 
 /* =======================================================
@@ -2807,7 +2842,7 @@ const FIELD_MAP = {
     orderDate: "order_date", deliveryDate: "delivery_date",
     colorCode: "color_code", fabricCode: "fabric_code",
     stockDeducted: "stock_deducted", stockDeductedQty: "stock_deducted_qty",
-    createdAt: "created_at"
+    createdAt: "created_at", teklifId: "teklif_id", teslimYeri: "teslim_yeri", sshAnaId: "ssh_ana_id"
   },
   products: { createdAt: "created_at" },
   customers: { taxNo: "tax_no", createdAt: "created_at" },
@@ -2823,6 +2858,7 @@ function toRow(store, obj) {
   const row = {};
   Object.keys(obj).forEach((k) => {
     if (k === "id") return;                 // id veritabanı tarafından verilir
+    if (v105AtlaAlan(store, obj, k)) return;   // teklif bağı, SSH kaydı ve tekliften gelen şartlar yalnızca sunucuda değişir
     let v = obj[k];
     if (v === "" && (k.endsWith("Date") || k === "date")) v = null;  // boş tarih = null
     row[map[k] || k] = v;
@@ -2937,6 +2973,7 @@ async function dbPut(store, obj) {
   liveSend(store, "UPDATE", [data]);
   const saved = fromRow(store, data);
   upsertLocalStore(store, saved);
+  if (store === "orders") v105ParcaTeslimKontrol([saved]);
   return saved.id;
 }
 
@@ -2955,6 +2992,7 @@ async function dbUpsertMany(store, list) {
   const { data, error } = await supa.from(TABLES[store]).upsert(rows, { onConflict: "id" }).select(STORE_COLUMNS[store]);
   if (error) dbFail("toplu güncelleme: " + store, error);
   liveSend(store, "UPDATE", data || []);
+  if (store === "orders") v105ParcaTeslimKontrol((data || []).map((r) => fromRow(store, r)));
 }
 
 async function dbDelete(store, id) {
@@ -3005,6 +3043,7 @@ let reservedByProduct = new Map();
 let supplierByProductId = new Map();
 
 function rebuildDerivedIndexes() {
+  v105NoOnbellek = null;
   const activeOrderRows = allOrders.filter((o) => !isDeletedOrder(o));
   // Tek geçişlerde indeksleri oluştur: büyük veri setlerinde O(ürün*sipariş)
   // taramasını kaldırır. Böylece toplu işlemler sonrası arayüz donmaz.
@@ -3013,7 +3052,7 @@ function rebuildDerivedIndexes() {
   for (const o of activeOrderRows) {
     const key = normName(o.product);
     if (!key) continue;
-    if (o.status !== "Teslim Edildi" && o.status !== "İptal") {
+    if (o.status !== "Teslim Edildi" && o.status !== "İptal" && o.status !== "SSH") {
       reservedByProduct.set(key, (reservedByProduct.get(key) || 0) + (Number(o.quantity) || 0));
     }
     if (o.supplier && (!latestOrderByProduct.has(key) ||
@@ -3072,7 +3111,7 @@ async function cacheGet(store) {
   catch (_) { return null; }
 }
 async function cachePut(store, val) {
-  try { const d = await cacheDb(); await new Promise((ok) => { const tx = d.transaction("stores", "readwrite"); tx.objectStore("stores").put(val, store); tx.oncomplete = ok; tx.onerror = ok; }); }
+  try { if (val && typeof val === "object") val = { ...val, cols: STORE_COLUMNS[store] || "" }; const d = await cacheDb(); await new Promise((ok) => { const tx = d.transaction("stores", "readwrite"); tx.objectStore("stores").put(val, store); tx.oncomplete = ok; tx.onerror = ok; }); }
   catch (_) {}
 }
 function storeArray(store) {
@@ -3129,7 +3168,8 @@ async function fetchDeletionsSince(store, since) {
 async function getAll(store) {
   if (!deltaMode) return getAllFull(store);
   const cached = await cacheGet(store);
-  const fresh = cached && Array.isArray(cached.rows) && cached.rowAt && (Date.now() - (cached.fetchedAt || 0)) < CACHE_MAX_AGE_MS;
+  const fresh = cached && Array.isArray(cached.rows) && cached.rowAt && (Date.now() - (cached.fetchedAt || 0)) < CACHE_MAX_AGE_MS
+    && (cached.cols || "") === (STORE_COLUMNS[store] || "");   // sütunlar değiştiyse (yeni kurulum) bir kez tamamı alınır
   if (!fresh) {
     /* İlk açılış (veya çok eski önbellek): bir kez tamamını al */
     const rows = await getAllFull(store);
@@ -3272,7 +3312,8 @@ function applyRemoteOrderChange(c) {
     return true;
   }
   const incoming = fromRow("orders", c.row);
-  const structural = remoteOrderNeedsListRender(incoming, previous);
+  if (previous && incoming.teklifId === undefined && previous.teklifId !== undefined) incoming.teklifId = previous.teklifId;
+  const structural = remoteOrderNeedsListRender(incoming, previous) || (!!previous && (previous.status !== incoming.status || previous.sshAnaId !== incoming.sshAnaId));
   // Küçük alan değişikliklerinde derived indexleri ve ana listeyi tekrar tarama.
   // Sadece ilgili sipariş nesnesini güncelle.
   const idx = allOrders.findIndex((o) => o.id === id);
@@ -3346,6 +3387,7 @@ function todayISO() {
   return new Date().toISOString().slice(0, 10);
 }
 function orderNo(order) {
+  if (order && order.sshAnaId) return v105ParcaNo(order);
   return "PR-" + String(order.id).padStart(5, "0");
 }
 
@@ -3418,10 +3460,10 @@ function getDeliveredAt(order){
 }
 function withOrderMetadata(description, shipmentType, pricing, conditions, deliveredAt){
   let clean=String(description||"").replace(SHIPMENT_MARKER_RE,"").replace(ORDER_TRASH_MARKER_RE,"").replace(ORDER_PRICE_MARKER_RE,"").replace(ORDER_CONDITION_MARKER_RE,"").replace(DELIVERED_AT_MARKER_RE,"").replace(/\s{2,}/g," ").trim();
-  const ship=shipmentType === "Nakliye" ? "[[SEVKIYAT:NAKLIYE]]" : shipmentType === "SSH" ? "[[SEVKIYAT:SSH]]" : "[[SEVKIYAT:OFISCHI]]";
+  const ship=!shipmentType ? "" : shipmentType === "Nakliye" ? "[[SEVKIYAT:NAKLIYE]]" : shipmentType === "SSH" ? "[[SEVKIYAT:SSH]]" : "[[SEVKIYAT:OFISCHI]]";
   const priceToken=encodeURIComponent(JSON.stringify(pricing||{}));
   const conditionToken=(conditions||[]).join("|");
-  return `${clean}${clean?" ":""}${ship} [[PRONTOFIYAT:${priceToken}]]${conditionToken?` [[SEVKDURUM:${conditionToken}]]`:""}${deliveredAt?` [[TESLIMEDILDI:${deliveredAt}]]`:""}`;
+  return `${clean}${clean?" ":""}${ship}${ship?" ":""}[[PRONTOFIYAT:${priceToken}]]${conditionToken?` [[SEVKDURUM:${conditionToken}]]`:""}${deliveredAt?` [[TESLIMEDILDI:${deliveredAt}]]`:""}`;
 }
 function pricingTotals(order){
   const p=getOrderPricing(order), qty=Number(order?.quantity)||0, total=p.salePrice*qty;
@@ -3434,11 +3476,12 @@ function pricingTotals(order){
 }
 function currencyLabel(c){return c==="USD"?"USD":c==="EUR"?"EUR":"TL";}
 function moneyCurrency(v,c){return new Intl.NumberFormat("tr-TR",{minimumFractionDigits:2,maximumFractionDigits:2}).format(Number(v)||0)+" "+currencyLabel(c);}
-function formatActualDelivery(order){ return order?.status === "Teslim Edildi" && getDeliveredAt(order) ? formatDate(getDeliveredAt(order)) : "-"; }
+function formatActualDelivery(order){ return (order?.status === "Teslim Edildi" || order?.status === "SSH") && getDeliveredAt(order) ? formatDate(getDeliveredAt(order)) : "-"; }
 function getShipmentType(order) {
   const desc = order && order.description || "";
   if (/\[\[SEVKIYAT:SSH\]\]/i.test(desc)) return "SSH";
   if (/\[\[SEVKIYAT:NAKLIYE\]\]/i.test(desc)) return "Nakliye";
+  if (v105Acik && !SHIPMENT_MARKER_RE.test(desc)) return "";
   return "Ofischi Sevkiyat";
 }
 function getOrderDescription(order) {
@@ -3477,7 +3520,7 @@ function shipmentCity(order) { return getCustomerCity(customerForOrder(order)); 
    o sekmede görünür; teslim tarihi geçmişse ayrıca gecikmiş
    olarak da işaretlenir ve Gecikti sekmesinde de listelenir. */
 function isOverdue(order) {
-  if (order.status === "Teslim Edildi" || order.status === "İptal") return false;
+  if (order.status === "Teslim Edildi" || order.status === "İptal" || order.status === "SSH") return false;
   return !!(order.deliveryDate && order.deliveryDate < todayISO());
 }
 /* =======================================================
@@ -3542,7 +3585,7 @@ function sanitizeDate(value) {
 
 // Durum doğrulama: yalnızca bilinen değerler
 function sanitizeStatus(value) {
-  return STATUS_LIST.includes(value) ? value : "Beklemede";
+  return STATUS_LIST.includes(value) && value !== "SSH" ? value : "Beklemede";
 }
 function debounce(fn, ms) {
   let t;
@@ -3721,6 +3764,7 @@ function initLockScreen() {
 async function startApp() {
   try {
     await detectDeltaMode();
+    await v105Algila();
     await reloadStore("orders");
     await cleanupExpiredDeletedOrders();
     renderOrdersView();
@@ -3865,6 +3909,7 @@ function getFilteredOrders() {
   if (currentFilter !== "Tümü") {
     list = currentFilter === "Gecikti"
       ? list.filter((o) => isOverdue(o))
+      : currentFilter === "SSH" ? list.filter(v105SshIlgili)
       : list.filter((o) => o.status === currentFilter);
   }
   if (currentDateFrom) list = list.filter((o) => o.orderDate && o.orderDate >= currentDateFrom);
@@ -3886,7 +3931,7 @@ function statusBadgeHtml(order) {
   const status = order.status;
   const slug = STATUS_SLUG[status] || "beklemede";
   const badge = `<button type="button" class="status-badge status-badge-btn status-${slug}" data-id="${order.id}">${escapeHtml(status)}</button>`;
-  const lateChip = isOverdue(order) ? `<span class="status-badge status-gecikti late-chip">Gecikti</span>` : "";
+  const lateChip = (isOverdue(order) ? `<span class="status-badge status-gecikti late-chip">Gecikti</span>` : "") + v105Cip(order);
   return lateChip ? `<span class="status-cell">${badge}${lateChip}</span>` : badge;
 }
 function refreshVisibleStatusBadges(orderId) {
@@ -3928,15 +3973,23 @@ function bindStatusBadgeClicks(scopeEl) {
   });
 }
 function showStatusMenu(triggerEl, order) {
-  const items = STATUS_LIST.map((s) => ({
-    label: s + (s === order.status ? " ✓" : ""),
-    onClick: () => updateOrderStatus(order.id, s)
-  }));
+  const items = STATUS_LIST.map((s) => {
+    if (s === "SSH") {
+      if (!v105Acik) return null;
+      if (order.status === "SSH") return { label: "SSH ✓", onClick: () => openDetailModal(order.id) };
+      if (order.status === "Teslim Edildi" && !order.sshAnaId) return { label: "SSH Aç…", onClick: () => v105SshAc(order.id) };
+      return null;
+    }
+    if (order.status === "SSH") return s === "Teslim Edildi" ? { label: "SSH Kapat…", onClick: () => v105SshKapat(order.id) } : null;
+    return { label: s + (s === order.status ? " ✓" : ""), onClick: () => updateOrderStatus(order.id, s) };
+  }).filter(Boolean);
   showRowMenu(triggerEl, items);
 }
 async function updateOrderStatus(id, status) {
   const order = allOrders.find((o) => o.id === id);
   if (!order || order.status === status) return;
+  if (status === "SSH") { if (order.status === "Teslim Edildi" && !order.sshAnaId) v105SshAc(id); else showToast("SSH yalnızca teslim edilmiş siparişte açılır."); return; }
+  if (order.status === "SSH") { if (status === "Teslim Edildi") v105SshKapat(id); else showToast("Bu sipariş SSH'de. Önce SSH'yi kapatın."); return; }
 
   const oldStatus = order.status;
   const orderSnapshot = { ...order };
@@ -4119,11 +4172,13 @@ function renderFilterPills() {
   const wrap = document.getElementById("filterPills");
   wrap.innerHTML = "";
   FILTER_LIST.forEach((f) => {
+    if (f === "SSH" && !v105Acik) return;
     const active = activeOrdersList();
     const count = f === "Tümü"
       ? active.length
       : (f === "Gecikti"
           ? active.filter((o) => isOverdue(o)).length
+          : f === "SSH" ? active.filter(v105SshIlgili).length
           : active.filter((o) => o.status === f).length);
     const btn = document.createElement("button");
     btn.className = "pill" + (f === currentFilter ? " active" : "");
@@ -4421,7 +4476,7 @@ function renderUpcomingPanel() {
   const in7Iso = `${in7.getFullYear()}-${String(in7.getMonth() + 1).padStart(2, "0")}-${String(in7.getDate()).padStart(2, "0")}`;
 
   const upcoming = allOrders
-    .filter((o) => o.status !== "Teslim Edildi" && o.status !== "İptal" && o.deliveryDate && o.deliveryDate >= todayIso && o.deliveryDate <= in7Iso)
+    .filter((o) => o.status !== "Teslim Edildi" && o.status !== "İptal" && o.status !== "SSH" && o.deliveryDate && o.deliveryDate >= todayIso && o.deliveryDate <= in7Iso)
     .sort((a, b) => a.deliveryDate.localeCompare(b.deliveryDate))
     .slice(0, 8);
 
@@ -4488,7 +4543,7 @@ function checkDailyDigest() {
 
   const in7 = new Date(); in7.setDate(in7.getDate() + 6);
   const in7Iso = `${in7.getFullYear()}-${String(in7.getMonth() + 1).padStart(2, "0")}-${String(in7.getDate()).padStart(2, "0")}`;
-  const upcomingCount = activeOrdersList().filter((o) => o.status !== "Teslim Edildi" && o.status !== "İptal" && o.deliveryDate && o.deliveryDate >= todayKey && o.deliveryDate <= in7Iso).length;
+  const upcomingCount = activeOrdersList().filter((o) => o.status !== "Teslim Edildi" && o.status !== "İptal" && o.status !== "SSH" && o.deliveryDate && o.deliveryDate >= todayKey && o.deliveryDate <= in7Iso).length;
 
   if (lateCount === 0 && upcomingCount === 0) return;
 
@@ -4856,7 +4911,8 @@ function getOrderDraftFromForm() {
     customer, phone, address, supplier, product, quantity, orderDate, deliveryDate,
     colorCode: sanitizeText(document.getElementById("f_colorCode").value,60),
     fabricCode: sanitizeText(document.getElementById("f_fabricCode").value,60),
-    shipmentType: document.getElementById("f_shipmentType").value,
+    shipmentType: v105Acik ? "" : document.getElementById("f_shipmentType").value,
+    ...(v105Acik ? v105FormSart(null) : {}),
     salePrice, purchasePrice, vatRate,
     status: sanitizeStatus(document.getElementById("f_status").value),
     description: sanitizeText(document.getElementById("f_description").value,MAX_NOTE_LEN),
@@ -4922,6 +4978,7 @@ function editOrderDraftItem(index) {
   document.getElementById("f_colorCode").value=item.colorCode||"";
   document.getElementById("f_fabricCode").value=item.fabricCode||"";
   document.getElementById("f_shipmentType").value=item.shipmentType||"Ofischi Sevkiyat";
+  if(v105Acik){ document.getElementById("f_montaj").value=item.montaj||""; document.getElementById("f_nakliye").value=item.nakliye||""; document.getElementById("f_teslimYeri").value=item.teslimYeri||""; }
   document.getElementById("f_salePrice").value=item.salePrice||"";
   document.getElementById("f_vatRate").value=Number.isFinite(Number(item.vatRate))?item.vatRate:10;
   document.getElementById("f_purchasePrice").value=item.purchasePrice||"";
@@ -5004,6 +5061,7 @@ async function performSaveOrderDraftBatch(items) {
       const order={
         customer:item.customer,supplier:item.supplier,product:item.product,quantity:item.quantity,
         orderDate:item.orderDate,deliveryDate:item.deliveryDate,colorCode:item.colorCode,fabricCode:item.fabricCode,status:item.status,
+        ...(v105Acik ? { montaj:item.montaj||null, nakliye:item.nakliye||null, teslimYeri:item.teslimYeri||null } : {}),
         description:withOrderMetadata(item.description,item.shipmentType,pricingMeta,[],item.status==="Teslim Edildi"?todayISO():"")
       };
       order.createdAt=new Date().toISOString();
@@ -5053,8 +5111,9 @@ function openOrderModal(id) {
   document.getElementById("f_colorCode").value = order ? order.colorCode || "" : "";
   document.getElementById("f_fabricCode").value = order ? order.fabricCode || "" : "";
   document.getElementById("f_description").value = order ? getOrderDescription(order) : "";
-  document.getElementById("f_shipmentType").value = order ? getShipmentType(order) : "Ofischi Sevkiyat";
+  document.getElementById("f_shipmentType").value = order ? (getShipmentType(order) || "Ofischi Sevkiyat") : "Ofischi Sevkiyat";
   document.getElementById("f_status").value = order ? order.status : "Beklemede";
+  v105FormDoldur(order);
   const pricing = order ? getOrderPricing(order) : {salePrice:"",currency:"TRY",rate:1,vatIncluded:false,vatRate:VAT_RATE*100,purchasePrice:""};
   document.getElementById("f_salePrice").value = pricing.salePrice || "";
   document.getElementById("f_vatRate").value = Number.isFinite(Number(pricing.vatRate)) ? pricing.vatRate : VAT_RATE*100;
@@ -5089,15 +5148,16 @@ async function saveOrderFromForm(allowWarnings = false, allowConflict = false) {
     colorCode: sanitizeText(document.getElementById("f_colorCode").value, 60),
     fabricCode: sanitizeText(document.getElementById("f_fabricCode").value, 60),
     description: "",
-    status: sanitizeStatus(document.getElementById("f_status").value)
+    status: oldOrder && oldOrder.status === "SSH" ? "SSH" : sanitizeStatus(document.getElementById("f_status").value)
   });
+  if (v105Acik && !(oldOrder && oldOrder.teklifId != null)) Object.assign(order, v105FormSart());
   const salePrice=Number(document.getElementById("f_salePrice").value)||0;
   const purchasePrice=Number(document.getElementById("f_purchasePrice").value)||0;
   const vatRate=Number(document.getElementById("f_vatRate").value);
   const pricingMeta={salePrice,currency:"TRY",rate:1,vatIncluded:false,vatRate:Number.isFinite(vatRate)?vatRate:VAT_RATE*100,purchasePrice};
   const oldDeliveredAt=oldOrder ? getDeliveredAt(oldOrder) : "";
   const deliveredAt=(order.status==="Teslim Edildi" && (!oldOrder || oldOrder.status!=="Teslim Edildi")) ? todayISO() : oldDeliveredAt;
-  order.description=withOrderMetadata(sanitizeText(document.getElementById("f_description").value, MAX_NOTE_LEN),document.getElementById("f_shipmentType").value,pricingMeta,oldOrder ? getOrderConditions(oldOrder) : [],deliveredAt);
+  order.description=withOrderMetadata(sanitizeText(document.getElementById("f_description").value, MAX_NOTE_LEN),v105Acik ? (oldOrder ? getShipmentType(oldOrder) : "") : document.getElementById("f_shipmentType").value,pricingMeta,oldOrder ? getOrderConditions(oldOrder) : [],deliveredAt);
 
   if (!order.customer || !order.product) {
     showToast("Müşteri ve ürün alanları boş bırakılamaz.");
@@ -5356,7 +5416,7 @@ function v91OpenShipmentPdf(){
   const selected=selectedShipmentGroups(groups).filter(g=>shipmentShowHidden?g.hasHidden:isShipmentGroupCandidate(g)).sort((a,b)=>a.city.localeCompare(b.city,"tr")||(a.deliveryDate||"").localeCompare(b.deliveryDate||"")||a.customerName.localeCompare(b.customerName,"tr"));
   if(!selected.length)return showToast("Önce sevkiyata çıkacak müşterileri seç.");
   const byCity=new Map();selected.forEach(g=>{if(!byCity.has(g.city))byCity.set(g.city,[]);byCity.get(g.city).push(g)});
-  const cityHtml=Array.from(byCity.entries()).map(([city,gs])=>`<div class="v92-pdf-city"><h2>${escapeHtml(city)} — ${gs.length} sevkiyat</h2><table class="v92-pdf-table"><thead><tr><th>Müşteri / Ünvan</th><th>Telefon</th><th>Adres</th><th>Teslim Tarihi</th><th>Nakliye Durumu</th></tr></thead><tbody>${gs.map(g=>`<tr><td>${escapeHtml(g.customerName)}</td><td>${escapeHtml(g.phone)}</td><td>${escapeHtml(g.address)}</td><td>${g.deliveryDate?formatDate(g.deliveryDate):"-"}</td><td>${escapeHtml(String(g.shipmentType||"-").toUpperCase())}</td></tr>`).join("")}</tbody></table></div>`).join("");
+  const cityHtml=Array.from(byCity.entries()).map(([city,gs])=>`<div class="v92-pdf-city"><h2>${escapeHtml(city)} — ${gs.length} sevkiyat</h2><table class="v92-pdf-table"><thead><tr><th>Müşteri / Ünvan</th><th>Telefon</th><th>Adres</th><th>Teslim Tarihi</th><th>Teslim Şartları</th></tr></thead><tbody>${gs.map(g=>`<tr><td>${escapeHtml(g.customerName)}</td><td>${escapeHtml(g.phone)}</td><td>${escapeHtml(g.address)}</td><td>${g.deliveryDate?formatDate(g.deliveryDate):"-"}</td><td>${escapeHtml(String(g.shipmentType||"-").toUpperCase())}</td></tr>`).join("")}</tbody></table></div>`).join("");
   const html=v92PdfShell(`<div class="v92-pdf-head"><div>${v92PdfLogoHtml()}<h1 class="v92-pdf-title">SEVKİYAT LİSTESİ</h1><div class="v92-pdf-sub">Hazırlanma tarihi: ${formatDate(todayISO())} · ${selected.length} sevkiyat</div></div><div style="font-size:10px;text-align:right">OFİSCHİ<br>PRONTO</div></div>${cityHtml}<div class="v92-pdf-foot"><span>Bu liste PRONTO sipariş takip sisteminden oluşturulmuştur.</span><span>OFİSCHİ</span></div>`,true);
   const host=document.createElement("div");host.innerHTML=html;v91OpenElementPdf(host.firstElementChild,"Sevkiyat","Sevkiyat","landscape","sevkiyat");
 }
@@ -5397,18 +5457,20 @@ function openDetailModal(id) {
       <div class="detail-item"><span class="detail-label">Adet</span><span class="detail-value">${escapeHtml(order.quantity)}</span></div>
       <div class="detail-item"><span class="detail-label">Sipariş Tarihi</span><span class="detail-value">${formatDate(order.orderDate)}</span></div>
       <div class="detail-item"><span class="detail-label">Planlanan Teslim Tarihi</span><span class="detail-value">${formatDate(order.deliveryDate)}</span></div>
-      <div class="detail-item"><span class="detail-label">Teslim Edildiği Tarih</span><span class="detail-value">${order.status === "Teslim Edildi" ? (getDeliveredAt(order) ? formatDate(getDeliveredAt(order)) : "Kayıtlı değil") : "-"}</span></div>
+      <div class="detail-item"><span class="detail-label">Teslim Edildiği Tarih</span><span class="detail-value">${(order.status === "Teslim Edildi" || order.status === "SSH") ? (getDeliveredAt(order) ? formatDate(getDeliveredAt(order)) : "Kayıtlı değil") : "-"}</span></div>
       <div class="detail-item"><span class="detail-label">Renk Kodu</span><span class="detail-value">${escapeHtml(order.colorCode) || "-"}</span></div>
       <div class="detail-item"><span class="detail-label">Kumaş Kodu</span><span class="detail-value">${escapeHtml(order.fabricCode) || "-"}</span></div>
       <div class="detail-item detail-item--wide"><span class="detail-label">Açıklama</span><span class="detail-value">${escapeHtml(getOrderDescription(order)) || "-"}</span></div>
       <div class="detail-item"><span class="detail-label">Durum</span><span class="detail-value">${statusBadgeHtml(order)}</span></div>
+      ${v105DetayHtml(order)}
       <div class="detail-item detail-item--wide"><span class="detail-label">Sipariş Fotoğrafı</span><div id="detailOrderPhotoHost" class="order-photo-loading">Fotoğraf kontrol ediliyor…</div></div>
     </div>
   `;
 
   const deliveredBtn = document.getElementById("detailDeliveredBtn");
-  deliveredBtn.style.display = order.status === "Teslim Edildi" ? "none" : "inline-flex";
+  deliveredBtn.style.display = order.status === "Teslim Edildi" || order.status === "SSH" ? "none" : "inline-flex";
   deliveredBtn.onclick = () => confirmMarkDelivered(order.id);
+  v105DetayBagla(order);
   document.getElementById("detailEditBtn").onclick = () => openOrderModal(order.id);
   document.getElementById("detailPdfBtn").onclick = () => v90OpenPdf(order.id);
   document.getElementById("detailDeleteBtn").onclick = () => confirmDeleteOrder(order.id);
@@ -5688,9 +5750,11 @@ function bindOrderEvents() {
       const stockMovements = [];
       const stockOps = [];
 
+      let v105Atla = 0;
       for (const order of orders) {
         const oldStatus = order.status;
         if (oldStatus === newStatus) continue;
+        if (oldStatus === "SSH" || newStatus === "SSH") { v105Atla++; continue; }
         const product = productMap.get(normName(order.product));
 
         if (newStatus === "Teslim Edildi" && oldStatus !== "Teslim Edildi" && product && typeof product.stock === "number" && !order.stockDeducted) {
@@ -5733,7 +5797,7 @@ function bindOrderEvents() {
           stockMovements.length ? dbAddMany("stockMovements", stockMovements) : Promise.resolve()
         ]);
         document.getElementById("bulkStatusSelect").value = "";
-        showToast(`${orders.length} sipariş "${newStatus}" olarak güncellendi.`);
+        showToast(`${orders.length - v105Atla} sipariş "${newStatus}" olarak güncellendi.${v105Atla ? ` ${v105Atla} SSH siparişi atlandı (SSH Aç / Kapat ile değişir).` : ""}`);
       } catch (e) {
         showToast("Toplu durum güncellemesi sırasında veritabanı hatası oluştu.");
       }
@@ -6632,7 +6696,7 @@ const SHIPMENT_HIDDEN_MARKER = "[[SEVKIYAT:GIZLI]]";
 const SHIPMENT_HIDDEN_RE = /\[\[SEVKIYAT:GIZLI\]\]/i;
 function isShipmentHidden(order) { return SHIPMENT_HIDDEN_RE.test(String(order && order.description || "")); }
 function buildShipmentGroups() {
-  const activeOrders = allOrders.filter((o) => o && o.status !== "Teslim Edildi" && o.status !== "İptal");
+  const activeOrders = allOrders.filter((o) => o && o.status !== "Teslim Edildi" && o.status !== "İptal" && o.status !== "SSH");
   const map = new Map();
 
   activeOrders.forEach((o) => {
@@ -6647,7 +6711,7 @@ function buildShipmentGroups() {
     const sortedOrders = orders.slice().sort(compareOrderDateDesc);
     const first = sortedOrders[0];
     const customer = customerForOrder(first);
-    const shipmentTypes = Array.from(new Set(orders.map(getShipmentType)));
+    const shipmentTypes = Array.from(new Set(orders.map(v105GrupSart)));
     const allReady = orders.length > 0 && orders.every((o) => o.status === "Sevkiyata Hazır");
     const hasHidden = orders.some(isShipmentHidden);
     const allHidden = orders.length > 0 && orders.every(isShipmentHidden);
@@ -6738,7 +6802,7 @@ function renderShipmentView() {
   const filtered = candidates.filter((g) => {
     const q = shipmentSearch.trim().toLocaleLowerCase("tr-TR");
     if (shipmentCityFilter && g.city !== shipmentCityFilter) return false;
-    if (shipmentTypeFilter && !g.orders.some((o) => getShipmentType(o) === shipmentTypeFilter)) return false;
+    if (shipmentTypeFilter && !g.orders.some((o) => v105FiltreUyar(o, shipmentTypeFilter))) return false;
     if (q) {
       const haystack = [
         g.customerName,
@@ -6790,7 +6854,7 @@ function renderShipmentView() {
   groups.innerHTML = Array.from(byCity.entries()).map(([city, shipmentGroups]) => `
     <div class="shipment-city-card">
       <div class="shipment-city-head"><span class="shipment-city-title">${escapeHtml(city)}</span><span class="shipment-city-count">${shipmentGroups.length} sevkiyat</span></div>
-      <table class="shipment-table"><thead><tr><th>Seç</th><th>Sipariş Tarihi</th><th>Müşteri / Telefon</th><th>Adres</th><th>Teslim</th><th>Nakliye Durumu</th><th>İşlem</th></tr></thead><tbody>
+      <table class="shipment-table"><thead><tr><th>Seç</th><th>Sipariş Tarihi</th><th>Müşteri / Telefon</th><th>Adres</th><th>Teslim</th><th>Teslim Şartları</th><th>İşlem</th></tr></thead><tbody>
       ${shipmentGroups.map((g)=>{
         const checked=isShipmentGroupSelected(g);
         const late=g.deliveryDate && g.deliveryDate < w.todayIso;
@@ -6929,7 +6993,7 @@ function renderDeliveryForm() {
             <th>Adres</th>
             <th>Teslim Tarihi</th>
             <th>Hazır Sipariş</th>
-            <th>Nakliye Durumu</th>
+            <th>Teslim Şartları</th>
             <th>İşlem</th>
           </tr>
         </thead>
@@ -7904,7 +7968,7 @@ async function v98Onay(id) {
   }
   const eski = new Map(); (esk.data || []).forEach((o) => { if (o.teklif_kalem && (!eski.has(o.teklif_kalem) || o.id > eski.get(o.teklif_kalem).id)) eski.set(o.teklif_kalem, o); });
   const uidSet = new Set(kal.map((k) => k.uid));
-  const cikan = Array.from(eski.values()).filter((o) => !uidSet.has(o.teklif_kalem) && o.status !== "Teslim Edildi" && o.status !== "İptal");
+  const cikan = Array.from(eski.values()).filter((o) => !uidSet.has(o.teklif_kalem) && o.status !== "Teslim Edildi" && o.status !== "İptal" && o.status !== "SSH");
   const bulunan = allCustomers.find((x) => v98TrAlt(x.name) === v98TrAlt(c.unvan));
   const custOpts = `<option value="">${bulunan ? "Kayıtlı müşteri: " + escapeHtml(bulunan.name) : "Yeni müşteri açılacak: " + escapeHtml(c.unvan || "")}</option>` +
     allCustomers.filter((x) => !bulunan || x.id !== bulunan.id).slice().sort((a, b) => String(a.name).localeCompare(String(b.name), "tr")).map((x) => `<option value="${x.id}">${escapeHtml(x.name)}</option>`).join("");
@@ -7955,7 +8019,7 @@ async function v98Onay(id) {
       const ords = (data && data.orders) || [];
       if (data && data.customer) { const cu = fromRow("customers", data.customer); upsertLocalStore("customers", cu); liveSend("customers", "INSERT", [data.customer]); }
       if (data && data.suppliers && data.suppliers.length) { upsertLocalStore("suppliers", data.suppliers.map((s) => fromRow("suppliers", s))); liveSend("suppliers", "INSERT", data.suppliers); }
-      const clean = ords.map((o) => { const { _foto, _yeni, _iptal, teklif_id, teklif_kalem, ...r } = o; return r; });
+      const clean = ords.map((o) => { const { _foto, _yeni, _iptal, teklif_kalem, ...r } = o; if (!v105Acik) delete r.teklif_id; return r; });
       upsertLocalStore("orders", clean.map((o) => fromRow("orders", o)));
       liveSend("orders", "UPDATE", clean);
       v98Gelen = v98Gelen.filter((g) => g.id !== id); v98Ciz();
@@ -8295,6 +8359,289 @@ function v103GeriYukle(id, tarih) {
   const box = document.getElementById("v103YedekListe");
   if (box) box.addEventListener("click", (e) => { const b = e.target.closest("[data-ygeri]"); if (b) v103GeriYukle(b.dataset.ygeri, b.dataset.ytarih); });
 })();
+/* ===== v105: SSH (Satış Sonrası Hizmet) + Montaj / Nakliye / Teslim Yeri =====
+   - Kurulum (pronto-ssh.sql) yoksa program eskisi gibi "Sevkiyat Tipi" ile çalışır.
+   - Trafik: açılışta 1 küçük kontrol; SSH Aç / Kapat birer istek. Yeni bilgiler sipariş satırıyla birlikte gelir.
+   - SSH durumu ve parça bağı yalnızca sunucu fonksiyonlarıyla değişir (veritabanı da ayrıca korur). */
+var v105Acik = false;
+var v105NoOnbellek = null;
+var V105_SADECE_SUNUCU = new Set(["teklifId", "teklif_id", "teklif_kalem", "teklifKalem", "ssh", "sshAnaId", "ssh_ana_id"]);
+const V105_TUR = ["Eksik parça", "Hasarlı", "Montaj sorunu", "Yanlış ürün", "Diğer"];
+const V105_PARCALI_TUR = ["Eksik parça", "Hasarlı", "Yanlış ürün"];
+const V105_SECIM = { montaj: { dahil: "Dahil", haric: "Hariç" }, nakliye: { dahil: "Dahil", haric: "Hariç" }, teslimYeri: { fabrika: "Fabrika", adres: "Adrese" } };
+const V105_ETIKET = {
+  tr: { montaj: { dahil: "Montaj Dahil", haric: "Montaj Hariç" }, nakliye: { dahil: "Nakliye Dahil", haric: "Nakliye Hariç" }, teslimYeri: { fabrika: "Fabrikadan Teslim", adres: "Adrese Teslim" } },
+  en: { montaj: { dahil: "Assembly included", haric: "Assembly excluded" }, nakliye: { dahil: "Shipping included", haric: "Shipping excluded" }, teslimYeri: { fabrika: "Ex-works", adres: "Delivered to address" } }
+};
+
+async function v105Algila() {
+  try { const { error } = await supa.from("orders").select("ssh_ana_id").limit(1); v105Acik = !error; } catch (_) { v105Acik = false; }
+  if (v105Acik && !/ssh_ana_id/.test(STORE_COLUMNS.orders)) STORE_COLUMNS.orders += ",teklif_id,montaj,nakliye,teslim_yeri,ssh,ssh_ana_id";
+  v105ArayuzKur();
+}
+function v105ArayuzKur() {
+  document.getElementById("f_sartWrap")?.classList.toggle("hidden-v105", !v105Acik);
+  document.getElementById("f_shipmentTypeWrap")?.classList.toggle("hidden-v105", v105Acik);
+  const sel = document.getElementById("shipmentTypeFilter");
+  if (sel && v105Acik) {
+    sel.innerHTML = [["", "Tüm Teslim Şartları"], ["nakliye:dahil", "Nakliye Dahil"], ["nakliye:haric", "Nakliye Hariç"], ["montaj:dahil", "Montaj Dahil"], ["montaj:haric", "Montaj Hariç"],
+      ["teslimYeri:adres", "Adrese Teslim"], ["teslimYeri:fabrika", "Fabrikadan Teslim"], ["belirsiz", "Belirtilmemiş"], ["ssh", "SSH Parça Siparişleri"]]
+      .map(([v, l]) => `<option value="${v}">${l}</option>`).join("");
+    shipmentTypeFilter = "";
+  }
+}
+
+/* ---------- teslim şartları ---------- */
+function v105Sart(v, k) { return V105_SECIM[k] && Object.prototype.hasOwnProperty.call(V105_SECIM[k], v) ? v : ""; }
+function v105SartParcalar(o, en) { const L = V105_ETIKET[en ? "en" : "tr"]; return ["montaj", "nakliye", "teslimYeri"].map((k) => L[k][v105Sart(o && o[k], k)]).filter(Boolean); }
+function v105EskiSevk(o) {
+  const m = String((o && o.description) || "").match(SHIPMENT_MARKER_RE); if (!m) return "";
+  const k = m[1].toUpperCase(); return k === "NAKLIYE" ? "Nakliye" : k === "SSH" ? "SSH" : "Ofischi Sevkiyat";
+}
+function v105SartMetni(o, { en = false, eski = true } = {}) {
+  const p = v105SartParcalar(o, en); if (p.length) return p.join(" · ");
+  if (en) return "Not specified";
+  const e = eski ? v105EskiSevk(o) : ""; return e ? `Belirtilmemiş (eski: ${e})` : "Belirtilmemiş";
+}
+function v105EskiSsh(o) { return v105Acik && !!o && !o.sshAnaId && /\[\[SEVKIYAT:SSH\]\]/i.test(String(o.description || "")); }
+function v105SshIlgili(o) { return !!o && (o.status === "SSH" || !!o.sshAnaId || v105EskiSsh(o)); }
+function v105GrupSart(o) { return !v105Acik ? getShipmentType(o) : v105SartMetni(o) + (o.sshAnaId ? " · SSH parça" : ""); }
+function v105FiltreUyar(o, f) {
+  if (!v105Acik) return getShipmentType(o) === f;
+  if (f === "ssh") return !!o.sshAnaId || v105EskiSsh(o);
+  if (f === "belirsiz") return !v105Sart(o.montaj, "montaj") && !v105Sart(o.nakliye, "nakliye") && !v105Sart(o.teslimYeri, "teslimYeri");
+  const [k, v] = String(f).split(":"); return !!V105_SECIM[k] && o[k] === v;
+}
+/* Tekliften gelen siparişin şartları Sipariş Takibi'nden gönderilmez (Teklif'ten gelir) */
+function v105AtlaAlan(store, obj, k) {
+  if (store !== "orders") return false;
+  if (V105_SADECE_SUNUCU.has(k)) return true;
+  return obj && obj.teklifId != null && (k === "montaj" || k === "nakliye" || k === "teslimYeri");
+}
+function v105FormSart() {
+  const v = (id, k) => v105Sart(document.getElementById(id)?.value, k) || null;
+  return { montaj: v("f_montaj", "montaj"), nakliye: v("f_nakliye", "nakliye"), teslimYeri: v("f_teslimYeri", "teslimYeri") };
+}
+function v105FormDoldur(order) {
+  v105ArayuzKur();
+  const st = document.getElementById("f_status"), not = document.getElementById("f_statusNot");
+  const ssh = !!order && order.status === "SSH";
+  if (st) st.disabled = ssh;
+  if (not) not.textContent = ssh ? 'Bu sipariş SSH\'de. Durum yalnızca "SSH Kapat" ile değişir.' : "";
+  if (!v105Acik) return;
+  const kilit = !!order && order.teklifId != null;
+  for (const [id, k] of [["f_montaj", "montaj"], ["f_nakliye", "nakliye"], ["f_teslimYeri", "teslimYeri"]]) {
+    const el = document.getElementById(id); if (!el) continue;
+    el.value = order ? v105Sart(order[k], k) : ""; el.disabled = kilit;
+  }
+  document.getElementById("f_sartKilit").textContent = kilit ? "· PRONTO Teklif'ten gelir, oradan değiştirin" : "";
+  const eski = order ? v105EskiSevk(order) : "";
+  document.getElementById("f_eskiSevk").textContent = eski ? `Eski sevkiyat tipi: ${eski}` : "";
+}
+
+/* ---------- numara ve rozet ---------- */
+function v105ParcaNo(o) {
+  if (!v105NoOnbellek) {
+    v105NoOnbellek = new Map(); const say = new Map();
+    allOrders.filter((x) => x && x.sshAnaId).sort((a, b) => a.id - b.id).forEach((x) => { const n = (say.get(x.sshAnaId) || 0) + 1; say.set(x.sshAnaId, n); v105NoOnbellek.set(x.id, n); });
+  }
+  return "PR-" + String(o.sshAnaId).padStart(5, "0") + "-SSH" + (v105NoOnbellek.get(o.id) || 1);
+}
+function v105Cip(o) {
+  if (!v105Acik || !o) return "";
+  if (o.sshAnaId) return `<span class="v105-chip" title="SSH parça siparişi">SSH parça</span>`;
+  if (v105EskiSsh(o)) return `<span class="v105-chip v105-chip--eski" title="Eski sistemde sevkiyat tipi SSH olarak girilmiş">Eski SSH</span>`;
+  return "";
+}
+function v105Gun(ts) { const d = new Date(ts); if (isNaN(d)) return ""; return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; }
+function v105GunEkle(iso, n) { const d = new Date(iso + "T12:00:00"); d.setDate(d.getDate() + n); return v105Gun(d); }
+
+/* ---------- detay penceresi ---------- */
+function v105KayitHtml(r) {
+  const p = r.parca_id ? allOrders.find((x) => x.id === Number(r.parca_id)) : null;
+  const durum = r.kapandi ? `Kapandı · ${formatDate(v105Gun(r.kapandi))}${r.otomatik ? " (parça teslim edildi)" : ""}` : "Açık";
+  return `<div class="v105-kayit"><b>#${escapeHtml(r.no)} · ${escapeHtml(r.tur)}</b> · ${formatDate(r.tarih)} <span class="status-badge ${r.kapandi ? "status-teslim" : "status-ssh"}">${escapeHtml(durum)}</span>
+    <div>${escapeHtml(r.aciklama)}</div>
+    ${r.parca ? `<div>Parça siparişi: ${p ? `<button type="button" class="v105-link" data-v105-ac="${p.id}">${escapeHtml(orderNo(p))}</button> · ${escapeHtml(p.product)} × ${escapeHtml(p.quantity)} — ${escapeHtml(p.status)}` : "—"}</div>` : ""}
+    ${r.kapanis_notu && !r.otomatik ? `<div class="v105-not">Çözüm: ${escapeHtml(r.kapanis_notu)}</div>` : ""}</div>`;
+}
+function v105DetayHtml(o) {
+  if (!v105Acik || !o) return "";
+  const eski = v105EskiSevk(o);
+  let h = `<div class="detail-item detail-item--wide"><span class="detail-label">Teslim Şartları</span><span class="detail-value">${escapeHtml(v105SartMetni(o, { eski: false }))}${o.teklifId != null ? ` <small class="v105-not">(PRONTO Teklif'ten)</small>` : ""}${eski ? `<div class="v105-not">Eski sevkiyat tipi: ${escapeHtml(eski)}</div>` : ""}</span></div>`;
+  if (o.sshAnaId) {
+    const ana = allOrders.find((x) => x.id === o.sshAnaId);
+    const k = ana && Array.isArray(ana.ssh) ? ana.ssh.find((r) => Number(r.parca_id) === o.id) : null;
+    h += `<div class="detail-item detail-item--wide v105-ssh"><h4>SSH Parça Siparişi</h4><div class="v105-kayit">Asıl sipariş: ${ana ? `<button type="button" class="v105-link" data-v105-ac="${ana.id}">${escapeHtml(orderNo(ana))}</button> · ${escapeHtml(ana.product)} — ${escapeHtml(ana.status)}` : escapeHtml("PR-" + String(o.sshAnaId).padStart(5, "0"))}${k ? `<div><b>${escapeHtml(k.tur)}</b>: ${escapeHtml(k.aciklama)}</div>` : ""}<div class="v105-not">Bu parça teslim edilince asıl siparişin SSH'si kendiliğinden kapanır.</div></div></div>`;
+  }
+  const kayitlar = Array.isArray(o.ssh) ? o.ssh : [];
+  if (kayitlar.length) h += `<div class="detail-item detail-item--wide v105-ssh"><h4>SSH Kayıtları (${kayitlar.length})</h4>${kayitlar.slice().reverse().map(v105KayitHtml).join("")}</div>`;
+  if (v105EskiSsh(o)) h += `<div class="detail-item detail-item--wide"><span class="v105-chip v105-chip--eski" style="margin-left:0">Eski SSH</span> <span class="v105-not">Bu kayıt eski sistemde sevkiyat tipi "SSH" olarak girilmiş.</span></div>`;
+  return h;
+}
+function v105DetayBagla(o) {
+  const ac = document.getElementById("v105SshAcBtn"), kp = document.getElementById("v105SshKapatBtn");
+  if (ac) { ac.classList.toggle("hidden-v105", !(v105Acik && o.status === "Teslim Edildi" && !o.sshAnaId)); ac.onclick = () => v105SshAc(o.id); }
+  if (kp) { kp.classList.toggle("hidden-v105", !(v105Acik && o.status === "SSH")); kp.onclick = () => v105SshKapat(o.id); }
+  document.getElementById("detailModalBody")?.querySelectorAll("[data-v105-ac]").forEach((b) => b.addEventListener("click", () => openDetailModal(Number(b.dataset.v105Ac))));
+}
+
+/* ---------- PDF notu ---------- */
+function v105PdfNot(o, en) {
+  if (!v105Acik || !o) return [];
+  if (o.sshAnaId) {
+    const ana = allOrders.find((x) => x.id === o.sshAnaId);
+    const k = ana && Array.isArray(ana.ssh) ? ana.ssh.find((r) => Number(r.parca_id) === o.id) : null;
+    return [{ note: { title: en ? "After-sales service part" : "SSH Parça Siparişi", text: `${en ? "Main order" : "Asıl sipariş"}: ${ana ? orderNo(ana) + " · " + (ana.product || "") : "PR-" + String(o.sshAnaId).padStart(5, "0")}${k ? `\n${k.tur}: ${k.aciklama}` : ""}` } }];
+  }
+  const k = o.status === "SSH" && Array.isArray(o.ssh) ? o.ssh[o.ssh.length - 1] : null;
+  return k ? [{ note: { title: en ? "After-sales service (open)" : "SSH (Açık)", text: `${k.tur} · ${formatDate(k.tarih)}\n${k.aciklama}` } }] : [];
+}
+
+/* ---------- sunucudan gelen satırları uygula ---------- */
+function v105Uygula(list) {
+  for (const x of list) if (x && x.row && x.row.id != null) upsertLocalStore(x.store, fromRow(x.store, x.row));
+  scheduleCacheSave();
+  try { refreshDatalists(true); } catch (_) {}
+  if (currentView === "orders") renderOrdersView();
+  else if (currentView === "shipment" && typeof renderShipmentView === "function") renderShipmentView();
+}
+/* Parça teslim edilince asıl sipariş sunucuda kapanır; canlı bildirim gelmezse 1 satır okunur */
+function v105ParcaTeslimKontrol(list) {
+  if (!v105Acik) return;
+  for (const o of list || []) {
+    if (!o || !o.sshAnaId || o.status !== "Teslim Edildi") continue;
+    const anaId = o.sshAnaId, ana = allOrders.find((x) => x.id === anaId);
+    if (!ana || ana.status !== "SSH") continue;
+    setTimeout(async () => {
+      const cur = allOrders.find((x) => x.id === anaId); if (!cur || cur.status !== "SSH") return;
+      const f = await v93FetchOrder(anaId); if (!f) return;
+      upsertLocalStore("orders", f); scheduleCacheSave();
+      if (currentView === "orders") renderOrdersView();
+      refreshVisibleStatusBadges(anaId);
+      if (currentDetailOrderId === anaId && !document.getElementById("detailModal")?.classList.contains("hidden")) openDetailModal(anaId);
+      if (f.status === "Teslim Edildi") showToast(`Parça teslim edildi: ${orderNo(f)} SSH'si kendiliğinden kapandı.`);
+    }, 1500);
+  }
+}
+
+/* ---------- SSH Aç ---------- */
+function v105SshAc(id) {
+  const a = allOrders.find((o) => o.id === id); if (!a) return;
+  if (!v105Acik) return showToast("SSH kurulumu (pronto-ssh.sql) henüz yapılmamış.");
+  if (a.status !== "Teslim Edildi" || a.sshAnaId) return showToast("SSH yalnızca teslim edilmiş asıl siparişte açılır.");
+  const fiyat = getOrderPricing(a), bugun = todayISO();
+  const sec = (eid, k, v) => `<select class="v98-in" id="${eid}">${[["", "Belirtilmemiş"], ...Object.entries(V105_SECIM[k])].map(([x, l]) => `<option value="${x}"${x === (v105Sart(v, k)) ? " selected" : ""}>${l}</option>`).join("")}</select>`;
+  const m = v98Ov(`<div class="modal-head"><h2>SSH Aç — ${escapeHtml(orderNo(a))}</h2><button class="icon-btn" data-x aria-label="Kapat">✕</button></div>
+    <div class="modal-body">
+      <div class="v98-s" style="margin:0 0 12px">${escapeHtml(a.customer)} · ${escapeHtml(a.product)} × ${escapeHtml(a.quantity)} · Teslim: ${formatDate(getDeliveredAt(a) || a.deliveryDate)}</div>
+      <div class="v98-grid">
+        <label><span class="v98-l">Sorun türü *</span><select class="v98-in" id="v105Tur">${V105_TUR.map((t) => `<option value="${t}">${t}</option>`).join("")}</select></label>
+        <label><span class="v98-l">Tarih *</span><input type="date" class="v98-in" id="v105Tarih" value="${bugun}" max="${bugun}"></label>
+      </div>
+      <label><span class="v98-l">Açıklama *</span><textarea class="v98-in" id="v105Aciklama" rows="3" maxlength="1000" placeholder="Sorunu kısaca yazın (ör. sol kapak eksik geldi)"></textarea></label>
+      <label class="v105-check"><input type="checkbox" id="v105Parca" checked> Parça gerekiyor — SSH parça siparişi açılsın</label>
+      <div class="v98-card" id="v105ParcaAlan">
+        <div class="v105-parca">
+          <label class="v105-genis"><span class="v98-l">Parça / ürün *</span><input class="v98-in" id="v105Urun" list="dl_order_products" maxlength="200" value="${escapeHtml(a.product || "")}"></label>
+          <label><span class="v98-l">Adet *</span><input type="number" class="v98-in" id="v105Adet" min="1" max="100000" step="1" value="1"></label>
+          <label><span class="v98-l">Tedarikçi *</span><input class="v98-in" id="v105Ted" list="dl_suppliers" maxlength="200" value="${escapeHtml(a.supplier || "")}"></label>
+          <label><span class="v98-l">Teslim tarihi *</span><input type="date" class="v98-in" id="v105Teslim" value="${v105GunEkle(bugun, 7)}" min="${bugun}"></label>
+          <label><span class="v98-l">Montaj</span>${sec("v105Mon", "montaj", a.montaj)}</label>
+          <label><span class="v98-l">Nakliye</span>${sec("v105Nak", "nakliye", a.nakliye)}</label>
+          <label><span class="v98-l">Teslim yeri</span>${sec("v105Yer", "teslimYeri", a.teslimYeri)}</label>
+          <div class="v105-genis v105-foto"><span class="v98-l">Parça fotoğrafı (isteğe bağlı)</span>
+            <div style="display:flex;gap:8px;align-items:center;margin-top:4px"><label class="btn btn-ghost" style="cursor:pointer">📷 Fotoğraf seç<input type="file" id="v105Foto" accept="image/png,image/jpeg,image/webp" style="display:none"></label><button type="button" class="btn btn-ghost hidden-v105" id="v105FotoSil">Kaldır</button></div>
+            <img id="v105FotoImg" class="hidden-v105" alt="Parça fotoğrafı"></div>
+        </div>
+        <div class="v105-not">Parça siparişi normal sipariş gibidir: Beklemede → Üretimde → Sevkiyata Hazır → Teslim Edildi yolunu izler, teslim edilince stoktan düşer. Parça teslim edilince bu SSH kendiliğinden kapanır.</div>
+      </div>
+      <div class="v98-warn hidden-v105" id="v105Hata"></div>
+    </div>
+    <div class="modal-foot"><button class="btn btn-ghost" data-x>Vazgeç</button><button class="btn btn-primary" id="v105Tamam">SSH Aç</button></div>`, true);
+  const $ = m.$; let elle = false, foto = null, fotoUrl = "";
+  const alan = () => $("#v105ParcaAlan").classList.toggle("hidden-v105", !$("#v105Parca").checked);
+  $("#v105Tur").addEventListener("change", () => { if (!elle) { $("#v105Parca").checked = V105_PARCALI_TUR.includes($("#v105Tur").value); alan(); } });
+  $("#v105Parca").addEventListener("change", () => { elle = true; alan(); });
+  const fotoTemizle = () => { if (fotoUrl) URL.revokeObjectURL(fotoUrl); fotoUrl = ""; foto = null; $("#v105FotoImg").classList.add("hidden-v105"); $("#v105FotoImg").removeAttribute("src"); $("#v105FotoSil").classList.add("hidden-v105"); };
+  $("#v105Foto").addEventListener("change", async (e) => {
+    const f = e.target.files && e.target.files[0]; e.target.value = ""; if (!f) return;
+    try { const b = await imageFileToJpegBlob(f); fotoTemizle(); foto = b; fotoUrl = URL.createObjectURL(b); $("#v105FotoImg").src = fotoUrl; $("#v105FotoImg").classList.remove("hidden-v105"); $("#v105FotoSil").classList.remove("hidden-v105"); }
+    catch (er) { showToast((er && er.message) || "Fotoğraf okunamadı."); }
+  });
+  $("#v105FotoSil").addEventListener("click", fotoTemizle);
+  m.ov.addEventListener("click", (e) => { if (e.target.closest("[data-x]")) fotoTemizle(); });
+  const hata = (t) => { const h = $("#v105Hata"); h.textContent = t; h.classList.toggle("hidden-v105", !t); if (t) h.scrollIntoView({ block: "nearest" }); };
+  $("#v105Tamam").addEventListener("click", async () => {
+    hata("");
+    const tur = $("#v105Tur").value, acik = sanitizeText($("#v105Aciklama").value, 1000), tarih = sanitizeDate($("#v105Tarih").value);
+    if (!V105_TUR.includes(tur)) return hata("Sorun türünü seçin.");
+    if (!acik) return hata("Sorunu kısaca yazın.");
+    if (!tarih || tarih > todayISO()) return hata("Geçerli bir tarih seçin (bugün veya öncesi).");
+    let parca = null;
+    if ($("#v105Parca").checked) {
+      const urun = sanitizeText($("#v105Urun").value, 200), adet = Number($("#v105Adet").value), ted = sanitizeText($("#v105Ted").value, 200), teslim = sanitizeDate($("#v105Teslim").value);
+      if (!urun) return hata("Parça / ürün adını yazın.");
+      if (!Number.isInteger(adet) || adet < 1 || adet > 100000) return hata("Adet 1 ile 100000 arasında tam sayı olmalı.");
+      if (!ted) return hata("Tedarikçi seçin.");
+      if (!teslim || teslim < tarih) return hata("Teslim tarihi SSH tarihinden önce olamaz.");
+      // Sipariş Takibi'nde fiyatlar gösterilmez (fiyat Teklif'te): parça siparişi fiyatsız açılır, KDV oranı asıl siparişten
+      const pricing = { salePrice: 0, currency: "TRY", rate: 1, vatIncluded: false, vatRate: Number.isFinite(Number(fiyat.vatRate)) ? Number(fiyat.vatRate) : VAT_RATE * 100, purchasePrice: 0 };
+      parca = { urun, adet: String(adet), tedarikci: ted, teslim, aciklama: withOrderMetadata(sanitizeText(`SSH ${orderNo(a)} · ${tur}: ${acik}`, MAX_NOTE_LEN), "", pricing, [], ""),
+        montaj: v105Sart($("#v105Mon").value, "montaj"), nakliye: v105Sart($("#v105Nak").value, "nakliye"), teslim_yeri: v105Sart($("#v105Yer").value, "teslimYeri") };
+    }
+    const btn = $("#v105Tamam"); btn.disabled = true; btn.textContent = "Açılıyor…";
+    try {
+      await throttleApi();
+      const { data, error } = await supa.rpc("pronto_ssh_ac", { p_id: a.id, p_tur: tur, p_aciklama: acik, p_tarih: tarih, p_parca: parca });
+      if (error) throw error;
+      v105Uygula([...(data.tedarikciler || []).map((r) => ({ store: "suppliers", row: r })), { store: "orders", row: data.parca }, { store: "orders", row: data.ana }]);
+      let fotoHata = false;
+      if (foto && data.parca && data.parca.id) { try { await uploadOrderPhoto(data.parca.id, foto); } catch (_) { fotoHata = true; } }
+      fotoTemizle(); m.close();
+      const p = data.parca ? allOrders.find((x) => x.id === data.parca.id) : null;
+      showToast(p ? `SSH açıldı. Parça siparişi ${orderNo(p)} oluşturuldu.${fotoHata ? " Fotoğraf yüklenemedi, parça siparişinden tekrar ekleyin." : ""}` : "SSH açıldı.");
+      openDetailModal(a.id);
+    } catch (er) {
+      hata("SSH açılamadı: " + ((er && er.message) || er));
+      btn.disabled = false; btn.textContent = "SSH Aç";
+    }
+  });
+  alan(); setTimeout(() => $("#v105Aciklama")?.focus(), 50);
+}
+
+/* ---------- SSH Kapat ---------- */
+function v105SshKapat(id) {
+  const a = allOrders.find((o) => o.id === id);
+  if (!a || a.status !== "SSH") return showToast("Bu siparişte açık SSH yok.");
+  const k = Array.isArray(a.ssh) && a.ssh.length ? a.ssh[a.ssh.length - 1] : null;
+  const p = k && k.parca_id ? allOrders.find((x) => x.id === Number(k.parca_id)) : null;
+  const m = v98Ov(`<div class="modal-head"><h2>SSH Kapat — ${escapeHtml(orderNo(a))}</h2><button class="icon-btn" data-x aria-label="Kapat">✕</button></div>
+    <div class="modal-body">
+      ${k ? `<div class="v98-card" style="margin-bottom:12px"><b>${escapeHtml(k.tur)}</b> · ${formatDate(k.tarih)}<div class="v98-s">${escapeHtml(k.aciklama)}</div></div>` : ""}
+      ${p && p.status !== "Teslim Edildi" ? `<div class="v98-warn">Parça siparişi <b>${escapeHtml(orderNo(p))}</b> henüz teslim edilmedi (${escapeHtml(p.status)}). Şimdi kapatırsanız parça siparişi kendi yolunda devam eder.</div>` : ""}
+      <label><span class="v98-l">Sorun nasıl çözüldü? *</span><textarea class="v98-in" id="v105Not" rows="3" maxlength="500" placeholder="ör. Montaj ekibi yerinde ayarladı"></textarea></label>
+      <div class="v98-warn hidden-v105" id="v105KHata" style="margin-top:10px"></div>
+    </div>
+    <div class="modal-foot"><button class="btn btn-ghost" data-x>Vazgeç</button><button class="btn btn-primary" id="v105KTamam">SSH'yi Kapat</button></div>`, false);
+  const hata = (t) => { const h = m.$("#v105KHata"); h.textContent = t; h.classList.toggle("hidden-v105", !t); };
+  m.$("#v105KTamam").addEventListener("click", async () => {
+    hata("");
+    const not = sanitizeText(m.$("#v105Not").value, 500);
+    if (!not) return hata("Sorunun nasıl çözüldüğünü kısaca yazın.");
+    const btn = m.$("#v105KTamam"); btn.disabled = true; btn.textContent = "Kapatılıyor…";
+    try {
+      await throttleApi();
+      const { data, error } = await supa.rpc("pronto_ssh_kapat", { p_id: a.id, p_not: not });
+      if (error) throw error;
+      v105Uygula([{ store: "orders", row: data }]);
+      m.close(); showToast("SSH kapatıldı. Sipariş tekrar Teslim Edildi.");
+      if (!document.getElementById("detailModal")?.classList.contains("hidden")) openDetailModal(a.id);
+    } catch (er) { hata("Kapatılamadı: " + ((er && er.message) || er)); btn.disabled = false; btn.textContent = "SSH'yi Kapat"; }
+  });
+  setTimeout(() => m.$("#v105Not")?.focus(), 50);
+}
+
 (function v98Kur() {
   const nav = document.querySelector(".sidebar-nav .nav-item[data-view='orders']");
   if (nav && !document.getElementById("v98GelenNav")) {
@@ -8343,12 +8690,12 @@ function v97ModelOrder(order, o, photo) {
   return {
     kind: "tek", docNo: orderNo(order), previewTitle: orderNo(order), filename: v90PdfFileName(order),
     contact: { type: "supplier", name: order.supplier },
-    kv: [[L.orderDate, formatDate(order.orderDate)], [L.delivery, formatDate(order.deliveryDate)], [L.status, v97Txt(en ? ({ "Beklemede": "Pending", "Üretimde": "In production", "Sevkiyata Hazır": "Ready to ship", "Teslim Edildi": "Delivered", "İptal": "Cancelled", "Gecikti": "Delayed" }[order.status] || order.status) : order.status)], [L.supplier, v97Txt(order.supplier)]],
+    kv: [[L.orderDate, formatDate(order.orderDate)], [L.delivery, formatDate(order.deliveryDate)], [L.status, v97Txt(en ? ({ "Beklemede": "Pending", "Üretimde": "In production", "Sevkiyata Hazır": "Ready to ship", "Teslim Edildi": "Delivered", "SSH": "After-sales service", "İptal": "Cancelled", "Gecikti": "Delayed" }[order.status] || order.status) : order.status)], [L.supplier, v97Txt(order.supplier)]].concat(v105Acik ? [[en ? "Terms" : "Teslim Şartları", v105SartMetni(order, { en })]] : []),
     sections: [
       { table: { cols: [{ h: L.photo, w: ps + 10 }, { h: L.product, w: "*" }, { h: L.color, w: "*" }, { h: L.qty, w: 50, align: "r" }],
         rows: [[{ img: photo || "", size: ps, alt: L.nophoto }, { text: v97Txt(order.product), bold: true }, v97Txt([order.colorCode, order.fabricCode].filter(Boolean).join(" / ")), { text: v97Txt(order.quantity), bold: true }]] } },
       { note: { title: L.desc, text: v97Txt(getOrderDescription(order)) } }
-    ]
+    ].concat(v105PdfNot(order, en))
   };
 }
 function v97ModelGroup(group, orders) {
@@ -8358,7 +8705,7 @@ function v97ModelGroup(group, orders) {
     kind: "grup", previewTitle: `${group.customer} · ${orders.length} kalem${sel ? ` · ${sel} seçili` : ""}`,
     filename: `Siparis-Grubu-${v91PdfSafeName(group.customer || "Grup")}${sel ? `-${sel}-Secili` : ""}.pdf`, customer: group.customer,
     title: `${group.customer} · ${orders.length} KALEM`, sub: `Sipariş Grubu · Hazırlanma tarihi: ${formatDate(todayISO())}`,
-    kv: [["Teslim", formatDate(orders[0]?.deliveryDate || group.deliveryDate)], ["Sip. Adet", String(total)]],
+    kv: [["Teslim", formatDate(orders[0]?.deliveryDate || group.deliveryDate)], ["Sip. Adet", String(total)]].concat(v105Acik ? [["Teslim Şartları", Array.from(new Set(orders.map((x) => v105SartMetni(x)))).join(" / ")]] : []),
     sections: [{ heading: "Sipariş Kalemleri", table: {
       cols: [{ h: "Sipariş No", w: "auto" }, { h: "Sipariş Tarihi", w: "auto" }, { h: "Müşteri", w: "*" }, { h: "Ürün", w: "*" }, { h: "Tedarikçi", w: "*" }, { h: "Renk/Kumaş", w: "*" }, { h: "Adet", w: "auto", align: "r" }, { h: "Teslim", w: "auto" }, { h: "Durum", w: "auto" }],
       rows: orders.map((x) => [{ text: orderNo(x), bold: true }, formatDate(x.orderDate), v97Txt(x.customer), { text: v97Txt(x.product), bold: true }, v97Txt(x.supplier), v97Txt(colorFabricText(x)), String(x.quantity ?? "-"), formatDate(x.deliveryDate), v97Txt(x.status)]) } }]
@@ -8406,7 +8753,7 @@ function v97ModelShipment(selected) {
     kind: "sevkiyat", previewTitle: "Sevkiyat", filename: "Sevkiyat.pdf",
     title: "SEVKİYAT LİSTESİ", sub: `Hazırlanma tarihi: ${formatDate(todayISO())} · ${selected.length} sevkiyat`,
     sections: Array.from(byCity.entries()).map(([city, gs]) => ({ heading: `${city} — ${gs.length} sevkiyat`, table: {
-      cols: [{ h: "Müşteri / Ünvan", w: "*" }, { h: "Telefon", w: "auto" }, { h: "Adres", w: "*" }, { h: "Teslim Tarihi", w: "auto" }, { h: "Nakliye Durumu", w: "auto" }],
+      cols: [{ h: "Müşteri / Ünvan", w: "*" }, { h: "Telefon", w: "auto" }, { h: "Adres", w: "*" }, { h: "Teslim Tarihi", w: "auto" }, { h: "Teslim Şartları", w: "auto" }],
       rows: gs.map((g) => [{ text: v97Txt(g.customerName), bold: true }, v97Txt(g.phone), v97Txt(g.address), g.deliveryDate ? formatDate(g.deliveryDate) : "-", v97Upper(g.shipmentType || "-")]) } }))
   };
 }
@@ -8416,7 +8763,7 @@ function v97ModelDelivery(group, orders, receiver, deliverer, note) {
   return {
     kind: "teslim", previewTitle: `Teslim Formu · ${customer}`, filename: `Teslim-Formu-${v91PdfSafeName(customer)}.pdf`,
     title: "TESLİM FORMU", sub: "OFİSCHİ BÜRO MOBİLYALARI · PRONTO",
-    meta: [["Müşteri", customer], ["Teslim Tarihi", formatDate(todayISO())], ["Telefon", v97Txt(group.phone || orders[0]?.phone)], ["Adres", v97Txt(group.address || orders[0]?.deliveryAddress), true]],
+    meta: [["Müşteri", customer], ["Teslim Tarihi", formatDate(todayISO())], ["Telefon", v97Txt(group.phone || orders[0]?.phone)]].concat(v105Acik ? [["Teslim Şartları", Array.from(new Set(orders.map((x) => v105SartMetni(x)))).join(" / ")]] : []).concat([["Adres", v97Txt(group.address || orders[0]?.deliveryAddress), true]]),
     sections: [
       { heading: "Teslim Edilen Ürünler", headRight: `${orders.length} KALEM · ${qty} ADET`, table: {
         cols: [{ h: "Sipariş No", w: "auto" }, { h: "Ürün", w: "*" }, { h: "Renk / Kumaş", w: "*" }, { h: "Adet", w: 50, align: "r" }],
