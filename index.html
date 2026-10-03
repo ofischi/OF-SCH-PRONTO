@@ -2251,6 +2251,14 @@ table.v98-t{width:100%;border-collapse:collapse;font-size:13px}
         <div id="importSummary" class="import-summary hidden"></div>
       </div>
 
+      <div class="settings-card" id="v103Yedek">
+        <h3>Yedekler (otomatik ve elle)</h3>
+        <p class="settings-note">Her Pazar gecesi otomatik yedek alınır (son 4 hafta saklanır); istediğin an elle de yedekleyebilirsin (son 5 saklanır). Fotoğraflar haftalık dış yedekte (GitHub) durur.
+          <b>Geri yükleme</b>: silinen ve değişen siparişler, müşteriler, tedarikçiler, ürünler, stok ve eşleştirmeler yedekteki haline döner; yedekten sonra eklenenler <b>silinmez</b>. Geri yüklemeden hemen önce şimdiki durum da yedeklenir. PRONTO Teklif verisi buradan değişmez.</p>
+        <div class="settings-actions"><button class="btn btn-primary" id="v103YedekAl" type="button">Şimdi yedekle</button></div>
+        <div id="v103YedekListe" style="margin-top:12px"></div>
+      </div>
+
       <div class="settings-card">
         <h3>Veri Yedekleme</h3>
         <p class="settings-note">Ortak veritabanındaki tüm kayıtları tek bir dosyaya indir. Geri yükleme, veritabanındaki mevcut kayıtların TAMAMINI silip dosyadakilerle değiştirir — ekipteki herkesi etkiler.</p>
@@ -3791,6 +3799,7 @@ function switchView(view) {
   if (view === "products") renderProductsView();
   if (view === "customers") renderCustomersView();
   if (view === "suppliers") renderSuppliersView();
+  if (view === "settings") v103YedekCiz();
   if (view === "reports") renderReportsView();
   if (view === "shipment") renderShipmentView();
   if (view === "delivery-form") renderDeliveryForm();
@@ -4509,6 +4518,16 @@ let pendingOrderPhotoObjectUrl = "";
 let orderPhotoRemoveRequested = false;
 let currentOrderPhotoUrl = "";
 
+/* v104: Fotoğraflar WEBP (%80) kaydedilir — netlik aynı, dosya ~%30 küçük.
+   Tarayıcı WEBP kaydedemiyorsa (bazı eski cihazlar PNG döndürür) bugünkü gibi JPEG %82 kaydedilir.
+   Dosya adı photo.jpg kalır: güvenlik kuralları, yedekleme ve eski fotoğraflar değişmez. */
+const V104_FOTO_TUR = ["image/webp", "image/jpeg"];
+async function v104FotoKodla(canvas) {
+  const webp = await new Promise((ok) => canvas.toBlob(ok, "image/webp", .80));
+  if (webp && webp.type === "image/webp" && webp.size > 0) return webp;
+  return await new Promise((ok) => canvas.toBlob(ok, "image/jpeg", .82));
+}
+
 function orderPhotoPath(orderId) {
   return `orders/${Number(orderId)}/photo.jpg`;
 }
@@ -4564,7 +4583,7 @@ async function imageFileToJpegBlob(file) {
     ctx.fillStyle = "#ffffff";
     ctx.fillRect(0, 0, width, height);
     ctx.drawImage(bitmap, 0, 0, width, height);
-    const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", .82));
+    const blob = await v104FotoKodla(canvas);
     if (!blob) throw new Error("Fotoğraf hazırlanamadı.");
     return blob;
   } finally {
@@ -4640,7 +4659,7 @@ async function uploadOrderPhoto(orderId, blob) {
   if (!supa || !orderId || !blob) return;
   const path = orderPhotoPath(orderId);
   const { error } = await supa.storage.from(ORDER_PHOTO_BUCKET).upload(path, blob, {
-    contentType: "image/jpeg",
+    contentType: V104_FOTO_TUR.includes(blob.type) ? blob.type : "image/jpeg",
     upsert: true,
     cacheControl: "3600"
   });
@@ -7963,7 +7982,7 @@ async function v98Jpeg(dataUrl) {
   const k = Math.min(1, 1600 / Math.max(img.naturalWidth, img.naturalHeight));
   const cv = document.createElement("canvas"); cv.width = Math.round(img.naturalWidth * k); cv.height = Math.round(img.naturalHeight * k);
   const g = cv.getContext("2d"); g.fillStyle = "#fff"; g.fillRect(0, 0, cv.width, cv.height); g.drawImage(img, 0, 0, cv.width, cv.height);
-  return await new Promise((ok) => cv.toBlob(ok, "image/jpeg", 0.82));
+  return await v104FotoKodla(cv);
 }
 function v98Reddet(row, parent) {
   const m = v98Ov(`<div class="modal-head"><h2>Teklif ${escapeHtml(row.teklif_no)} — Reddet</h2><button class="icon-btn" data-x aria-label="Kapat">✕</button></div>
@@ -8215,6 +8234,66 @@ function v101OnayBagla(ov) {
   });
   const ara = document.getElementById("v101EslAra");
   if (ara) ara.addEventListener("input", debounce((e) => { v101Ara = sanitizeSearchText(e.target.value, 100); v101Ciz(false); }, 160));
+})();
+
+/* ===== v103: Yedekler (program içi) — liste, elle yedek, şifre + "GERİ YÜKLE" onaylı geri yükleme =====
+   Trafik: Ayarlar açılınca 1 küçük liste isteği; yedek alma/geri yükleme sunucuda yapılır, veri bilgisayara inmez. */
+const V103_TUR = { otomatik: "Otomatik (haftalık)", elle: "Elle", oncesi: "Geri yükleme öncesi" };
+const V103_AD = { orders: "sipariş", customers: "müşteri", suppliers: "tedarikçi", products: "ürün", stock_movements: "stok hareketi", pronto_urun_tedarikci: "eşleştirme" };
+const v103Ozet = (oz) => Object.entries(oz || {}).filter(([k]) => V103_AD[k]).map(([k, n]) => `${n} ${V103_AD[k]}`).join(" · ") || "—";
+const v103Tarih = (iso) => { try { return new Date(iso).toLocaleString("tr-TR", { dateStyle: "short", timeStyle: "short" }); } catch (_) { return String(iso || ""); } };
+async function v103YedekCiz() {
+  const box = document.getElementById("v103YedekListe"); if (!box || !supa) return;
+  box.innerHTML = `<div class="settings-note">Yükleniyor…</div>`;
+  const { data, error } = await supa.rpc("pronto_yedek_liste");
+  if (error) { box.innerHTML = `<div class="settings-note">${/function|schema cache|does not exist/i.test(error.message || "") ? "Yedekleme kurulumu (pronto-yedek.sql) henüz yapılmamış." : "Yedek listesi alınamadı: " + escapeHtml(error.message || "")}</div>`; return; }
+  const L = Array.isArray(data) ? data : [];
+  box.innerHTML = L.length ? `<div class="v98-tw"><table class="v98-t"><thead><tr><th>Tarih</th><th>Tür</th><th>İçerik</th><th class="num">Boyut</th><th></th></tr></thead><tbody>${L.map((y) => `<tr><td><b>${escapeHtml(v103Tarih(y.tarih))}</b></td><td>${escapeHtml(V103_TUR[y.tur] || y.tur)}</td><td style="font-size:12.5px">${escapeHtml(v103Ozet(y.ozet))}</td><td class="num">${escapeHtml(Math.max(1, Math.round((Number(y.boyut) || 0) / 1024)))} KB</td><td class="num"><button type="button" class="btn btn-secondary v101-sm" data-ygeri="${escapeHtml(y.id)}" data-ytarih="${escapeHtml(v103Tarih(y.tarih))}">Geri yükle</button></td></tr>`).join("")}</tbody></table></div>`
+    : `<div class="settings-note">Henüz yedek yok. "Şimdi yedekle" ile ilk yedeği alın; otomatik yedek her Pazar gecesi alınır.</div>`;
+}
+async function v103YedekAl(btn) {
+  btn.disabled = true;
+  try {
+    const { data, error } = await supa.rpc("pronto_yedek_al");
+    if (error) throw error;
+    showToast("Yedek alındı: " + v103Ozet(data && data.ozet)); await v103YedekCiz();
+  } catch (er) { showToast("Yedek alınamadı: " + ((er && er.message) || er)); }
+  finally { btn.disabled = false; }
+}
+function v103GeriYukle(id, tarih) {
+  const m = v98Ov(`<div class="modal-head"><h2>Yedekten geri yükle</h2><button class="icon-btn" data-x aria-label="Kapat">✕</button></div>
+    <div class="modal-body"><p style="margin-top:0"><b>${escapeHtml(tarih)}</b> tarihli yedek geri yüklenecek. Silinen ve değişen kayıtlar bu yedekteki haline döner; yedekten sonra eklenenler <b>silinmez</b>. Şimdiki durum da önce yedeklenir. Tüm Sipariş Takibi bilgisayarlarını etkiler.</p>
+      <label class="v98-l">Programın giriş şifresi</label><input type="password" class="v98-in" id="v103Sifre" autocomplete="current-password" maxlength="72">
+      <label class="v98-l" style="display:block;margin-top:10px">Onaylamak için <b>GERİ YÜKLE</b> yazın</label><input class="v98-in" id="v103Onay" autocomplete="off" maxlength="20">
+      <div class="v98-s" id="v103Mesaj" style="color:#C0392B;min-height:18px;margin-top:6px"></div></div>
+    <div class="modal-foot"><button class="btn btn-ghost" data-x>Vazgeç</button><button class="btn btn-danger" data-ytamam disabled>Geri yükle</button></div>`);
+  m.ov.style.zIndex = "1200";
+  const sifre = m.$("#v103Sifre"), onay = m.$("#v103Onay"), bt = m.$("[data-ytamam]"), msg = m.$("#v103Mesaj");
+  const dogru = () => onay.value.trim().toLocaleUpperCase("tr-TR") === "GERİ YÜKLE" && sifre.value.length >= 6;
+  m.ov.addEventListener("input", () => { bt.disabled = !dogru(); msg.textContent = ""; });
+  setTimeout(() => sifre.focus(), 30);
+  bt.addEventListener("click", async () => {
+    if (!dogru()) return;
+    bt.disabled = true; bt.textContent = "Kontrol ediliyor…";
+    try {
+      const { error: ae } = await supa.auth.signInWithPassword({ email: PRONTO_CONFIG.sharedEmail, password: sifre.value });
+      if (ae) { msg.textContent = "Şifre yanlış."; sifre.value = ""; sifre.focus(); bt.textContent = "Geri yükle"; return; }
+      bt.textContent = "Geri yükleniyor…";
+      const { data, error } = await supa.rpc("pronto_yedek_geri", { p_id: Number(id), p_onay: "GERİ YÜKLE" });
+      if (error) throw error;
+      m.close();
+      const s = (data && data.sonuc) || {}; let ek = 0, gu = 0; Object.values(s).forEach((x) => { ek += Number(x && x.eklenen) || 0; gu += Number(x && x.guncellenen) || 0; });
+      showToast(`Geri yüklendi: ${ek} kayıt geri geldi, ${gu} kayıt düzeltildi.`);
+      try { v101Esl = null; } catch (_) {}
+      await catchUpAfterReconnect();
+      await v103YedekCiz();
+    } catch (er) { bt.disabled = false; bt.textContent = "Geri yükle"; msg.textContent = "Geri yüklenemedi: " + ((er && er.message) || er); }
+  });
+}
+(function v103Kur() {
+  const al = document.getElementById("v103YedekAl"); if (al) al.addEventListener("click", () => v103YedekAl(al));
+  const box = document.getElementById("v103YedekListe");
+  if (box) box.addEventListener("click", (e) => { const b = e.target.closest("[data-ygeri]"); if (b) v103GeriYukle(b.dataset.ygeri, b.dataset.ytarih); });
 })();
 (function v98Kur() {
   const nav = document.querySelector(".sidebar-nav .nav-item[data-view='orders']");
