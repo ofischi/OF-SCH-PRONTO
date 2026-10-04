@@ -1,10 +1,21 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-  <script>document.documentElement.removeAttribute("data-theme");</script>
+  <script>try{if(localStorage.getItem("prontoTheme")==="dark")document.documentElement.setAttribute("data-theme","dark");else document.documentElement.removeAttribute("data-theme");}catch(e){}</script>
 <meta charset="UTF-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https://*.supabase.co; connect-src 'self' https://*.supabase.co wss://*.supabase.co; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, viewport-fit=cover">
+<!-- telefona uygulama gibi kurulum (ana ekran simgesi, tam ekran) -->
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="64x64" href="ikon/ikon-64.png">
+<link rel="apple-touch-icon" sizes="180x180" href="ikon/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Sipariş">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="application-name" content="Sipariş">
+<meta name="theme-color" content="#F2F1EE" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#111214" media="(prefers-color-scheme: dark)">
 <title>PRONTO — Sipariş Takibi</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1814,6 +1825,143 @@ table.v98-t{width:100%;border-collapse:collapse;font-size:13px}
  table.v98-t td[data-l="Tedarikçi *"]::before{display:block;margin:4px 0 3px}
 }
 </style>
+
+<style id="v106-css">
+/* ===== v106: telefon/tablet cam alt bar (C · cam hap + ortada artı) ===== */
+.v106-bar, .v106-ov, .v106-kalem { display: none; }
+.stock-input.v106-eksi { color: #C62828; font-weight: 700; border-color: #E8A39B; }
+@media screen and (max-width:1024px) {
+  #hamburgerBtn, #v98MobBadge { display: none !important; }
+  .mobile-topbar {
+    position: static; background: transparent; border: 0; box-shadow: none;
+    -webkit-backdrop-filter: none; backdrop-filter: none;
+    padding: calc(14px + env(safe-area-inset-top)) 16px 2px; justify-content: flex-start;
+  }
+  .main-content { padding-bottom: calc(112px + env(safe-area-inset-bottom)) !important; }
+  .toast { top: calc(12px + env(safe-area-inset-top)); bottom: auto; max-width: calc(100vw - 32px); text-align: center; }
+  @keyframes toastIn { from { opacity: 0; transform: translate(-50%, -10px); } to { opacity: 1; transform: translate(-50%, 0); } }
+
+  .v106-bar {
+    display: flex; align-items: center; justify-content: space-around;
+    position: fixed; z-index: 90; left: 14px; right: 14px;
+    bottom: calc(12px + env(safe-area-inset-bottom)); height: 64px; padding: 0 6px;
+    border-radius: 24px; background: rgba(255,255,255,.74);
+    -webkit-backdrop-filter: blur(22px) saturate(180%); backdrop-filter: blur(22px) saturate(180%);
+    border: 1px solid rgba(255,255,255,.75);
+    box-shadow: 0 10px 30px rgba(20,20,30,.16), inset 0 1px 0 rgba(255,255,255,.7);
+    max-width: 560px; margin: 0 auto;
+  }
+  .v106-it {
+    flex: 1 1 0; min-width: 0; height: 52px; position: relative;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+    background: none; border: 0; border-radius: 16px; color: #6B6F76; font: inherit; font-size: 10.5px; font-weight: 600; cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .v106-it svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+  .v106-it span { white-space: nowrap; }
+  .v106-it.on { color: #17181A; }
+  .v106-it.on::after { content: ""; position: absolute; bottom: 3px; width: 5px; height: 5px; border-radius: 50%; background: #d99a14; }
+  .v106-fab {
+    flex: 0 0 58px; width: 58px; height: 58px; margin: -34px 4px 0; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center; cursor: pointer;
+    background: linear-gradient(160deg, #f3c84b, #d99a14); color: #17181A;
+    border: 4px solid rgba(255,255,255,.95); box-shadow: 0 8px 20px rgba(217,154,20,.45);
+    -webkit-tap-highlight-color: transparent;
+  }
+  .v106-fab svg { width: 26px; height: 26px; fill: none; stroke: currentColor; stroke-width: 2.6; stroke-linecap: round; }
+  .v106-fab:active, .v106-it:active { transform: scale(.94); }
+  .v106-rozet {
+    position: absolute; top: 2px; left: calc(50% + 6px); min-width: 18px; height: 18px; padding: 0 5px;
+    border-radius: 9px; background: #D93025; color: #fff; font-style: normal; font-size: 10.5px; font-weight: 700;
+    line-height: 18px; text-align: center; box-shadow: 0 0 0 2px rgba(255,255,255,.9);
+  }
+  .v106-rozet[hidden] { display: none; }
+
+  .v106-ov:not([hidden]) { display: block; position: fixed; inset: 0; z-index: 89; background: rgba(15,15,18,.22); }
+  .v106-sheet {
+    position: fixed; left: 14px; right: 14px; max-width: 560px; margin: 0 auto;
+    bottom: calc(88px + env(safe-area-inset-bottom)); padding: 8px 12px 14px; border-radius: 24px;
+    background: rgba(255,255,255,.88);
+    -webkit-backdrop-filter: blur(24px) saturate(180%); backdrop-filter: blur(24px) saturate(180%);
+    border: 1px solid rgba(255,255,255,.8); box-shadow: 0 18px 44px rgba(20,20,30,.22);
+    transform: translateY(12px); opacity: 0; transition: transform .22s ease, opacity .22s ease;
+  }
+  .v106-ov.acik .v106-sheet { transform: none; opacity: 1; }
+  .v106-tut { width: 38px; height: 4px; border-radius: 2px; background: rgba(0,0,0,.18); margin: 2px auto 10px; }
+  .v106-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+  .v106-tile {
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; min-height: 76px; padding: 8px 4px;
+    border-radius: 16px; border: 1px solid rgba(0,0,0,.06); background: rgba(255,255,255,.6); color: #2A2B2E;
+    font: inherit; font-size: 12px; font-weight: 600; cursor: pointer; text-align: center; -webkit-tap-highlight-color: transparent;
+  }
+  .v106-tile svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  .v106-tile.on { background: #FFF4D6; border-color: #EBC45A; color: #17181A; }
+
+  [data-theme="dark"] .v106-bar { background: rgba(30,31,34,.8); border-color: rgba(255,255,255,.12); box-shadow: 0 10px 30px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.06); }
+  [data-theme="dark"] .v106-it { color: #9A9EA6; }
+  [data-theme="dark"] .v106-it.on { color: #F2F2EE; }
+  [data-theme="dark"] .v106-fab { border-color: rgba(30,31,34,.95); }
+  [data-theme="dark"] .v106-rozet { box-shadow: 0 0 0 2px rgba(30,31,34,.95); }
+  [data-theme="dark"] .v106-ov:not([hidden]) { background: rgba(0,0,0,.4); }
+  [data-theme="dark"] .v106-sheet { background: rgba(30,31,34,.92); border-color: rgba(255,255,255,.12); }
+  [data-theme="dark"] .v106-tut { background: rgba(255,255,255,.22); }
+  [data-theme="dark"] .v106-tile { background: rgba(255,255,255,.06); border-color: rgba(255,255,255,.08); color: #E6E6E2; }
+  [data-theme="dark"] .v106-tile.on { background: rgba(217,154,20,.22); border-color: rgba(217,154,20,.55); color: #fff; }
+
+  .v106-kalem:not(.v106-gizli) { display: inline-flex; align-items: center; white-space: nowrap; font-weight: 700; }
+}
+@media print { .v106-bar, .v106-ov { display: none !important; } }
+/* Telefon: üstteki "+ Yeni Sipariş" gizli (alttaki artı aynı işi yapar); tablet/masaüstü/.exe değişmez */
+@media screen and (max-width:767px) { #newOrderBtn { display: none !important; } }
+</style>
+<style id="v107-css">
+/* ---------- v107: tema seçimi ---------- */
+.v107-seg{display:inline-flex;gap:4px;padding:4px;border-radius:12px;background:var(--color-surface-2, rgba(0,0,0,.05));border:1px solid var(--color-border)}
+.v107-sb{border:0;background:none;color:var(--color-text-muted);font:inherit;font-weight:700;padding:8px 18px;border-radius:9px;cursor:pointer}
+.v107-sb.on{background:var(--color-surface);color:var(--color-text);box-shadow:0 1px 3px rgba(0,0,0,.15)}
+.v107-tema-t{position:relative}
+.v107-tgl{position:absolute;top:8px;right:8px;width:28px;height:16px;border-radius:9px;background:rgba(0,0,0,.15)}
+.v107-tgl::after{content:"";position:absolute;top:2px;left:2px;width:12px;height:12px;border-radius:50%;background:#fff;transition:transform .2s}
+.v107-tema-t.on .v107-tgl{background:#d99a14}
+.v107-tema-t.on .v107-tgl::after{transform:translateX(12px)}
+[data-theme="dark"] .v107-tgl{background:rgba(255,255,255,.2)}
+/* ---------- v107: adım adım Yeni Sipariş (telefon/tablet) ---------- */
+.v107-p,.v107-f,.v107-ozet{display:none}
+#orderModal.v107 .v107-p{display:flex;gap:6px;padding:4px 18px 10px}
+#orderModal.v107 .v107-p button{flex:1;min-width:0;display:flex;flex-direction:column;gap:5px;background:none;border:0;padding:2px 0;font:700 10.5px inherit;font-family:inherit;color:var(--color-text-muted);text-align:left;cursor:pointer}
+#orderModal.v107 .v107-p button i{height:4px;border-radius:3px;background:var(--color-border)}
+#orderModal.v107 .v107-p button.on i{background:#d99a14}
+#orderModal.v107 .v107-p button.cur{color:var(--color-text)}
+#orderModal.v107 .v107-p button:disabled{opacity:.55;cursor:default}
+#orderModal.v107 .modal-foot{display:none!important}
+#orderModal.v107 .v107-f{display:flex;align-items:center;gap:8px;padding:10px 14px calc(10px + env(safe-area-inset-bottom));border-top:1px solid var(--color-border);background:var(--color-surface)}
+#orderModal.v107 .v107-f .btn{min-height:46px}
+#orderModal.v107 .v107-bos{flex:1}
+#orderModal.v107 .v107-go{min-width:120px;justify-content:center}
+#orderModal.v107 .order-entry-layout{display:block}
+#orderModal.v107 .form-grid{grid-template-columns:minmax(0,1fr)!important}
+#orderModal.v107[data-adim="1"] [data-v107]:not([data-v107="1"]),
+#orderModal.v107[data-adim="2"] [data-v107]:not([data-v107="2"]),
+#orderModal.v107[data-adim="3"] [data-v107]:not([data-v107="3"]),
+#orderModal.v107[data-adim="4"] .order-entry-left{display:none!important}
+#orderModal.v107:not([data-adim="3"]) .order-add-line-wrap,
+#orderModal.v107[data-adim="1"] #orderEntryRight,#orderModal.v107[data-adim="2"] #orderEntryRight{display:none!important}
+#orderModal.v107 .order-add-line-wrap{display:none!important}
+#orderModal.v107[data-adim="3"] #orderEntryRight{display:block!important;margin-top:18px}
+#orderModal.v107[data-adim="4"] #orderEntryRight{display:block!important}
+#orderModal.v107[data-adim="4"] .v107-ozet{display:flex;flex-direction:column;gap:8px;margin-bottom:14px}
+#orderModal.v107 .v107-kart{display:flex;flex-direction:column;gap:2px;width:100%;text-align:left;padding:12px 14px;border-radius:14px;border:1px solid var(--color-border);background:var(--color-surface);color:var(--color-text);font:inherit;cursor:pointer;position:relative}
+#orderModal.v107 .v107-kart b{font-size:14.5px;padding-right:60px}
+#orderModal.v107 .v107-kart span{font-size:12.5px;color:var(--color-text-muted)}
+#orderModal.v107 .v107-kart em{position:absolute;right:14px;top:12px;font-style:normal;font-size:12.5px;font-weight:700;color:#b07a06}
+#orderModal.v107 .v107-bad input,#orderModal.v107 .v107-bad textarea,#orderModal.v107 .v107-bad select{border-color:#e5484d!important;box-shadow:0 0 0 1px #e5484d}
+#orderModal.v107 .v107-bad>span{color:#e5484d}
+#orderModal.v107 .form-field input,#orderModal.v107 .form-field select,#orderModal.v107 .form-field textarea{font-size:16px;min-height:46px}
+#orderModal.v107 .modal{display:flex!important;flex-direction:column!important}
+#orderModal.v107 .modal-body{flex:1 1 auto!important;min-height:0!important;height:auto!important;max-height:none!important;overflow:auto!important}
+#orderModal.v107 .v107-f,#orderModal.v107 .v107-p,#orderModal.v107 .modal-head{flex:none!important}
+
+</style>
 </head>
 <body>
 
@@ -2247,6 +2395,15 @@ table.v98-t{width:100%;border-collapse:collapse;font-size:13px}
       </div>
 
       <div class="settings-card">
+        <h3>Görünüm</h3>
+        <p class="settings-note">Karanlık mod yalnızca bu cihazda geçerlidir; diğer kullanıcıları etkilemez.</p>
+        <div class="v107-seg" role="group" aria-label="Tema">
+          <button type="button" class="v107-sb" data-v107-tema="acik">Açık</button>
+          <button type="button" class="v107-sb" data-v107-tema="koyu">Koyu</button>
+        </div>
+      </div>
+
+      <div class="settings-card">
         <h3>Ortak Parola</h3>
         <p class="settings-note">Bu parolayı ekipteki herkes kullanır. Değiştirirsen herkesin yeniden giriş yapması gerekir — yeni parolayı ekibe bildirmeyi unutma.</p>
         <form id="passwordForm" class="settings-form">
@@ -2282,19 +2439,10 @@ table.v98-t{width:100%;border-collapse:collapse;font-size:13px}
 
       <div class="settings-card">
         <h3>Veri Yedekleme</h3>
-        <p class="settings-note">Ortak veritabanındaki tüm kayıtları tek bir dosyaya indir. Geri yükleme, veritabanındaki mevcut kayıtların TAMAMINI silip dosyadakilerle değiştirir — ekipteki herkesi etkiler.</p>
+        <p class="settings-note">Ortak veritabanındaki tüm kayıtları tek bir dosyaya indir (bilgisayarınızda saklamak için). Geri dönmek gerekirse yukarıdaki <b>Otomatik Yedekler</b> listesini kullanın; o yöntem hiçbir kaydı silmez.</p>
         <div class="settings-actions">
           <button class="btn btn-secondary" id="backupBtn">Verileri Yedekle (.json)</button>
-          <label class="btn btn-secondary" for="restoreInput" style="cursor:pointer;">Yedekten Geri Yükle
-            <input type="file" id="restoreInput" accept="application/json" style="display:none;">
-          </label>
         </div>
-      </div>
-
-      <div class="settings-card settings-card--danger">
-        <h3>Tehlikeli Bölge</h3>
-        <p class="settings-note">Bu işlem ORTAK veritabanındaki tüm kayıtları kalıcı olarak siler — ekipteki herkes için. Geri alınamaz.</p>
-        <button class="btn btn-danger" id="resetAllBtn">Tüm Verileri Sıfırla</button>
       </div>
     </section>
 
@@ -2440,6 +2588,7 @@ table.v98-t{width:100%;border-collapse:collapse;font-size:13px}
     </form>
     <div class="modal-foot">
       <button type="button" class="btn btn-secondary v96-add-foot" id="orderAddLineFootBtn">+ Ekle</button>
+      <button type="button" class="btn btn-ghost v106-kalem v106-gizli" id="v106KalemBtn">0 kalem ↓</button>
       <button class="btn btn-ghost" id="orderCancelBtn">İptal</button>
       <button type="button" class="btn btn-primary" id="orderSaveBtn">Siparişleri Kaydet</button>
     </div>
@@ -3665,11 +3814,17 @@ function registerFailedLogin() {
 function clearFailedLogins() { setLoginState({ fails: 0, lockedUntil: 0 }); }
 
 /* =======================================================
-   TEMA — SADECE AYDINLIK MOD
+   TEMA — açık / koyu (seçim yalnızca bu cihazda saklanır)
    ======================================================= */
+function v107Koyu() { return document.documentElement.getAttribute("data-theme") === "dark"; }
+function v107TemaUygula(koyu) {
+  if (koyu) document.documentElement.setAttribute("data-theme", "dark"); else document.documentElement.removeAttribute("data-theme");
+  try { localStorage.setItem("prontoTheme", koyu ? "dark" : "light"); } catch (_) {}
+  document.querySelectorAll("[data-v107-tema]").forEach((b) => { const k = b.dataset.v107Tema; if (k === "dugme") b.classList.toggle("on", koyu); else b.classList.toggle("on", (k === "koyu") === koyu); b.setAttribute("aria-pressed", String(k === "dugme" ? koyu : (k === "koyu") === koyu)); });
+}
 function initLightMode() {
-  document.documentElement.removeAttribute("data-theme");
-  localStorage.setItem("prontoTheme", "light");
+  let koyu = false; try { koyu = localStorage.getItem("prontoTheme") === "dark"; } catch (_) {}
+  v107TemaUygula(koyu);
 }
 
 /* =======================================================
@@ -3840,6 +3995,7 @@ function switchView(view) {
   });
   document.getElementById("sidebar").classList.remove("open");
   document.getElementById("sidebarOverlay").classList.remove("open");
+  v106BarAktif();
   if (view === "products") renderProductsView();
   if (view === "customers") renderCustomersView();
   if (view === "suppliers") renderSuppliersView();
@@ -3916,12 +4072,12 @@ function getFilteredOrders() {
   if (currentDateTo) list = list.filter((o) => o.orderDate && o.orderDate <= currentDateTo);
 
   if (currentSearch.trim()) {
-    const q = sanitizeText(currentSearch, 100).toLocaleLowerCase("tr-TR");
+    const q = v106Ara(sanitizeText(currentSearch, 100));
     list = list.filter((o) =>
-      (o.customer || "").toLocaleLowerCase("tr").includes(q) ||
-      (o.product || "").toLocaleLowerCase("tr").includes(q) ||
-      (o.supplier || "").toLocaleLowerCase("tr").includes(q) ||
-      orderNo(o).toLocaleLowerCase("tr").includes(q)
+      v106Ara(o.customer).includes(q) ||
+      v106Ara(o.product).includes(q) ||
+      v106Ara(o.supplier).includes(q) ||
+      v106Ara(orderNo(o)).includes(q)
     );
   }
   return list;
@@ -3990,6 +4146,8 @@ async function updateOrderStatus(id, status) {
   if (!order || order.status === status) return;
   if (status === "SSH") { if (order.status === "Teslim Edildi" && !order.sshAnaId) v105SshAc(id); else showToast("SSH yalnızca teslim edilmiş siparişte açılır."); return; }
   if (order.status === "SSH") { if (status === "Teslim Edildi") v105SshKapat(id); else showToast("Bu sipariş SSH'de. Önce SSH'yi kapatın."); return; }
+  if (status === "Teslim Edildi" && !(await v106StokOnay([order]))) return;
+  if (order.status === status || !allOrders.includes(order)) return;
 
   const oldStatus = order.status;
   const orderSnapshot = { ...order };
@@ -4008,7 +4166,7 @@ async function updateOrderStatus(id, status) {
     if (becameDelivered && !order.stockDeducted) {
       const before = product.stock;
       const qty = Number(order.quantity) || 0;
-      product.stock = Math.max(0, before - qty);
+      product.stock = before - qty;
       order.stockDeducted = true;
       order.stockDeductedQty = before - product.stock;
       stockMovement = { productId: product.id, productName: product.name, delta: product.stock - before, resultingStock: product.stock, type: "delivery", note: `Sipariş ${orderNo(order)} teslim edildi`, supplier: "", date: order.deliveryDate || todayISO(), createdAt: new Date().toISOString() };
@@ -4931,6 +5089,7 @@ function clearOrderLineFields() {
 }
 
 function renderOrderDraftItems() {
+  queueMicrotask(v106KalemSay);
   const list = document.getElementById("orderCartList");
   const count = document.getElementById("orderCartCount");
   if (!list || !count) return;
@@ -5035,7 +5194,10 @@ async function saveOrderDraftBatch() {
   if(items.some(x=>(Number(x.purchasePrice)||0)>(Number(x.salePrice)||0) && Number(x.salePrice)>0)) warningParts.push("bazı kalemlerde tedarikçi alış fiyatı satış fiyatından yüksek");
   if(items.some(x=>allOrders.some(o=>normName(o.customer)===normName(x.customer)&&normName(o.product)===normName(x.product)&&String(o.deliveryDate||"")===String(x.deliveryDate||"")&&o.status!=="İptal"))) warningParts.push("bazı kalemlerde aynı müşteri + ürün + teslim tarihiyle mevcut sipariş var");
   const message = warningParts.length ? `Dikkat: ${warningParts.join(" ve ")}. Yine de ${items.length} sipariş kalemini kaydetmek istiyor musunuz?` : `${customer} için ${items.length} sipariş kalemi kaydedilecek. Onaylıyor musunuz?`;
-  showConfirm(message, async ()=>{ await performSaveOrderDraftBatch(items); });
+  showConfirm(message, async ()=>{
+    if (!(await v106StokOnay(items.filter((x) => x.status === "Teslim Edildi")))) return;
+    await performSaveOrderDraftBatch(items);
+  });
 }
 
 async function performSaveOrderDraftBatch(items) {
@@ -5129,6 +5291,8 @@ function openOrderModal(id) {
   modal.classList.remove("hidden");
   orderFormDirty = false;
   renderOrderPriceSummary();
+  v106KalemSay();
+  v107Ac(isNewOrder);
   if (order) loadOrderPhotoIntoForm(order.id);
 }
 
@@ -5202,6 +5366,8 @@ async function saveOrderFromForm(allowWarnings = false, allowConflict = false) {
     }
   }
 
+  if (orderSaveInProgress) return;
+  if (order.status === "Teslim Edildi" && !(oldOrder && oldOrder.status === "Teslim Edildi") && !(await v106StokOnay([{ ...order, stockDeducted: oldOrder ? oldOrder.stockDeducted : false }]))) return;
   if (orderSaveInProgress) return;
   orderSaveInProgress = true;
   const saveBtn = document.getElementById("orderSaveBtn");
@@ -5493,6 +5659,8 @@ function closeDetailModal() {
 function confirmMarkDelivered(id) {
   showConfirm("Bu sipariş teslim edildi olarak işaretlensin mi?", async () => {
     const order = allOrders.find((o) => o.id === id);
+    if (!order || order.status === "Teslim Edildi") return;
+    if (!(await v106StokOnay([order]))) return;
     const oldStatus = order.status;
     order.status = "Teslim Edildi";
     const p=getOrderPricing(order); order.description=withOrderMetadata(getOrderDescription(order),getShipmentType(order),p,getOrderConditions(order),todayISO());
@@ -5744,6 +5912,7 @@ function bindOrderEvents() {
       closeConfirmModal();
       const orders = ids.map((id) => allOrders.find((o) => o.id === id)).filter(Boolean);
       if (!orders.length) return;
+      if (newStatus === "Teslim Edildi" && !(await v106StokOnay(orders.filter((o) => o.status !== "Teslim Edildi" && o.status !== "SSH")))) return;
 
       const productMap = new Map(allProducts.map((p) => [normName(p.name), p]));
       const changedProducts = new Map();
@@ -5760,7 +5929,7 @@ function bindOrderEvents() {
         if (newStatus === "Teslim Edildi" && oldStatus !== "Teslim Edildi" && product && typeof product.stock === "number" && !order.stockDeducted) {
           const before = product.stock;
           const qty = Number(order.quantity) || 0;
-          product.stock = Math.max(0, before - qty);
+          product.stock = before - qty;
           order.stockDeducted = true;
           order.stockDeductedQty = before - product.stock;
           changedProducts.set(product.id, product);
@@ -6275,9 +6444,9 @@ function bindEntityEvents() {
    ÜRÜNLER — RENDER
    ======================================================= */
 function renderProductsView() {
-  const q = productSearch.trim().toLocaleLowerCase("tr");
+  const q = v106Ara(productSearch);
   let list = activeProductsList().slice().sort((a, b) => b.id - a.id);
-  if (q) list = list.filter((p) => (p.name || "").toLocaleLowerCase("tr").includes(q) || (p.category || "").toLocaleLowerCase("tr").includes(q));
+  if (q) list = list.filter((p) => v106Ara(p.name).includes(q) || v106Ara(p.category).includes(q));
 
   const empty = document.getElementById("productsEmptyState");
   if (list.length === 0) {
@@ -6346,9 +6515,9 @@ function reservedQtyForProduct(name) {
 }
 
 function renderStockView() {
-  const q = stockSearch.trim().toLocaleLowerCase("tr");
+  const q = v106Ara(stockSearch);
   let list = activeProductsList().slice().sort((a, b) => (a.name || "").localeCompare(b.name || "", "tr"));
-  if (q) list = list.filter((p) => (p.name || "").toLocaleLowerCase("tr").includes(q) || (p.category || "").toLocaleLowerCase("tr").includes(q));
+  if (q) list = list.filter((p) => v106Ara(p.name).includes(q) || v106Ara(p.category).includes(q));
 
   // Özet kartlar (tüm ürünler üzerinden, aramadan bağımsız)
   let trackedCount = 0, totalReserved = 0;
@@ -6381,7 +6550,7 @@ function renderStockView() {
     return `
     <div class="stock-control">
       <button class="stock-adj" data-id="${p.id}" data-delta="-1" ${atZero ? "disabled" : ""}>−</button>
-      <input type="number" class="stock-input" min="0" data-id="${p.id}" value="${typeof p.stock === "number" ? p.stock : ""}" placeholder="-">
+      <input type="number" class="stock-input${typeof p.stock === "number" && p.stock < 0 ? " v106-eksi" : ""}" data-id="${p.id}" value="${typeof p.stock === "number" ? p.stock : ""}" placeholder="-"${typeof p.stock === "number" && p.stock < 0 ? ` title="${-p.stock} adet teslim edildi ama stokta yoktu"` : ""}>
       <button class="stock-adj" data-id="${p.id}" data-delta="1">+</button>
     </div>
   `;
@@ -6549,16 +6718,16 @@ function bindStockEvents() {
    MÜŞTERİLER — RENDER
    ======================================================= */
 function renderCustomersView() {
-  const q = customerSearch.trim().toLocaleLowerCase("tr");
+  const q = v106Ara(customerSearch);
   let list = allCustomers.slice();
   if (customerSort === "az") list.sort((a, b) => (a.name || "").localeCompare(b.name || "", "tr") || a.id - b.id);
   else if (customerSort === "za") list.sort((a, b) => (b.name || "").localeCompare(a.name || "", "tr") || b.id - a.id);
   else if (customerSort === "old") list.sort((a, b) => a.id - b.id);
   else list.sort((a, b) => b.id - a.id);
   if (q) list = list.filter((c) =>
-    (c.name || "").toLocaleLowerCase("tr").includes(q) ||
-    (c.phone || "").toLocaleLowerCase("tr").includes(q) ||
-    (c.email || "").toLocaleLowerCase("tr").includes(q)
+    v106Ara(c.name).includes(q) ||
+    v106Ara(c.phone).includes(q) ||
+    v106Ara(c.email).includes(q)
   );
 
   const empty = document.getElementById("customersEmptyState");
@@ -6619,16 +6788,16 @@ function renderCustomersView() {
    TEDARİKÇİLER — RENDER
    ======================================================= */
 function renderSuppliersView() {
-  const q = supplierSearch.trim().toLocaleLowerCase("tr");
+  const q = v106Ara(supplierSearch);
   let list = allSuppliers.slice();
   if (supplierSort === "az") list.sort((a, b) => (a.name || "").localeCompare(b.name || "", "tr") || a.id - b.id);
   else if (supplierSort === "za") list.sort((a, b) => (b.name || "").localeCompare(a.name || "", "tr") || b.id - a.id);
   else if (supplierSort === "old") list.sort((a, b) => a.id - b.id);
   else list.sort((a, b) => b.id - a.id);
   if (q) list = list.filter((s) =>
-    (s.name || "").toLocaleLowerCase("tr").includes(q) ||
-    (s.phone || "").toLocaleLowerCase("tr").includes(q) ||
-    (s.email || "").toLocaleLowerCase("tr").includes(q)
+    v106Ara(s.name).includes(q) ||
+    v106Ara(s.phone).includes(q) ||
+    v106Ara(s.email).includes(q)
   );
 
   const empty = document.getElementById("suppliersEmptyState");
@@ -6800,7 +6969,7 @@ function renderShipmentView() {
   }
 
   const filtered = candidates.filter((g) => {
-    const q = shipmentSearch.trim().toLocaleLowerCase("tr-TR");
+    const q = v106Ara(shipmentSearch);
     if (shipmentCityFilter && g.city !== shipmentCityFilter) return false;
     if (shipmentTypeFilter && !g.orders.some((o) => v105FiltreUyar(o, shipmentTypeFilter))) return false;
     if (q) {
@@ -6810,8 +6979,10 @@ function renderShipmentView() {
         g.address,
         g.city,
         g.shipmentType,
-        formatDate(g.deliveryDate)
-      ].map((v) => String(v || "").toLocaleLowerCase("tr-TR"));
+        formatDate(g.deliveryDate),
+        ...g.orders.map((o) => o.product),
+        ...g.orders.map((o) => orderNo(o))
+      ].map((v) => v106Ara(v));
       if (!haystack.some((v) => v.includes(q))) return false;
     }
     return true;
@@ -7413,7 +7584,7 @@ async function importOrdersFromExcel(file) {
     ]);
     await reloadAll();
     for (const o of allOrders.filter((x) => x.status === "Teslim Edildi" && !x.stockDeducted && parsedOrders.some((p) => v93Key(p) === v93Key(x)))) {
-      try { await v93DeductNewDelivered(o); } catch (e) { console.warn("Stok düşülemedi:", e); }
+      try { await v93DeductNewDelivered(o, false); } catch (e) { console.warn("Stok düşülemedi:", e); }
     }
     closeAllModals();
     renderOrdersView(); renderProductsView(); renderStockView(); renderCustomersView(); renderSuppliersView(); renderReportsView();
@@ -7501,56 +7672,6 @@ function bindSettingsEvents() {
     showToast("Yedek indirildi.");
   });
 
-  document.getElementById("restoreInput").addEventListener("change", (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    if (file.size > 25 * 1024 * 1024) { showToast("Yedek dosyası 25 MB'dan küçük olmalı."); e.target.value = ""; return; }
-    const reader = new FileReader();
-    reader.onload = () => {
-      let data;
-      try {
-        if (typeof reader.result !== "string" || reader.result.length > 25 * 1024 * 1024) throw new Error("too-large");
-        data = JSON.parse(reader.result);
-      } catch (err) {
-        showToast("Dosya okunamadı, geçerli bir yedek dosyası seç.");
-        return;
-      }
-      showConfirm("Yedek geri yüklenirse mevcut tüm veriler bu dosyadaki verilerle değiştirilecek. Devam edilsin mi?", async () => {
-        await dbClear("orders"); await dbClear("products"); await dbClear("customers"); await dbClear("suppliers"); await dbClear("stockMovements");
-        for (const o of (Array.isArray(data.orders) ? data.orders : [])) {
-          const rec = sanitizeOrderRecord(o); if (rec) await dbAdd("orders", rec);
-        }
-        for (const p of (Array.isArray(data.products) ? data.products : [])) {
-          const rec = sanitizeProductRecord(p); if (rec) await dbAdd("products", rec);
-        }
-        for (const cu of (Array.isArray(data.customers) ? data.customers : [])) {
-          const rec = sanitizePersonRecord(cu); if (rec) await dbAdd("customers", rec);
-        }
-        for (const s of (Array.isArray(data.suppliers) ? data.suppliers : [])) {
-          const rec = sanitizePersonRecord(s); if (rec) await dbAdd("suppliers", rec);
-        }
-        for (const m of (Array.isArray(data.stockMovements) ? data.stockMovements : [])) {
-          const rec = sanitizeMovementRecord(m); if (rec) await dbAdd("stockMovements", rec);
-        }
-        await reloadAll();
-        closeAllModals();
-        renderOrdersView(); renderProductsView(); renderStockView(); renderCustomersView(); renderSuppliersView(); renderReportsView();
-        showToast("Yedek geri yüklendi.");
-      });
-    };
-    reader.readAsText(file);
-    e.target.value = "";
-  });
-
-  document.getElementById("resetAllBtn").addEventListener("click", () => {
-    showConfirm("TÜM veriler (siparişler, ürünler, müşteriler, tedarikçiler, stok hareketleri) kalıcı olarak silinecek. Bu işlem geri alınamaz. Emin misin?", async () => {
-      await dbClear("orders"); await dbClear("products"); await dbClear("customers"); await dbClear("suppliers"); await dbClear("stockMovements");
-      await reloadAll();
-      closeAllModals();
-      renderOrdersView(); renderProductsView(); renderStockView(); renderCustomersView(); renderSuppliersView(); renderReportsView();
-      showToast("Tüm veriler sıfırlandı.");
-    });
-  });
 }
 
 /* =======================================================
@@ -7685,13 +7806,20 @@ document.addEventListener("DOMContentLoaded", () => {
 /* 2) Stok, veritabanında tek adımda değişir (iki bilgisayar aynı anda yazsa da ikisi sayılır).
    SQL çalıştırılmamışsa yalnızca stok alanını yazan eski yönteme düşer. */
 let v93RpcOk = null;
-async function v93StockAdjust(product, delta, localBefore) {
+let v106EksiYok = false;   // pronto-duzeltme.sql henüz çalıştırılmadıysa eski (0'da duran) yönteme döner
+async function v93StockAdjust(product, delta, localBefore, eksi = true) {
   delta = Number(delta) || 0;
   const base = Number.isFinite(Number(localBefore)) ? Number(localBefore) : (typeof product.stock === "number" ? product.stock : 0);
   if (!delta) return { before: base, after: base };
   if (v93RpcOk !== false) {
     await throttleApi();
-    const { data, error } = await supa.rpc("pronto_stock_adjust", { p_product_id: product.id, p_delta: delta });
+    const arg = { p_product_id: product.id, p_delta: delta };
+    if (eksi && !v106EksiYok) arg.p_eksi = true;
+    let { data, error } = await supa.rpc("pronto_stock_adjust", arg);
+    if (error && arg.p_eksi && /PGRST202|p_eksi|Could not find the function/i.test(String((error.code || "") + " " + (error.message || "")))) {
+      v106EksiYok = true; delete arg.p_eksi;
+      ({ data, error } = await supa.rpc("pronto_stock_adjust", arg));
+    }
     if (!error && data) {
       v93RpcOk = true;
       const before = Number(data.before_stock), after = Number(data.after_stock);
@@ -7703,19 +7831,19 @@ async function v93StockAdjust(product, delta, localBefore) {
     if (!/PGRST202|42883|pronto_stock_adjust|Could not find the function/i.test(msg)) dbFail("stok güncelleme", error);
     v93RpcOk = false;
   }
-  const after = Math.max(0, base + delta);
+  const after = (eksi && !v106EksiYok) ? base + delta : Math.max(0, base + delta);
   product.stock = after;
   await dbPut("products", { id: product.id, stock: after });
   return { before: base, after };
 }
 function v93NoStock(p) { const { stock, ...rest } = p; return rest; }
 /* 5) "Teslim Edildi" olarak açılan siparişte stok düşer */
-async function v93DeductNewDelivered(order) {
+async function v93DeductNewDelivered(order, eksi = true) {
   if (!order || order.status !== "Teslim Edildi" || order.stockDeducted) return;
   const product = allProducts.find((p) => normName(p.name) === normName(order.product));
   if (!product || typeof product.stock !== "number") return;
   const qty = Number(order.quantity) || 0; if (!qty) return;
-  const r = await v93StockAdjust(product, -qty, product.stock);
+  const r = await v93StockAdjust(product, -qty, product.stock, eksi);
   order.stockDeducted = true; order.stockDeductedQty = r.before - r.after;
   await dbPut("orders", { id: order.id, stockDeducted: true, stockDeductedQty: order.stockDeductedQty });
   await logStockMovement(product, r.after - r.before, "delivery", `Sipariş ${orderNo(order)} teslim edildi`, "", order.deliveryDate);
@@ -7887,6 +8015,7 @@ function v98Ciz() {
   const nav = document.getElementById("v98GelenNav");
   if (nav) { nav.style.display = v98Aktif ? "" : "none"; const b = nav.querySelector(".v98-badge"); b.textContent = n; b.style.display = n ? "" : "none"; }
   const mb = document.getElementById("v98MobBadge"); if (mb) { mb.textContent = n; mb.style.display = n ? "" : "none"; }
+  v106Rozet();
   const ban = document.getElementById("v98Banner");
   if (ban) { ban.style.display = n ? "" : "none"; const t = ban.querySelector("[data-n]"); if (t) t.textContent = n === 1 ? "PRONTO Teklif'ten 1 sipariş onay bekliyor" : `PRONTO Teklif'ten ${n} sipariş onay bekliyor`; }
   document.title = (n ? `(${n}) ` : "") + document.title.replace(/^\(\d+\)\s*/, "");
@@ -8121,8 +8250,8 @@ async function v101Ciz(force) {
   if (say) say.textContent = v101Yok ? "" : `(${gs.length})`;
   ["v101EslOner", "v101EslYeni", "v101EslExcel"].forEach((id) => { const b = document.getElementById(id); if (b) b.disabled = v101Yok; });
   if (v101Yok) { box.innerHTML = `<div class="v98-warn">Eşleştirme tablosu henüz kurulmamış. Supabase'de <b>pronto-tedarikci-eslesme.sql</b> dosyasını bir kez çalıştırın.</div>`; return; }
-  const q = v101Anahtar(v101Ara);
-  const f = q ? gs.filter((g) => g.ka.includes(q) || g.ma.includes(q) || g.list.some((r) => v101Anahtar(r.tedarikci).includes(q))) : gs;
+  const q = v106Ara(v101Ara);
+  const f = q ? gs.filter((g) => v106Ara(g.kategori).includes(q) || v106Ara(g.model).includes(q) || g.list.some((r) => v106Ara(r.tedarikci).includes(q))) : gs;
   if (!gs.length) { box.innerHTML = `<div class="history-empty" style="padding:26px;text-align:center">Henüz eşleştirme yok.<br><b>Geçmişten öner</b> ile geçmiş siparişlere bakarak hızlıca doldurabilir ya da <b>+ Yeni Eşleştirme</b> ile tek tek ekleyebilirsiniz.</div>`; return; }
   if (!f.length) { box.innerHTML = `<div class="history-empty" style="padding:26px;text-align:center">Aramanla eşleşen kayıt yok.</div>`; return; }
   const LIM = 400, goster = f.slice(0, LIM), kats = [];
@@ -8640,6 +8769,212 @@ function v105SshKapat(id) {
     } catch (er) { hata("Kapatılamadı: " + ((er && er.message) || er)); btn.disabled = false; btn.textContent = "SSH'yi Kapat"; }
   });
   setTimeout(() => m.$("#v105Not")?.focus(), 50);
+}
+
+/* ===== v106: arama (Türkçe harfe duyarsız) · stok uyarısı · telefon/tablet cam alt bar ===== */
+/* Arama: ş/s, ç/c, ğ/g, ü/u, ö/o, ı/i ve büyük/küçük harf ayrımı yapılmaz */
+function v106Ara(s) {
+  return String(s == null ? "" : s).toLocaleLowerCase("tr-TR").normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/ı/g, "i").replace(/\s+/g, " ").trim();
+}
+
+/* ---------- Stok yetmezse sor (onaylanırsa stok eksiye düşer, eksik kaybolmaz) ---------- */
+function v106Sor(metin) {
+  return new Promise((ok) => {
+    let bitti = false;
+    const iptal = document.getElementById("confirmCancelBtn"), ov = document.getElementById("confirmModal");
+    const temizle = () => { iptal?.removeEventListener("click", hayir); ov?.removeEventListener("click", dis); };
+    const hayir = () => { if (bitti) return; bitti = true; temizle(); ok(false); };
+    const dis = (e) => { if (e.target === ov) hayir(); };
+    iptal?.addEventListener("click", hayir); ov?.addEventListener("click", dis);
+    showConfirm(metin, () => { if (bitti) return; bitti = true; temizle(); ok(true); });
+  });
+}
+async function v106StokOnay(list) {
+  const ihtiyac = new Map();
+  for (const o of list || []) {
+    if (!o || o.stockDeducted) continue;
+    const p = allProducts.find((x) => normName(x.name) === normName(o.product));
+    if (!p || typeof p.stock !== "number") continue;
+    const q = Number(o.quantity) || 0; if (!q) continue;
+    const e = ihtiyac.get(p.id) || { p, q: 0 }; e.q += q; ihtiyac.set(p.id, e);
+  }
+  const eksik = Array.from(ihtiyac.values()).filter((e) => e.p.stock < e.q);
+  if (!eksik.length) return true;
+  const satir = eksik.map((e) => `• ${e.p.name}: stokta ${e.p.stock}, teslim edilecek ${e.q} → stok ${e.p.stock - e.q} olacak`).join("\n");
+  return v106Sor(`Stokta yeterli ürün yok:\n${satir}\n\nYine de teslim edilsin mi? Eksik adet Stok Takibi'nde eksi olarak görünür.`);
+}
+
+/* ---------- Telefon / tablet: cam alt bar ---------- */
+const V106_DAHA = [["products", "Ürünler"], ["stock", "Stok Takibi"], ["customers", "Müşteriler"], ["suppliers", "Tedarikçiler"], ["delivery-form", "Teslim Formu"], ["reports", "Raporlar"], ["settings", "Ayarlar"]];
+const V106_IC = {
+  orders: '<rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>',
+  gelen: '<path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/>',
+  shipment: '<path d="M1 3h15v13H1zM16 8h4l3 3v5h-7z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/>',
+  daha: '<circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/>',
+  arti: '<path d="M12 5v14M5 12h14"/>',
+  products: '<path d="M21 8l-9-5-9 5v8l9 5 9-5z"/><path d="M3 8l9 5 9-5M12 13v8"/>',
+  stock: '<rect x="3" y="4" width="18" height="5" rx="1"/><path d="M5 9v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V9M10 13h4"/>',
+  customers: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>',
+  suppliers: '<path d="M10 17h4V5H2v12h3M14 9h4l4 4v4h-2"/><circle cx="7.5" cy="17.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/>',
+  "delivery-form": '<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/>',
+  reports: '<path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/>',
+  settings: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>'
+};
+const v106Svg = (k) => `<svg viewBox="0 0 24 24" aria-hidden="true">${V106_IC[k] || ""}</svg>`;
+function v106BarKur() {
+  if (document.getElementById("v106Bar")) return;
+  const it = (k, l, extra = "") => `<button type="button" class="v106-it" data-v106="${k}">${v106Svg(k)}<span>${l}</span>${extra}</button>`;
+  const nav = document.createElement("nav");
+  nav.className = "v106-bar"; nav.id = "v106Bar"; nav.setAttribute("aria-label", "Alt menü");
+  nav.innerHTML = it("orders", "Siparişler") + it("gelen", "Gelen", '<i class="v106-rozet" id="v106Rozet" hidden></i>')
+    + `<button type="button" class="v106-fab" data-v106="yeni" aria-label="Yeni Sipariş" title="Yeni Sipariş">${v106Svg("arti")}</button>`
+    + it("shipment", "Sevkiyat") + it("daha", "Daha");
+  document.body.appendChild(nav);
+  const ov = document.createElement("div");
+  ov.className = "v106-ov"; ov.id = "v106Daha"; ov.hidden = true;
+  ov.innerHTML = `<div class="v106-sheet" role="dialog" aria-label="Diğer sayfalar"><div class="v106-tut"></div><div class="v106-grid">${V106_DAHA.map(([k, l]) => `<button type="button" class="v106-tile" data-v106-git="${k}">${v106Svg(k)}<span>${l}</span></button>`).join("")}<button type="button" class="v106-tile v107-tema-t${v107Koyu() ? " on" : ""}" data-v107-tema="dugme" aria-pressed="${v107Koyu()}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg><span>Karanlık Mod</span><i class="v107-tgl"></i></button></div></div>`;
+  document.body.appendChild(ov);
+  nav.addEventListener("click", (e) => {
+    const b = e.target.closest("[data-v106]"); if (!b) return;
+    const k = b.dataset.v106; v106DahaKapat();
+    if (k === "yeni") { document.getElementById("newOrderBtn")?.click(); return; }
+    if (k === "gelen") { if (typeof v98ListeAc === "function") v98ListeAc(); return; }
+    if (k === "daha") { v106DahaAc(); return; }
+    switchView(k); window.scrollTo({ top: 0, behavior: "smooth" });
+  });
+  ov.addEventListener("click", (e) => {
+    const g = e.target.closest("[data-v106-git]");
+    if (g) { v106DahaKapat(); switchView(g.dataset.v106Git); window.scrollTo({ top: 0 }); return; }
+    if (e.target === ov) v106DahaKapat();
+  });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !ov.hidden) { v106DahaKapat(); e.stopPropagation(); } }, true);
+  v106BarAktif(); v106Rozet();
+}
+function v106DahaAc() { const ov = document.getElementById("v106Daha"); if (!ov) return; ov.hidden = false; requestAnimationFrame(() => ov.classList.add("acik")); v106BarAktif(); }
+function v106DahaKapat() { const ov = document.getElementById("v106Daha"); if (!ov || ov.hidden) return; ov.classList.remove("acik"); ov.hidden = true; v106BarAktif(); }
+function v106BarAktif() {
+  const bar = document.getElementById("v106Bar"); if (!bar) return;
+  const v = typeof currentView === "string" ? currentView : "orders";
+  const dahaAcik = !document.getElementById("v106Daha")?.hidden;
+  bar.querySelectorAll("[data-v106]").forEach((b) => {
+    const k = b.dataset.v106;
+    b.classList.toggle("on", k === "daha" ? (dahaAcik || V106_DAHA.some(([x]) => x === v)) : k === v);
+  });
+  document.querySelectorAll("#v106Daha [data-v106-git]").forEach((b) => b.classList.toggle("on", b.dataset.v106Git === v));
+}
+function v106Rozet() {
+  const r = document.getElementById("v106Rozet"); if (!r) return;
+  const n = (typeof v98Gelen !== "undefined" && Array.isArray(v98Gelen)) ? v98Gelen.length : 0;
+  r.textContent = n > 99 ? "99+" : String(n); r.hidden = !n;
+  const it = r.closest(".v106-it"); if (it && typeof v98Aktif !== "undefined") it.style.display = v98Aktif === false ? "none" : "";
+}
+/* Yeni sipariş: kalem sayısı kaydet düğmesinde ve listeye inen küçük düğmede */
+function v106KalemSay() {
+  const n = Array.isArray(orderDraftItems) ? orderDraftItems.length : 0;
+  const yeni = !document.getElementById("orderId")?.value;
+  const kb = document.getElementById("v106KalemBtn");
+  if (kb) { kb.textContent = `${n} kalem ↓`; kb.classList.toggle("v106-gizli", !(yeni && n)); }
+  const sb = document.getElementById("orderSaveBtn");
+  if (sb && yeni && !orderSaveInProgress) sb.textContent = n ? `Siparişleri Kaydet (${n})` : "Siparişleri Kaydet";
+  if (typeof v107Adim !== "undefined" && v107Adim) { v107AltCiz(); if (v107Adim === 4 && !n) v107Git(3); }
+}
+(function v106Kur() {
+  const kur = () => {
+    v106BarKur();
+    const kb = document.getElementById("v106KalemBtn");
+    if (kb && !kb.dataset.b) { kb.dataset.b = "1"; kb.addEventListener("click", (e) => { e.preventDefault(); document.getElementById("orderEntryRight")?.scrollIntoView({ behavior: "smooth", block: "start" }); }); }
+  };
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", kur); else kur();
+})();
+
+/* ===== v107: karanlık mod düğmeleri ===== */
+document.addEventListener("click", (e) => {
+  const b = e.target.closest("[data-v107-tema]"); if (!b) return;
+  const k = b.dataset.v107Tema;
+  v107TemaUygula(k === "dugme" ? !v107Koyu() : k === "koyu");
+});
+
+/* ===== v107: telefon/tablet — adım adım Yeni Sipariş (Müşteri → Teslim → Ürünler → Özet) =====
+   Masaüstü, .exe ve mevcut siparişi düzenleme eski formu kullanır. Alanlar ve kayıt kodu aynıdır;
+   yalnızca hangi alanların görüneceği adıma göre değişir. */
+const V107_ADIM = ["Müşteri", "Teslim", "Ürünler", "Özet"];
+const V107_GRUP = { 1: ["f_customer", "f_customerPhone", "f_customerAddress"], 2: ["f_orderDate", "f_deliveryDate", "f_sartWrap", "f_shipmentTypeWrap"], 3: ["f_supplier", "f_product", "f_quantity", "f_colorCode", "f_fabricCode", "f_status", "f_description", "orderPhotoBox"] };
+let v107Adim = 0;
+const v107Mod = () => !window.prontoDesktop && matchMedia("(max-width:1024px)").matches;
+const v107El = (id) => document.getElementById(id);
+function v107Ac(yeni) {
+  const m = v107El("orderModal"); if (!m) return;
+  if (!yeni || !v107Mod()) { v107Adim = 0; m.classList.remove("v107"); delete m.dataset.adim; return; }
+  for (const [n, ids] of Object.entries(V107_GRUP)) ids.forEach((id) => { const el = v107El(id); const c = el && (el.id === "f_sartWrap" || el.id === "f_shipmentTypeWrap" ? el : el.closest(".form-field")); if (c) c.dataset.v107 = n; });
+  const kutu = m.querySelector(".modal");
+  if (!v107El("v107P")) { const p = document.createElement("div"); p.id = "v107P"; p.className = "v107-p"; kutu.querySelector(".modal-head").after(p); }
+  if (!v107El("v107Ozet")) { const o = document.createElement("div"); o.id = "v107Ozet"; o.className = "v107-ozet"; v107El("orderEntryRight").before(o); }
+  if (!v107El("v107F")) {
+    const f = document.createElement("div"); f.id = "v107F"; f.className = "v107-f"; kutu.appendChild(f);
+    f.addEventListener("click", (e) => {
+      const b = e.target.closest("[data-v107k]"); if (!b) return; e.preventDefault();
+      const k = b.dataset.v107k;
+      if (k === "geri") return v107Adim > 1 ? v107Git(v107Adim - 1) : attemptCloseOrderModal();
+      if (k === "ileri") return v107Ileri();
+      if (k === "ekle") return v107El("orderAddLineBtn").click();
+      if (k === "kaydet") return v107El("orderSaveBtn").click();
+    });
+    v107El("v107P").addEventListener("click", (e) => { const b = e.target.closest("[data-git]"); if (b && !b.disabled) v107Git(+b.dataset.git); });
+    v107El("orderForm").addEventListener("input", (e) => e.target.closest(".v107-bad")?.classList.remove("v107-bad"));
+    v107El("orderCartList").addEventListener("click", (e) => { if (v107Adim && e.target.closest(".order-draft-edit")) setTimeout(() => v107Git(3), 0); });
+  }
+  m.classList.add("v107"); v107Git(1);
+}
+let v107En = 1;
+function v107Git(n) {
+  const m = v107El("orderModal"); if (!m || !m.classList.contains("v107")) return;
+  if (n === 1) v107En = Math.max(1, orderDraftItems.length ? 4 : 1);
+  v107Adim = n; v107En = Math.max(v107En, n); m.dataset.adim = String(n);
+  v107El("v107P").innerHTML = V107_ADIM.map((a, i) => `<button type="button" class="${i < n ? "on" : ""}${i + 1 === n ? " cur" : ""}" data-git="${i + 1}" ${i + 1 > v107En ? "disabled" : ""}><i></i><span>${a}</span></button>`).join("");
+  if (n === 4) v107OzetCiz();
+  v107AltCiz();
+  m.querySelectorAll(".v107-bad").forEach((x) => x.classList.remove("v107-bad"));
+  const b = m.querySelector(".modal-body"); if (b) b.scrollTop = 0;
+  if (document.activeElement && m.contains(document.activeElement)) document.activeElement.blur();
+}
+function v107AltCiz() {
+  const f = v107El("v107F"); if (!f || !v107Adim) return;
+  const n = orderDraftItems.length;
+  const geri = `<button type="button" class="btn btn-ghost" data-v107k="geri">${v107Adim === 1 ? "İptal" : "‹ Geri"}</button>`;
+  let sag = "";
+  if (v107Adim < 3) sag = `<button type="button" class="btn btn-primary v107-go" data-v107k="ileri">${V107_ADIM[v107Adim]} →</button>`;
+  else if (v107Adim === 3) sag = `<button type="button" class="btn btn-secondary" data-v107k="ekle">+ Ekle</button><button type="button" class="btn btn-primary v107-go" data-v107k="ileri">Özet${n ? ` (${n})` : ""} →</button>`;
+  else sag = `<button type="button" class="btn btn-primary v107-go" data-v107k="kaydet" ${orderSaveInProgress ? "disabled" : ""}>Siparişleri Kaydet${n ? ` (${n})` : ""}</button>`;
+  f.innerHTML = geri + `<span class="v107-bos"></span>` + sag;
+}
+function v107Hata(id, msg) { const el = v107El(id); const c = el && (el.closest(".form-field") || el); c?.classList.add("v107-bad"); showToast(msg); el?.focus?.({ preventScroll: false }); return false; }
+function v107Kontrol(n) {
+  const v = (id) => (v107El(id)?.value || "").trim();
+  if (n === 1) {
+    if (!v("f_customer")) return v107Hata("f_customer", "Müşteri adını yazın veya listeden seçin.");
+    const tel = v("f_customerPhone"); if (tel && !/^[+]?[(]?[0-9\s().-]{7,20}$/.test(tel)) return v107Hata("f_customerPhone", "Telefon numarasını kontrol edin.");
+  }
+  if (n === 2) {
+    if (!v("f_orderDate")) return v107Hata("f_orderDate", "Sipariş tarihini girin.");
+    if (!v("f_deliveryDate")) return v107Hata("f_deliveryDate", "Teslim tarihini girin.");
+    if (v("f_deliveryDate") < v("f_orderDate")) return v107Hata("f_deliveryDate", "Teslim tarihi sipariş tarihinden önce olamaz.");
+  }
+  if (n === 3) {
+    const dolu = ["f_supplier", "f_product", "f_quantity"].some((id) => v(id));
+    if (dolu) { const once = orderDraftItems.length; v107El("orderAddLineBtn").click(); if (orderDraftItems.length === once) return false; }
+    if (!orderDraftItems.length) return v107Hata("f_product", "En az bir ürün ekleyin: tedarikçi, ürün ve adedi yazıp + Ekle'ye dokunun.");
+  }
+  return true;
+}
+function v107Ileri() { if (!v107Kontrol(v107Adim)) return; v107Git(v107Adim + 1); }
+function v107OzetCiz() {
+  const o = v107El("v107Ozet"); if (!o) return;
+  const v = (id) => (v107El(id)?.value || "").trim(), e = (s) => escapeHtml(String(s || ""));
+  const sec = (id) => { const s = v107El(id); return s && s.value ? s.options[s.selectedIndex].text : "Belirtilmemiş"; };
+  const sart = v105Acik ? `Montaj: ${sec("f_montaj")} · Nakliye: ${sec("f_nakliye")} · Teslim yeri: ${sec("f_teslimYeri")}` : `Sevkiyat: ${e(v("f_shipmentType"))}`;
+  o.innerHTML = `<button type="button" class="v107-kart" data-git="1"><b>${e(v("f_customer"))}</b><span>${e([v("f_customerPhone"), v("f_customerAddress")].filter(Boolean).join(" · ")) || "Telefon / adres yok"}</span><em>Düzenle</em></button>
+    <button type="button" class="v107-kart" data-git="2"><b>Sipariş ${e(formatDate(v("f_orderDate")))} · Teslim ${e(formatDate(v("f_deliveryDate")))}</b><span>${e(sart)}</span><em>Düzenle</em></button>`;
+  o.onclick = (ev) => { const b = ev.target.closest("[data-git]"); if (b) v107Git(+b.dataset.git); };
 }
 
 (function v98Kur() {
