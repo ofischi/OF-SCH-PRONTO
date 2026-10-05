@@ -9477,5 +9477,26 @@ body.v108-kilit .v106-bar, body.v108-kilit .v106-fab, body.v108-kilit .v106-ov, 
 (function(){function g(){var l=document.getElementById("lockScreen");document.body.classList.toggle("v108-kilit",!!l&&!l.classList.contains("hidden"))}
 g();var l=document.getElementById("lockScreen");if(l&&window.MutationObserver)new MutationObserver(g).observe(l,{attributes:true,attributeFilter:["class"]});})();
 </script>
+<style id="grup-modal">
+/* Sipariş grubu penceresi (telefon/tablet): liste kaydırılsın, alt çubuk düzenli iki satır olsun */
+@media screen and (max-width:1024px){
+ #orderGroupModal .modal.order-group-modal{display:flex!important;flex-direction:column;max-height:calc(100dvh - 24px)!important}
+ #orderGroupModal .modal-head{flex:0 0 auto}
+ #orderGroupModal .modal-body{flex:1 1 auto;min-height:0;overflow-y:auto!important;overflow-x:hidden!important;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+ #orderGroupModal .order-group-table-wrap{max-height:none!important;overflow:visible!important}
+ #orderGroupModal .modal-foot{flex:0 0 auto;position:relative;padding:10px 12px calc(12px + env(safe-area-inset-bottom,0px))!important}
+ #orderGroupModal .order-group-actions{display:grid!important;grid-template-columns:repeat(12,minmax(0,1fr));gap:8px;align-items:center;width:100%}
+ #orderGroupModal .order-group-actions .group-action-spacer{display:none}
+ #orderGroupModal #orderGroupSelectionCount{grid-column:1/4;grid-row:1;white-space:nowrap;font-size:13px}
+ #orderGroupModal #orderGroupBulkStatus{grid-column:4/9;grid-row:1;width:100%;min-width:0;height:40px;font-size:16px}
+ #orderGroupModal #orderGroupBulkStatusBtn{grid-column:9/13;grid-row:1}
+ #orderGroupModal #orderGroupBulkClearBtn{grid-column:1/6;grid-row:2}
+ #orderGroupModal #orderGroupPdfBtn{grid-column:6/8;grid-row:2}
+ #orderGroupModal #orderGroupBulkDeleteBtn{grid-column:8/11;grid-row:2}
+ #orderGroupModal #orderGroupModalCloseBtn{grid-column:11/13;grid-row:2}
+ #orderGroupModal .order-group-actions .btn{width:100%;min-width:0;height:40px;padding:0 6px;font-size:12.5px;white-space:nowrap;justify-content:center}
+ #orderGroupModal #orderGroupBulkDeleteBtn{font-size:12px}
+}
+</style>
 </body>
 </html>
