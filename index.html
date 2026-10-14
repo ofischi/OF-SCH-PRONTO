@@ -2221,7 +2221,7 @@ table.v98-t{width:100%;border-collapse:collapse;font-size:13px}
     <section class="view hidden" id="view-customers">
       <div class="page-header">
         <div><h1>Müşteriler</h1><p class="subtitle">Sipariş formlarında seçilebilecek müşteri listesi.</p></div>
-        <div class="header-actions"><button class="btn btn-primary" id="newCustomerBtn">+ Yeni Müşteri</button></div>
+        <div class="header-actions"><button class="btn btn-secondary" id="v24MBirlestirBtn" type="button">Birleştir</button><button class="btn btn-primary" id="newCustomerBtn">+ Yeni Müşteri</button></div>
       </div>
       <div class="toolbar">
         <div class="search-box">
@@ -2253,7 +2253,7 @@ table.v98-t{width:100%;border-collapse:collapse;font-size:13px}
     <section class="view hidden" id="view-suppliers">
       <div class="page-header">
         <div><h1>Tedarikçiler</h1><p class="subtitle">Sipariş formlarında seçilebilecek tedarikçi listesi.</p></div>
-        <div class="header-actions"><button class="btn btn-primary v101-l" id="newSupplierBtn">+ Yeni Tedarikçi</button></div>
+        <div class="header-actions"><button class="btn btn-secondary v101-l" id="v24BirlestirBtn" type="button">Birleştir</button><button class="btn btn-primary v101-l" id="newSupplierBtn">+ Yeni Tedarikçi</button></div>
       </div>
       <div class="v101-tabs" role="tablist">
         <button type="button" class="v101-tab active" role="tab" data-sup-tab="list">Tedarikçiler</button>
@@ -6778,6 +6778,7 @@ function renderCustomersView() {
       const id = Number(btn.dataset.id);
       showRowMenu(btn, [
         { label: "Düzenle", onClick: () => openEntityModal("customer", id) },
+        { label: "Birleştir…", onClick: () => v24BirlestirAc(id, "m") },
         { label: "Sil", danger: true, onClick: () => confirmDeleteEntity("customer", id) }
       ]);
     });
@@ -6847,6 +6848,7 @@ function renderSuppliersView() {
       const id = Number(btn.dataset.id);
       showRowMenu(btn, [
         { label: "Düzenle", onClick: () => openEntityModal("supplier", id) },
+        { label: "Birleştir…", onClick: () => v24BirlestirAc(id, "t") },
         { label: "Sil", danger: true, onClick: () => confirmDeleteEntity("supplier", id) }
       ]);
     });
@@ -9498,5 +9500,287 @@ g();var l=document.getElementById("lockScreen");if(l&&window.MutationObserver)ne
  #orderGroupModal #orderGroupBulkDeleteBtn{font-size:12px}
 }
 </style>
+<style id="ted-birlestir">
+/* Tedarikçileri birleştir + benzer ad uyarısı */
+.v24-modal{max-width:640px !important;width:96vw;display:flex;flex-direction:column;max-height:calc(100dvh - 24px)}
+.v24-modal .modal-body{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+.v24-modal .modal-foot{flex:0 0 auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.v24-modal .modal-foot .v24-say{margin-right:auto;font-size:13px;color:var(--color-text-muted)}
+.v24-modal .btn:disabled{opacity:.45;cursor:not-allowed;filter:grayscale(.4)}
+.v24-bilgi{font-size:13px;line-height:1.45;color:var(--color-text-muted);margin:0 0 10px}
+.v24-ara{width:100%;height:40px;border:1px solid var(--color-border);border-radius:10px;padding:0 12px;background:var(--color-surface-solid);color:var(--color-text);font:inherit;font-size:16px;box-sizing:border-box}
+.v24-gruplar{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 4px}
+.v24-grup{border:1px dashed rgba(27,92,153,.5);background:rgba(27,92,153,.07);color:var(--color-text);border-radius:999px;padding:6px 12px;font:inherit;font-size:12.5px;cursor:pointer;text-align:left;max-width:100%}
+.v24-grup b{font-weight:700}
+.v24-liste{margin-top:10px;border:1px solid var(--color-border);border-radius:12px;overflow:hidden}
+.v24-satir{display:flex;align-items:center;gap:10px;padding:10px 12px;border-top:1px solid var(--color-border);cursor:pointer;min-height:44px;box-sizing:border-box}
+.v24-satir:first-child{border-top:0}
+.v24-satir.on{background:rgba(27,92,153,.09)}
+.v24-satir input{width:20px;height:20px;flex:0 0 auto;margin:0;accent-color:#1B5C99}
+.v24-ad{font-weight:600;word-break:break-word}
+.v24-alt{font-size:12px;color:var(--color-text-muted)}
+.v24-bos{padding:16px;text-align:center;color:var(--color-text-muted);font-size:13px}
+.v24-sec{display:flex;flex-direction:column;gap:6px;margin-top:6px}
+.v24-sec label{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--color-border);border-radius:10px;cursor:pointer;min-height:44px;box-sizing:border-box}
+.v24-sec label.on{border-color:#1B5C99;background:rgba(27,92,153,.08)}
+.v24-sec input[type=radio]{width:18px;height:18px;margin:0;flex:0 0 auto;accent-color:#1B5C99}
+.v24-ozet{margin-top:12px;padding:12px;border-radius:10px;background:rgba(27,92,153,.07);border:1px solid rgba(27,92,153,.25);font-size:13px;line-height:1.5}
+.v24-hata{color:#C0392B;font-size:13px;min-height:18px;margin-top:8px}
+.v24-ipucu{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:6px;padding:6px 8px;border-radius:8px;background:rgba(230,126,34,.12);border:1px solid rgba(230,126,34,.45);font-size:12.5px;line-height:1.3;color:var(--color-text);text-transform:none;letter-spacing:0;font-weight:500}
+.v24-ipucu button{border:1px solid rgba(230,126,34,.7);background:var(--color-surface-solid);color:var(--color-text);border-radius:999px;padding:4px 10px;font:inherit;font-weight:700;cursor:pointer;max-width:100%;word-break:break-word;text-align:left}
+@media (max-width:640px){
+ .v24-modal{max-height:calc(100dvh - 12px)}
+ .v24-modal .modal-foot .btn{flex:1 1 auto}
+ .v24-modal .modal-foot .v24-say{flex:1 1 100%;margin:0}
+}
+</style>
+<script id="ted-birlestir-js">
+/* ===== Tedarikçileri / müşterileri birleştir (sunucu: pronto-birlestir.sql) + benzer ad uyarısı ===== */
+try { V103_TUR.birlestirme = "Birleştirme öncesi"; } catch (_) {}
+/* sunucudaki pronto_ted_anahtar ile aynı: harf büyüklüğü, İ/I/ı/i farkı ve fazla boşluk yok sayılır */
+function v24Key(s) { return String(s || "").trim().replace(/[İIı]/g, "i").toLocaleLowerCase("tr-TR").replace(/\s+/g, " "); }
+const V24_HARF = { "ç": "c", "ğ": "g", "ö": "o", "ş": "s", "ü": "u", "â": "a", "î": "i", "û": "u" };
+function v24Katla(s) { return v24Key(s).replace(/[çğöşüâîû]/g, (c) => V24_HARF[c]).replace(/[^a-z0-9 ]+/g, " ").replace(/\s+/g, " ").trim(); }
+function v24Mesafe(a, b) {
+  if (a === b) return 0; if (Math.abs(a.length - b.length) > 3) return 9;
+  const m = a.length, n = b.length, d = []; for (let i = 0; i <= m; i++) { d[i] = [i]; }
+  for (let j = 1; j <= n; j++) d[0][j] = j;
+  for (let i = 1; i <= m; i++) for (let j = 1; j <= n; j++) {
+    const c = a[i - 1] === b[j - 1] ? 0 : 1;
+    d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + c);
+    if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1]) d[i][j] = Math.min(d[i][j], d[i - 2][j - 2] + 1);
+  }
+  return d[m][n];
+}
+/* iki ad birbirine ne kadar benziyor: 0 = aynı (yazım farkı), 99 = benzemiyor */
+function v24Fark(a, b) {
+  const fa = v24Katla(a), fb = v24Katla(b), ca = fa.replace(/ /g, ""), cb = fb.replace(/ /g, "");
+  if (ca.length < 3 || cb.length < 3) return 99;
+  if (ca === cb) return 0;
+  const L = Math.min(ca.length, cb.length), t = L <= 4 ? 0 : L <= 8 ? 1 : 2;
+  const dd = v24Mesafe(ca, cb); if (dd <= t) return dd;
+  const wa = fa.split(" ")[0], wb = fb.split(" ")[0];
+  if ((fa.indexOf(" ") < 0 || fb.indexOf(" ") < 0) && Math.min(wa.length, wb.length) >= 5) {
+    const dw = v24Mesafe(wa, wb); if (dw <= (Math.min(wa.length, wb.length) <= 8 ? 1 : 2)) return dw + 1;
+  }
+  if (L >= 5 && (ca.indexOf(cb) >= 0 || cb.indexOf(ca) >= 0)) return 3;
+  return 99;
+}
+/* tip: "t" = tedarikçi, "m" = müşteri */
+const V24 = {
+  t: { liste: () => allSuppliers, alan: "supplier", store: "suppliers", rpcOn: "pronto_tedarikci_birlestir_onizle", rpc: "pronto_tedarikci_birlestir",
+       baslik: "Tedarikçileri Birleştir", ad: "tedarikçi", Ad: "Tedarikçi", donen: "tedarikci",
+       bilgi: "Siparişleri, stok hareketleri ve ürün eşleştirmeleri tek karta toplanır; diğer kartlar silinir." },
+  m: { liste: () => allCustomers, alan: "customer", store: "customers", rpcOn: "pronto_musteri_birlestir_onizle", rpc: "pronto_musteri_birlestir",
+       baslik: "Müşterileri Birleştir", ad: "müşteri", Ad: "Müşteri", donen: "musteri",
+       bilgi: "Siparişleri tek karta toplanır; diğer kartlar silinir." }
+};
+function v24Benzer(ad, haric, tip) {
+  const k = v24Key(ad); if (!k) return [];
+  const out = [];
+  for (const s of V24[tip || "t"].liste()) {
+    if (!s || (haric != null && s.id === haric)) continue;
+    const sk = v24Key(s.name); if (!sk || sk === k) continue;
+    const d = v24Fark(ad, s.name); if (d < 99) out.push({ s, d });
+  }
+  return out.sort((a, b) => a.d - b.d || String(a.s.name).localeCompare(String(b.s.name), "tr")).map((x) => x.s);
+}
+function v24SiparisSay(tip) {
+  const m = new Map(), f = V24[tip].alan;
+  for (const o of allOrders) { if (!o) continue; const k = v24Key(o[f]); if (k) m.set(k, (m.get(k) || 0) + 1); }
+  return m;
+}
+/* benzer ad grupları (öneri olarak) */
+function v24Gruplar(tip) {
+  const L = V24[tip].liste().filter((s) => s && v24Key(s.name)).slice(0, 1500), n = L.length, p = L.map((_, i) => i);
+  const kok = (i) => { while (p[i] !== i) { p[i] = p[p[i]]; i = p[i]; } return i; };
+  const kat = L.map((s) => v24Katla(s.name).replace(/ /g, ""));
+  for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) {
+    if (Math.abs(kat[i].length - kat[j].length) > 3 && kat[i].slice(0, 4) !== kat[j].slice(0, 4)) continue;
+    if (v24Fark(L[i].name, L[j].name) < 99) { const a = kok(i), b = kok(j); if (a !== b) p[a] = b; }
+  }
+  const g = new Map(); L.forEach((s, i) => { const r = kok(i); if (!g.has(r)) g.set(r, []); g.get(r).push(s); });
+  return Array.from(g.values()).filter((x) => x.length > 1).sort((a, b) => b.length - a.length).slice(0, 8);
+}
+function v24Hata(er) {
+  const t = String((er && (er.message || er.details)) || er || "");
+  if (/_birlestir|schema cache|does not exist|Could not find the function/i.test(t)) return "Birleştirme kurulumu (pronto-birlestir.sql) henüz yapılmamış.";
+  return t || "Bilinmeyen hata";
+}
+
+let v24Sec = new Set(), v24AraQ = "", v24Tip = "t";
+function v24BirlestirAc(ilkId, tip) {
+  v24Tip = tip === "m" ? "m" : "t";
+  const C = V24[v24Tip];
+  if (!supa) { showToast("Birleştirme için internet bağlantısı gerekli."); return; }
+  v24Sec = new Set(); v24AraQ = "";
+  if (ilkId != null) {
+    const s0 = C.liste().find((x) => x.id === ilkId);
+    if (s0) { v24Sec.add(s0.id); v24Benzer(s0.name, s0.id, v24Tip).forEach((x) => v24Sec.add(x.id)); }
+  }
+  const m = v98Ov(`<div class="modal-head"><h2>${C.baslik}</h2><button class="icon-btn" data-x aria-label="Kapat">✕</button></div>
+    <div class="modal-body" id="v24Govde"></div>
+    <div class="modal-foot" id="v24Alt"></div>`);
+  m.ov.querySelector(".modal").classList.add("v24-modal");
+  v24Adim1(m);
+}
+function v24Adim1(m) {
+  const C = V24[v24Tip];
+  const sayac = v24SiparisSay(v24Tip);
+  const gruplar = v24Gruplar(v24Tip);
+  m.$("#v24Govde").innerHTML = `<p class="v24-bilgi">Aynı ${C.ad === "müşteri" ? "kişinin / firmanın" : "firmanın"} farklı yazılmış kartlarını seçin. ${C.bilgi} İşlemden önce otomatik yedek alınır.</p>
+    <input type="search" class="v24-ara" id="v24Ara" maxlength="100" placeholder="${C.Ad} ara…" autocomplete="off" value="${escapeHtml(v24AraQ)}">
+    ${gruplar.length ? `<div class="v24-gruplar" aria-label="Benzer adlar">${gruplar.map((g, i) => `<button type="button" class="v24-grup" data-grup="${i}"><b>Benzer:</b> ${escapeHtml(g.slice(0, 4).map((s) => s.name).join(", "))}${g.length > 4 ? ` +${g.length - 4}` : ""}</button>`).join("")}</div>` : ""}
+    <div class="v24-liste" id="v24Liste"></div>`;
+  m.$("#v24Alt").innerHTML = `<span class="v24-say" id="v24Say"></span><button class="btn btn-ghost" type="button" id="v24Temizle">Seçimi temizle</button><button class="btn btn-ghost" type="button" data-x>Vazgeç</button><button class="btn btn-primary" type="button" id="v24Ileri">İleri</button>`;
+  const ciz = () => {
+    const q = v106Ara(v24AraQ);
+    let L = C.liste().filter((s) => s && (!q || v106Ara(s.name).includes(q) || v106Ara(s.phone).includes(q) || v24Sec.has(s.id)));
+    L.sort((a, b) => (v24Sec.has(b.id) - v24Sec.has(a.id)) || String(a.name || "").localeCompare(String(b.name || ""), "tr"));
+    const fazla = L.length > 300; L = L.slice(0, 300);
+    m.$("#v24Liste").innerHTML = L.length ? L.map((s) => { const n = sayac.get(v24Key(s.name)) || 0, on = v24Sec.has(s.id);
+      return `<label class="v24-satir${on ? " on" : ""}"><input type="checkbox" data-sid="${s.id}"${on ? " checked" : ""}><span><span class="v24-ad">${escapeHtml(s.name)}</span><br><span class="v24-alt">${n} sipariş${s.phone ? " · " + escapeHtml(s.phone) : ""}</span></span></label>`; }).join("")
+      + (fazla ? `<div class="v24-bos">Daha fazlası için aramayı daraltın.</div>` : "")
+      : `<div class="v24-bos">Eşleşen ${C.ad} yok.</div>`;
+    const k = v24Sec.size;
+    m.$("#v24Say").textContent = k ? `${k} kart seçili` : "En az 2 kart seçin";
+    m.$("#v24Ileri").disabled = k < 2;
+    m.$("#v24Temizle").style.display = k ? "" : "none";
+  };
+  ciz();
+  m.$("#v24Ara").addEventListener("input", debounce((e) => { v24AraQ = sanitizeSearchText(e.target.value, 100); ciz(); }, 150));
+  m.$("#v24Liste").addEventListener("change", (e) => { const c = e.target.closest("[data-sid]"); if (!c) return; const id = Number(c.dataset.sid); if (c.checked) v24Sec.add(id); else v24Sec.delete(id); ciz(); });
+  m.$("#v24Govde").addEventListener("click", (e) => { const b = e.target.closest("[data-grup]"); if (!b) return; v24Sec = new Set(gruplar[Number(b.dataset.grup)].map((s) => s.id)); ciz(); });
+  m.$("#v24Temizle").addEventListener("click", () => { v24Sec.clear(); ciz(); });
+  m.$("#v24Ileri").addEventListener("click", () => { if (v24Sec.size >= 2) v24Adim2(m); });
+}
+function v24Adim2(m) {
+  const tip = v24Tip, C = V24[tip];
+  const secili = C.liste().filter((s) => v24Sec.has(s.id));
+  if (secili.length < 2) { v24Adim1(m); return; }
+  const sayac = v24SiparisSay(tip);
+  const adlar = []; const gor = new Set();
+  secili.slice().sort((a, b) => (sayac.get(v24Key(b.name)) || 0) - (sayac.get(v24Key(a.name)) || 0) || a.id - b.id).forEach((s) => { const k = v24Key(s.name); if (!gor.has(k)) { gor.add(k); adlar.push(String(s.name).trim()); } });
+  let secim = "0", onizleme = null, kilitAd = null, engel = "";
+  const ornek = tip === "m" ? "Örn. AYŞE YILMAZ" : "Örn. OFISCHI PREMIUM MAĞAZA";
+  m.$("#v24Govde").innerHTML = `<p class="v24-bilgi"><b>${secili.length} kart</b> birleştirilecek. Kalacak adı seçin:</p>
+    <div class="v24-sec" id="v24Sec">
+      ${adlar.map((a, i) => `<label class="${i === 0 ? "on" : ""}" data-ad="${escapeHtml(v24Key(a))}"><input type="radio" name="v24ad" value="${i}"${i === 0 ? " checked" : ""}><span><span class="v24-ad">${escapeHtml(a)}</span><br><span class="v24-alt">${sayac.get(v24Key(a)) || 0} sipariş</span></span></label>`).join("")}
+      <label id="v24YeniL"><input type="radio" name="v24ad" value="yeni"><span style="flex:1;min-width:0"><span class="v24-ad">Başka bir ad yaz</span><input type="text" class="v24-ara" id="v24Yeni" maxlength="200" placeholder="${ornek}" autocomplete="off" style="margin-top:6px"></span></label>
+    </div>
+    <div class="v24-ozet" id="v24Ozet">Hesaplanıyor…</div>
+    <div class="v24-hata" id="v24Hata" role="alert"></div>`;
+  m.$("#v24Alt").innerHTML = `<button class="btn btn-ghost" type="button" id="v24Geri">‹ Geri</button><span class="v24-say"></span><button class="btn btn-ghost" type="button" data-x>Vazgeç</button><button class="btn btn-primary" type="button" id="v24Tamam">Birleştir</button>`;
+  const yeni = m.$("#v24Yeni"), btn = m.$("#v24Tamam"), hata = m.$("#v24Hata");
+  const kalanAd = () => kilitAd || (secim === "yeni" ? sanitizeText(yeni.value, 200).replace(/[<>"`]+/g, "").trim() : adlar[Number(secim)]);
+  const ozetCiz = () => {
+    const ad = kalanAd();
+    btn.disabled = !ad || !onizleme || !!engel;
+    if (!onizleme) return;
+    if (engel) { m.$("#v24Ozet").innerHTML = engel; return; }
+    const t = onizleme.toplam || {};
+    const disari = ad ? C.liste().find((s) => !v24Sec.has(s.id) && v24Key(s.name) === v24Key(ad)) : null;
+    const silinecek = secili.length - 1 + (disari ? 1 : 0);
+    const tasinan = tip === "m" ? `<b>${Number(t.siparis) || 0}</b> sipariş.`
+      : `<b>${Number(t.siparis) || 0}</b> sipariş, <b>${Number(t.stok) || 0}</b> stok hareketi, <b>${Number(t.eslesme) || 0}</b> ürün eşleştirmesi.`;
+    m.$("#v24Ozet").innerHTML = ad
+      ? `<b>${escapeHtml(ad)}</b> adına taşınacak: ${tasinan}<br>
+         Silinecek kart: <b>${silinecek}</b> (${kilitAd ? "diğer kartların telefon, e-posta, adres bilgileri nota yazılır" : "telefon, e-posta ve adres boşsa diğer kartlardan alınır"}).
+         ${kilitAd ? `<br><b>Not:</b> "${escapeHtml(kilitAd)}" PRONTO Teklif'e bağlı; bu kart kalır ve adı değişmez.` : ""}
+         ${disari && !kilitAd ? `<br><b>Not:</b> Bu adla zaten bir kart var; o kart da birleştirmeye katılır ve o kalır.` : ""}
+         <br><span class="v24-alt">İşlemden önce otomatik yedek alınır; gerekirse Ayarlar → Yedekler'den geri alınabilir.</span>`
+      : "Kalacak adı yazın.";
+  };
+  m.$("#v24Sec").addEventListener("change", (e) => {
+    const r = e.target.closest("input[type=radio]"); if (!r) return;
+    secim = r.value; m.$("#v24Sec").querySelectorAll("label").forEach((l) => l.classList.toggle("on", !!l.querySelector("input[type=radio]:checked")));
+    if (secim === "yeni") setTimeout(() => yeni.focus(), 0);
+    hata.textContent = ""; ozetCiz();
+  });
+  yeni.addEventListener("focus", () => { const r = yeni.closest("label").querySelector("input[type=radio]"); if (!r.checked) { r.checked = true; r.dispatchEvent(new Event("change", { bubbles: true })); } });
+  yeni.addEventListener("input", () => { hata.textContent = ""; ozetCiz(); });
+  m.$("#v24Geri").addEventListener("click", () => v24Adim1(m));
+  btn.disabled = true;
+  supa.rpc(C.rpcOn, { p_ids: Array.from(v24Sec) }).then(({ data, error }) => {
+    if (error) { m.$("#v24Ozet").textContent = ""; hata.textContent = v24Hata(error); return; }
+    onizleme = data || {};
+    if (tip === "m") {
+      const bagli = (onizleme.kartlar || []).filter((k) => k && k.teklif);
+      if (bagli.length > 1) {
+        engel = `<b>Birleştirilemez:</b> ${bagli.map((k) => `"${escapeHtml(k.ad)}"`).join(", ")} PRONTO Teklif'te ayrı müşterilere bağlı. Bu kartlardan yalnızca birini seçin.`;
+      } else if (bagli.length === 1) {
+        kilitAd = String(bagli[0].ad || "").trim();
+        m.$("#v24Sec").querySelectorAll("label").forEach((l) => {
+          const r = l.querySelector("input[type=radio]"), bu = l.dataset.ad === v24Key(kilitAd);
+          r.disabled = !bu; r.checked = bu; l.classList.toggle("on", bu); l.style.opacity = bu ? "" : ".45";
+        });
+        yeni.disabled = true;
+      }
+    }
+    ozetCiz();
+  }).catch((er) => { hata.textContent = v24Hata(er); });
+  btn.addEventListener("click", async () => {
+    const ad = kalanAd();
+    if (!ad) { hata.textContent = "Kalacak adı yazın."; return; }
+    btn.disabled = true; btn.textContent = "Birleştiriliyor…"; hata.textContent = "";
+    try {
+      const { data, error } = await supa.rpc(C.rpc, { p_ids: Array.from(v24Sec), p_ad: ad });
+      if (error) throw error;
+      m.close();
+      const r = data || {}, kart = r[C.donen];
+      showToast(`Birleştirildi: ${Number(r.siparis) || 0} sipariş "${(kart && kart.name) || ad}" ${C.ad}sine taşındı.`);
+      await v24Yenile(tip);
+    } catch (er) { btn.disabled = false; btn.textContent = "Birleştir"; hata.textContent = "Birleştirilemedi: " + v24Hata(er); }
+  });
+}
+async function v24Yenile(tip) {
+  try {
+    await reloadStore(V24[tip].store); await reloadStore("orders");
+    if (tip === "t" && stockLoaded) await reloadStore("stockMovements");
+  } catch (e) { console.warn("Birleştirme sonrası yenileme:", e); }
+  if (tip === "t") { try { v101Esl = null; } catch (_) {} }
+  refreshDatalists(true);
+  if (currentView === "suppliers" && tip === "t") { renderSuppliersView(); try { if (v101Tab === "esl") v101Ciz(true); } catch (_) {} }
+  else if (currentView === "customers" && tip === "m") renderCustomersView();
+  else if (currentView === "orders") renderOrdersView();
+}
+(function v24Kur() {
+  const b = document.getElementById("v24BirlestirBtn"); if (b) b.addEventListener("click", () => v24BirlestirAc(null, "t"));
+  const c = document.getElementById("v24MBirlestirBtn"); if (c) c.addEventListener("click", () => v24BirlestirAc(null, "m"));
+})();
+
+/* Benzer ad uyarısı: tedarikçi / müşteri yazılan her kutuda "Bunu mu demek istediniz?" */
+const V24_LISTE = { dl_suppliers: "t", v101SupDl: "t", v101OnerDl: "t", dl_customers: "m" };
+function v24KutuTip(el) {
+  if (!el || el.tagName !== "INPUT") return null;
+  const l = el.getAttribute("list") || "";
+  if (V24_LISTE[l]) return V24_LISTE[l];
+  if (/^v98Sup/.test(l)) return "t";
+  if (el.id === "ef_name" && typeof currentEntityType !== "undefined") return currentEntityType === "supplier" ? "t" : currentEntityType === "customer" ? "m" : null;
+  return null;
+}
+function v24Ipucu(el, tip) {
+  if (el._v24h) { el._v24h.remove(); el._v24h = null; }
+  const L0 = V24[tip].liste();
+  const v = String(el.value || "").trim(); if (v.length < 3 || !Array.isArray(L0)) return;
+  const haric = el.id === "ef_name" ? (Number(document.getElementById("entityId").value) || null) : null;
+  if (L0.some((s) => s && s.id !== haric && v24Key(s.name) === v24Key(v))) return;
+  const L = v24Benzer(v, haric, tip).slice(0, 3); if (!L.length) return;
+  const h = document.createElement("div"); h.className = "v24-ipucu"; h.setAttribute("role", "status");
+  h.innerHTML = `<span>Bunu mu demek istediniz?</span>${L.map((s) => `<button type="button" data-v24ad="${escapeHtml(s.name)}">${escapeHtml(s.name)}</button>`).join("")}`;
+  h.addEventListener("mousedown", (e) => e.preventDefault());
+  h.addEventListener("click", (e) => {
+    const b = e.target.closest("[data-v24ad]"); if (!b) return;
+    e.preventDefault(); e.stopPropagation();
+    el.value = b.dataset.v24ad; h.remove(); el._v24h = null;
+    el.dispatchEvent(new Event("input", { bubbles: true })); el.dispatchEvent(new Event("change", { bubbles: true }));
+  });
+  el.insertAdjacentElement("afterend", h); el._v24h = h;
+}
+document.addEventListener("input", (e) => {
+  const el = e.target, tip = v24KutuTip(el); if (!tip) return;
+  clearTimeout(el._v24t); el._v24t = setTimeout(() => { if (el.isConnected) v24Ipucu(el, tip); }, 300);
+}, true);
+</script>
 </body>
 </html>
