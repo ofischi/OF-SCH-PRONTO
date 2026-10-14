@@ -2195,7 +2195,22 @@ table.v98-t{width:100%;border-collapse:collapse;font-size:13px}
     <section class="view hidden" id="view-products">
       <div class="page-header">
         <div><h1>Ürünler</h1><p class="subtitle">Sipariş formlarında seçilebilecek ürün listesi.</p></div>
-        <div class="header-actions"><button class="btn btn-ghost" id="productTrashBtn">🗑 Çöp Kutusu</button><button class="btn btn-primary" id="newProductBtn">+ Yeni Ürün</button></div>
+        <div class="header-actions v25-l"><button class="btn btn-ghost" id="productTrashBtn">🗑 Çöp Kutusu</button><button class="btn btn-primary" id="newProductBtn">+ Yeni Ürün</button></div>
+      </div>
+      <div class="v101-tabs" role="tablist" id="v25Tabs">
+        <button type="button" class="v101-tab active" role="tab" aria-selected="true" data-v25-tab="list">Ürünler</button>
+        <button type="button" class="v101-tab" role="tab" aria-selected="false" data-v25-tab="kat">Teklif Kataloğu<span class="v101-n" id="v25Say"></span></button>
+      </div>
+      <div id="v25Panel">
+        <div class="v101-bar">
+          <div class="search-box">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+            <input type="text" id="v25Ara" maxlength="100" placeholder="Kategori, model, renk, ölçü veya kod ara…" autocomplete="off">
+          </div>
+          <button type="button" class="btn btn-primary" id="v25Yeni">+ Kataloğa Ürün Ekle</button>
+        </div>
+        <p class="v101-info">Bu liste <b>PRONTO Teklif</b>'in ürün kataloğudur. Buradan eklenen ürün ve model fotoğrafı Teklif'te de hemen görünür. Fiyat ve mevcut ürünlerde değişiklik Teklif'ten yapılır.</p>
+        <div id="v25Liste"></div>
       </div>
       <div class="toolbar">
         <div class="search-box">
@@ -3389,6 +3404,7 @@ function subscribeToChanges() {
     .on("broadcast", { event: "gelen" }, ({ payload }) => { try { v98Canli(payload); } catch (_) {} })
     .on("broadcast", { event: "foto" }, ({ payload }) => { try { v99FotoGeldi(payload); } catch (_) {} })
     .on("broadcast", { event: "esl" }, () => { try { v101Geldi(); } catch (_) {} })
+    .on("broadcast", { event: "kat" }, () => { try { v25Geldi(); } catch (_) {} })
     .on("broadcast", { event: "reload" }, ({ payload }) => {
       const store = payload && payload.store;
       if (!TABLES[store] || (store === "stockMovements" && !stockLoaded)) return;
@@ -9781,6 +9797,302 @@ document.addEventListener("input", (e) => {
   const el = e.target, tip = v24KutuTip(el); if (!tip) return;
   clearTimeout(el._v24t); el._v24t = setTimeout(() => { if (el.isConnected) v24Ipucu(el, tip); }, 300);
 }, true);
+</script>
+<style id="v25-katalog">
+/* v25: Teklif kataloğu (Ürünler → Teklif Kataloğu) + sıralı ürün seçici */
+#view-products.v25-kat-on .v25-l,#view-products.v25-kat-on>.toolbar,#view-products.v25-kat-on #productsTableWrap,
+#view-products.v25-kat-on #productsCardsWrap,#view-products.v25-kat-on #productsPagination,#view-products.v25-kat-on #productsEmptyState{display:none !important}
+#view-products:not(.v25-kat-on) #v25Panel{display:none}
+.v25-kat{margin:0 0 16px}
+.v25-kat-h{font-weight:800;font-size:14px;letter-spacing:.02em;padding:6px 2px;display:flex;align-items:center;gap:8px}
+.v25-kat-h span{font-weight:600;font-size:12px;color:var(--color-text-muted)}
+.v25-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px}
+.v25-m{display:flex;gap:12px;padding:12px;border:1px solid var(--color-border);border-radius:14px;background:var(--color-surface-solid);min-width:0}
+.v25-th{flex:0 0 64px;width:64px;height:64px;border-radius:10px;background:rgba(127,127,127,.12);display:flex;align-items:center;justify-content:center;overflow:hidden;font-size:10px;color:var(--color-text-muted);text-align:center;line-height:1.2}
+.v25-th img{width:100%;height:100%;object-fit:cover;display:block}
+.v25-mb{min-width:0;flex:1}
+.v25-mn{font-weight:700;word-break:break-word}
+.v25-ms{font-size:12px;color:var(--color-text-muted);margin:2px 0 6px}
+.v25-vs{display:flex;flex-wrap:wrap;gap:5px}
+.v25-v{font-size:11.5px;padding:3px 8px;border-radius:999px;background:rgba(27,92,153,.08);border:1px solid rgba(27,92,153,.2);white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
+.v25-v.yeni{background:rgba(46,160,67,.1);border-color:rgba(46,160,67,.35)}
+.v25-bos{padding:24px;text-align:center;color:var(--color-text-muted)}
+/* seçici */
+.v25-modal{max-width:680px !important;width:96vw;display:flex;flex-direction:column;max-height:calc(100dvh - 24px)}
+.v25-modal .modal-body{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+.v25-modal .modal-foot{flex:0 0 auto;display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
+.v25-modal .btn:disabled{opacity:.45;cursor:not-allowed}
+.v25-sec{display:grid;grid-template-columns:1fr 1fr;gap:10px 12px}
+.v25-sec label{display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:700;color:var(--color-text-muted);min-width:0}
+.v25-sec label b{color:#C0392B}
+.v25-sec input{height:42px;border:1px solid var(--color-border);border-radius:10px;padding:0 12px;background:var(--color-surface-solid);color:var(--color-text);font:inherit;font-size:16px;font-weight:500;box-sizing:border-box;width:100%;text-transform:uppercase}
+.v25-sec input::placeholder{text-transform:none}
+.v25-sec input:disabled{opacity:.5}
+.v25-durum{margin-top:12px;padding:10px 12px;border-radius:10px;font-size:13px;line-height:1.45;border:1px solid var(--color-border)}
+.v25-durum.var{background:rgba(27,92,153,.08);border-color:rgba(27,92,153,.3)}
+.v25-durum.yeni{background:rgba(46,160,67,.08);border-color:rgba(46,160,67,.35)}
+.v25-foto{display:flex;gap:12px;align-items:center;margin-top:12px}
+.v25-foto .v25-th{flex-basis:84px;width:84px;height:84px}
+.v25-hata{color:#C0392B;font-size:13px;min-height:18px;margin-top:8px}
+@media (max-width:640px){
+ .v25-sec{grid-template-columns:1fr}
+ .v25-modal{max-height:calc(100dvh - 12px)}
+ .v25-modal .modal-foot .btn{flex:1 1 auto}
+ .v25-grid{grid-template-columns:1fr}
+}
+</style>
+<script id="v25-katalog-js">
+/* ===== v25: Ortak ürün kataloğu (sunucu: pronto-katalog.sql) =====
+   Trafik: katalog cihazda saklanır; açılışta yalnızca değişenler istenir. Fotoğraflar sadece
+   ekranda görünen modeller için, 24'lük paketlerle bir kez iner ve cihazda kalır. */
+const V25_KAT_C = "v25_katalog", V25_FOTO_C = "v25_katalog_foto";
+let v25Kat = null, v25KatP = null, v25Yok = false, v25Eski = false, v25Tab = "list", v25AraQ = "", v25GeldiT = null;
+let v25Foto = null;            // { anahtar: { at, v } }
+const v25Lw = (x) => String(x == null ? "" : x).replace(/[\u0000-\u001f\u007f<>]/g, " ").replace(/\s+/g, " ").trim().replace(/I/g, "ı").replace(/İ/g, "i").toLocaleLowerCase("tr-TR");
+const v25Up = (x) => String(x == null ? "" : x).replace(/[\u0000-\u001f\u007f<>]/g, " ").replace(/\s+/g, " ").trim().slice(0, 60).replace(/i/g, "İ").replace(/ı/g, "I").toLocaleUpperCase("tr-TR");
+const V25_ALAN = [["kategori", "Kategori", true], ["model", "Model", true], ["modul", "Modül"], ["olcu", "Ölçü"], ["renk", "Renk"], ["yon", "Yön"]];
+const v25Anahtar = (r) => V25_ALAN.map(([k]) => v25Lw(r[k])).join("|");
+const v25FotoKey = (k, m, mod) => v25Lw(k) + "|" + v25Lw(m) + "|" + v25Lw(mod || "");
+const v25FotoKey2 = (k, m) => v25Lw(k) + "|" + v25Lw(m);
+const v25ImgOk = (v) => typeof v === "string" && /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/]+=*$/.test(v) && v.length < 600000;
+function v25Hata(er) {
+  const t = String((er && (er.message || er.details)) || er || "");
+  if (/pronto_katalog|schema cache|does not exist|Could not find the function/i.test(t)) return "Katalog kurulumu (pronto-katalog.sql) henüz yapılmamış.";
+  return t || "Bilinmeyen hata";
+}
+async function v25KatYukle(force) {
+  if (v25Kat && !force && !v25Eski) return v25Kat;
+  if (v25KatP) return v25KatP;
+  v25KatP = (async () => {
+    if (!v25Kat) {
+      const c = await cacheGet(V25_KAT_C);
+      v25Kat = { rows: new Map(((c && c.rows) || []).map((r) => [r.id, r])), foto: (c && c.foto) || {}, son: (c && c.son) || null };
+    }
+    if (!v25Foto) { const f = await cacheGet(V25_FOTO_C); v25Foto = (f && f.map) || {}; }
+    if (!supa) return v25Kat;
+    // 2 dakikalık örtüşme: aynı anda kaydedilenler kaçmasın
+    const son = v25Kat.son ? new Date(new Date(v25Kat.son).getTime() - 120000).toISOString() : null;
+    const { data, error } = await supa.rpc("pronto_katalog_getir", { p_son: son });
+    if (error) { if (/pronto_katalog|schema cache|does not exist|Could not find the function|PGRST202/i.test((error.message || "") + (error.code || ""))) { v25Yok = true; return v25Kat; } throw error; }
+    v25Yok = false; v25Eski = false;
+    const d = data || {};
+    for (const r of d.urunler || []) if (r && r.id) v25Kat.rows.set(r.id, r);
+    for (const id of d.silinen || []) v25Kat.rows.delete(id);
+    Object.assign(v25Kat.foto, d.fotolar || {});
+    for (const k of d.silinen_foto || []) { delete v25Kat.foto[k]; delete v25Foto[k]; }
+    if (d.son) v25Kat.son = d.son;
+    cachePut(V25_KAT_C, { rows: Array.from(v25Kat.rows.values()), foto: v25Kat.foto, son: v25Kat.son });
+    return v25Kat;
+  })().finally(() => { v25KatP = null; });
+  return v25KatP;
+}
+function v25Geldi() {
+  v25Eski = true;
+  clearTimeout(v25GeldiT);
+  v25GeldiT = setTimeout(() => { if (currentView === "products" && v25Tab === "kat") v25Ciz(true); }, 1500);
+}
+/* model fotoğrafı: önce kategori|model|modül, yoksa kategori|model */
+function v25FotoBul(k, m, mod) {
+  if (!v25Kat) return null;
+  const a = v25FotoKey(k, m, mod), b = v25FotoKey2(k, m), c = v25FotoKey(k, m, "");
+  for (const x of [a, c, b]) if (v25Kat.foto[x]) return x;
+  return null;
+}
+let v25FotoBekle = new Set(), v25FotoT = null, v25FotoDin = new Map();
+function v25FotoIste(key, cb) {
+  if (!key) return;
+  const f = v25Foto && v25Foto[key];
+  if (f && (!v25Kat.foto[key] || f.at >= v25Kat.foto[key])) { cb(f.v); return; }
+  if (!v25FotoDin.has(key)) v25FotoDin.set(key, []);
+  v25FotoDin.get(key).push(cb);
+  v25FotoBekle.add(key);
+  clearTimeout(v25FotoT); v25FotoT = setTimeout(v25FotoCek, 60);
+}
+async function v25FotoCek() {
+  const keys = Array.from(v25FotoBekle); v25FotoBekle.clear();
+  for (let i = 0; i < keys.length; i += 24) {
+    const parca = keys.slice(i, i + 24);
+    try {
+      const { data, error } = await supa.rpc("pronto_katalog_foto", { p_keys: parca });
+      if (error) throw error;
+      for (const [k, o] of Object.entries(data || {})) if (o && v25ImgOk(o.v)) v25Foto[k] = { at: o.at, v: o.v };
+    } catch (e) { console.warn("Katalog fotoğrafı:", e); }
+    for (const k of parca) { const cbs = v25FotoDin.get(k) || []; v25FotoDin.delete(k); const f = v25Foto[k]; if (f) cbs.forEach((cb) => cb(f.v)); }
+  }
+  cachePut(V25_FOTO_C, { map: v25Foto });
+}
+function v25ThumbBagla(root) {
+  const els = root.querySelectorAll("[data-fk]");
+  const yukle = (el) => { const k = el.dataset.fk; el.removeAttribute("data-fk"); v25FotoIste(k, (v) => { if (!el.isConnected || !v25ImgOk(v)) return; const im = new Image(); im.alt = ""; im.decoding = "async"; im.src = v; el.textContent = ""; el.appendChild(im); }); };
+  if (!("IntersectionObserver" in window)) { els.forEach(yukle); return; }
+  const io = new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) { io.unobserve(e.target); yukle(e.target); } }), { rootMargin: "200px" });
+  els.forEach((el) => io.observe(el));
+}
+/* katalog → kategori > model grupları */
+function v25Gruplar(q) {
+  const kats = new Map();
+  for (const r of v25Kat ? v25Kat.rows.values() : []) {
+    if (q) { const t = v106Ara([r.kod, r.kategori, r.model, r.modul, r.olcu, r.renk, r.yon].join(" ")); if (!t.includes(q)) continue; }
+    const kk = v25Lw(r.kategori), mk = v25Lw(r.model);
+    let K = kats.get(kk); if (!K) kats.set(kk, (K = { ad: r.kategori, modeller: new Map() }));
+    let M = K.modeller.get(mk); if (!M) K.modeller.set(mk, (M = { ad: r.model, kat: r.kategori, list: [] }));
+    M.list.push(r);
+  }
+  return Array.from(kats.values()).sort((a, b) => String(a.ad).localeCompare(String(b.ad), "tr"))
+    .map((K) => ({ ad: K.ad, modeller: Array.from(K.modeller.values()).sort((a, b) => String(a.ad).localeCompare(String(b.ad), "tr")) }));
+}
+const v25VarAd = (r) => [r.modul, r.olcu, r.renk, r.yon].filter(Boolean).join(" · ") || "Standart";
+async function v25Ciz(force) {
+  const box = document.getElementById("v25Liste"); if (!box) return;
+  if (!v25Kat || force || v25Eski) {
+    if (!v25Kat) box.innerHTML = `<div class="v25-bos">Yükleniyor…</div>`;
+    try { await v25KatYukle(force); } catch (e) { box.innerHTML = `<div class="v25-bos">Katalog okunamadı: ${escapeHtml(v25Hata(e))}</div>`; return; }
+  }
+  const yeniB = document.getElementById("v25Yeni"); if (yeniB) yeniB.disabled = v25Yok;
+  if (v25Yok) { box.innerHTML = `<div class="v98-warn">Katalog bağlantısı henüz kurulmamış. Supabase'de <b>pronto-katalog.sql</b> dosyasını bir kez çalıştırın.</div>`; return; }
+  const say = document.getElementById("v25Say"); if (say) say.textContent = `(${v25Kat.rows.size})`;
+  const q = v106Ara(v25AraQ), gs = v25Gruplar(q);
+  if (!v25Kat.rows.size) { box.innerHTML = `<div class="v25-bos">Katalogda henüz ürün yok.</div>`; return; }
+  if (!gs.length) { box.innerHTML = `<div class="v25-bos">Aramanla eşleşen ürün yok.</div>`; return; }
+  let n = 0; const LIM = 300; const parcalar = [];
+  for (const K of gs) {
+    if (n >= LIM) break;
+    const ms = K.modeller.slice(0, LIM - n); n += ms.length;
+    parcalar.push(`<div class="v25-kat"><div class="v25-kat-h">${escapeHtml(K.ad)} <span>${K.modeller.length} model</span></div><div class="v25-grid">` +
+      ms.map((M) => { const fk = v25FotoBul(M.kat, M.ad, (M.list[0] || {}).modul);
+        return `<div class="v25-m"><span class="v25-th"${fk ? ` data-fk="${escapeHtml(fk)}"` : ""}>${fk ? "" : "Fotoğraf yok"}</span><div class="v25-mb"><div class="v25-mn">${escapeHtml(M.ad)}</div><div class="v25-ms">${M.list.length} çeşit</div><div class="v25-vs">` +
+          M.list.slice(0, 40).map((r) => `<span class="v25-v${r.id && String(r.id).startsWith("sp") ? " yeni" : ""}" title="${escapeHtml(r.kod || "")}">${escapeHtml(v25VarAd(r))}</span>`).join("") +
+          (M.list.length > 40 ? `<span class="v25-v">+${M.list.length - 40}</span>` : "") + `</div></div></div>`; }).join("") + `</div></div>`);
+  }
+  const toplamM = gs.reduce((a, K) => a + K.modeller.length, 0);
+  box.innerHTML = parcalar.join("") + (toplamM > LIM ? `<div class="v98-s" style="text-align:center;padding:8px">${toplamM - LIM} model daha var — aramayı daraltın.</div>` : "");
+  v25ThumbBagla(box);
+}
+function v25SekmeAc(t) {
+  v25Tab = t === "kat" ? "kat" : "list";
+  const sec = document.getElementById("view-products"); if (!sec) return;
+  sec.classList.toggle("v25-kat-on", v25Tab === "kat");
+  sec.querySelectorAll("[data-v25-tab]").forEach((b) => { const on = b.dataset.v25Tab === v25Tab; b.classList.toggle("active", on); b.setAttribute("aria-selected", on ? "true" : "false"); });
+  if (v25Tab === "kat") v25Ciz(false);
+}
+
+/* ===== Sıralı ürün seçici: kategori → model → modül → ölçü → renk → yön =====
+   Her kutuda yalnızca katalogdaki ilgili değerler önerilir; yeni değer de yazılabilir.
+   (Satın Alma da bunu kullanacak.) */
+function v25Secici(host, opt) {
+  opt = opt || {};
+  const id = "v25s" + Math.random().toString(36).slice(2, 8);
+  const v = { kategori: "", model: "", modul: "", olcu: "", renk: "", yon: "", ...(opt.deger || {}) };
+  host.innerHTML = `<div class="v25-sec">${V25_ALAN.map(([k, l, z]) => `<label><span>${l}${z ? " <b>*</b>" : ""}</span><input data-v25k="${k}" list="${id}-${k}" maxlength="60" autocomplete="off" value="${escapeHtml(v[k] || "")}" placeholder="${z ? "Seçin veya yazın" : "Boş bırakılabilir"}"><datalist id="${id}-${k}"></datalist></label>`).join("")}</div>
+    <div class="v25-durum" data-v25d></div>`;
+  const inp = (k) => host.querySelector(`[data-v25k="${k}"]`);
+  const rows = () => (v25Kat ? Array.from(v25Kat.rows.values()) : []);
+  const uniq = (arr) => { const m = new Map(); for (const x of arr) { const t = String(x || "").trim(); if (t && !m.has(v25Lw(t))) m.set(v25Lw(t), t); } return Array.from(m.values()).sort((a, b) => a.localeCompare(b, "tr")); };
+  const listeler = () => {
+    const R = rows(), kk = v25Lw(v.kategori), mk = v25Lw(v.model);
+    const kat = R.filter((r) => v25Lw(r.kategori) === kk), mod = kat.filter((r) => v25Lw(r.model) === mk);
+    const L = { kategori: uniq(R.map((r) => r.kategori)), model: uniq(kat.map((r) => r.model)), modul: uniq(mod.map((r) => r.modul)),
+      olcu: uniq((mod.length ? mod : kat).map((r) => r.olcu)), renk: uniq((mod.length ? mod : kat).map((r) => r.renk)), yon: uniq(["SOL", "SAĞ"].concat(R.map((r) => r.yon))) };
+    for (const [k] of V25_ALAN) { const dl = host.querySelector(`#${id}-${k}`); if (dl) dl.innerHTML = L[k].slice(0, 300).map((x) => `<option value="${escapeHtml(x)}">`).join(""); }
+  };
+  const tam = () => { const a = v25Anahtar(v); return rows().find((r) => v25Anahtar(r) === a) || null; };
+  const durum = () => {
+    const d = host.querySelector("[data-v25d]"), t = tam();
+    if (!v25Lw(v.kategori) || !v25Lw(v.model)) { d.className = "v25-durum"; d.textContent = "Kategori ve model seçin."; }
+    else if (t) { d.className = "v25-durum var"; d.innerHTML = `<b>Katalogda var:</b> ${escapeHtml(t.kod || "")} — ${escapeHtml(t.kategori)} / ${escapeHtml(t.model)} / ${escapeHtml(v25VarAd(t))}`; }
+    else {
+      const modelVar = rows().some((r) => v25Lw(r.kategori) === v25Lw(v.kategori) && v25Lw(r.model) === v25Lw(v.model));
+      d.className = "v25-durum yeni"; d.innerHTML = `<b>Yeni ${modelVar ? "çeşit" : "ürün"}:</b> kaydedilince PRONTO Teklif kataloğuna da eklenir.`;
+    }
+    opt.onChange && opt.onChange(api);
+  };
+  host.addEventListener("input", (e) => { const k = e.target.dataset && e.target.dataset.v25k; if (!k) return; v[k] = e.target.value; if (k === "kategori" || k === "model") listeler(); durum(); });
+  host.addEventListener("change", (e) => { const k = e.target.dataset && e.target.dataset.v25k; if (!k) return; v[k] = e.target.value; listeler(); durum(); });
+  const api = {
+    deger: () => { const o = {}; for (const [k] of V25_ALAN) o[k] = v25Up(v[k]); return o; },
+    tam, gecerli: () => !!v25Lw(v.kategori) && !!v25Lw(v.model),
+    fotoAnahtar: () => v25FotoBul(v.kategori, v.model, v.modul),
+    yenile: () => { listeler(); durum(); }, odak: () => inp("kategori") && inp("kategori").focus()
+  };
+  listeler(); durum();
+  return api;
+}
+
+/* görsel → 320 px JPEG (Teklif'teki model fotoğraflarıyla aynı biçim) */
+async function v25Gorsel(file) {
+  if (!file) return "";
+  if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) throw new Error("Sadece JPG, PNG veya WEBP yükleyebilirsiniz.");
+  if (file.size > 8 * 1024 * 1024) throw new Error("Dosya 8 MB sınırını aşıyor.");
+  const h = new Uint8Array(await file.slice(0, 12).arrayBuffer());
+  const ok = (h[0] === 0xFF && h[1] === 0xD8) || (h[0] === 0x89 && h[1] === 0x50) || (h[8] === 0x57 && h[9] === 0x45 && h[10] === 0x42 && h[11] === 0x50);
+  if (!ok) throw new Error("Dosya içeriği geçerli bir görsel değil.");
+  const url = URL.createObjectURL(file);
+  try {
+    const img = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = () => rej(new Error("Görsel okunamadı.")); i.src = url; });
+    const k = Math.min(1, 320 / Math.max(img.width, img.height));
+    const c = document.createElement("canvas"); c.width = Math.max(1, Math.round(img.width * k)); c.height = Math.max(1, Math.round(img.height * k));
+    const x = c.getContext("2d"); x.fillStyle = "#fff"; x.fillRect(0, 0, c.width, c.height); x.drawImage(img, 0, 0, c.width, c.height);
+    let q = 0.85, d = c.toDataURL("image/jpeg", q);
+    while (d.length > 280000 && q > 0.4) { q -= 0.1; d = c.toDataURL("image/jpeg", q); }
+    return d;
+  } finally { URL.revokeObjectURL(url); }
+}
+
+/* Kataloğa ürün ekle penceresi */
+async function v25YeniAc() {
+  if (!supa) { showToast("Katalog için internet bağlantısı gerekli."); return; }
+  try { await v25KatYukle(false); } catch (e) { showToast(v25Hata(e)); return; }
+  if (v25Yok) { showToast("Katalog kurulumu (pronto-katalog.sql) henüz yapılmamış."); return; }
+  const m = v98Ov(`<div class="modal-head"><h2>Kataloğa Ürün Ekle</h2><button class="icon-btn" data-x aria-label="Kapat">✕</button></div>
+    <div class="modal-body"><div id="v25SecHost"></div>
+      <div class="v25-foto"><span class="v25-th" id="v25FTh">Fotoğraf yok</span><div><div class="v98-s" id="v25FBilgi"></div>
+        <button type="button" class="btn btn-secondary" id="v25FSec" style="margin-top:6px">Model fotoğrafı seç</button>
+        <button type="button" class="btn btn-ghost" id="v25FSil" style="margin-top:6px;display:none">Kaldır</button>
+        <input type="file" id="v25FDosya" accept="image/jpeg,image/png,image/webp" hidden></div></div>
+      <div class="v25-hata" id="v25H" role="alert"></div></div>
+    <div class="modal-foot"><button class="btn btn-ghost" type="button" data-x>Vazgeç</button><button class="btn btn-primary" type="button" id="v25Kaydet">Kataloğa Ekle</button></div>`);
+  m.ov.querySelector(".modal").classList.add("v25-modal");
+  let foto = "", kirli = false;
+  // yazılmış form dışarı tıklayınca sorulmadan kapanmasın
+  m.ov.addEventListener("mousedown", (e) => { if (e.target === m.ov && kirli) { e.stopImmediatePropagation(); showConfirm("Kaydedilmemiş değişiklikler var. Çıkmak istersen bu değişiklikler kaybolacak. Devam edilsin mi?", () => m.close()); } }, true);
+  m.ov.addEventListener("click", (e) => { if (e.target.closest("[data-x]") && kirli) { e.stopImmediatePropagation(); showConfirm("Kaydedilmemiş değişiklikler var. Çıkmak istersen bu değişiklikler kaybolacak. Devam edilsin mi?", () => m.close()); } }, true);
+  const th = m.$("#v25FTh"), bilgi = m.$("#v25FBilgi"), sec = m.$("#v25FSec"), sil = m.$("#v25FSil"), hata = m.$("#v25H"), btn = m.$("#v25Kaydet");
+  const thGoster = (v) => { th.textContent = ""; if (v && v25ImgOk(v)) { const im = new Image(); im.alt = ""; im.src = v; th.appendChild(im); } else th.textContent = "Fotoğraf yok"; };
+  let son = null;
+  const S = v25Secici(m.$("#v25SecHost"), { onChange: (api) => {
+    kirli = true; hata.textContent = "";
+    const fk = api.fotoAnahtar(), t = api.tam();
+    btn.disabled = !api.gecerli() || !!t; btn.textContent = t ? "Zaten katalogda" : "Kataloğa Ekle";
+    if (fk) { sec.style.display = "none"; sil.style.display = "none"; bilgi.textContent = "Bu modelin fotoğrafı katalogda var."; if (son !== fk) { son = fk; thGoster(""); v25FotoIste(fk, (v) => { if (son === fk) thGoster(v); }); } }
+    else { son = null; sec.style.display = api.gecerli() ? "" : "none"; bilgi.textContent = api.gecerli() ? "Bu modelin fotoğrafı yok. İsterseniz ekleyin (Teklif'te de görünür)." : ""; thGoster(foto); sil.style.display = foto ? "" : "none"; sec.textContent = foto ? "Fotoğrafı değiştir" : "Model fotoğrafı seç"; }
+  } });
+  kirli = false; setTimeout(() => S.odak(), 50);
+  sec.addEventListener("click", () => m.$("#v25FDosya").click());
+  m.$("#v25FDosya").addEventListener("change", async (e) => { const f = e.target.files && e.target.files[0]; e.target.value = ""; if (!f) return; try { foto = await v25Gorsel(f); kirli = true; thGoster(foto); sil.style.display = ""; sec.textContent = "Fotoğrafı değiştir"; } catch (er) { hata.textContent = er.message || String(er); } });
+  sil.addEventListener("click", () => { foto = ""; thGoster(""); sil.style.display = "none"; sec.textContent = "Model fotoğrafı seç"; });
+  btn.addEventListener("click", async () => {
+    if (!S.gecerli()) { hata.textContent = "Kategori ve model zorunlu."; return; }
+    btn.disabled = true; btn.textContent = "Ekleniyor…"; hata.textContent = "";
+    try {
+      const { data, error } = await supa.rpc("pronto_katalog_ekle", { p_urun: S.deger(), p_foto: !S.fotoAnahtar() && foto ? foto : null });
+      if (error) throw error;
+      const r = data || {}, u = r.urun || {};
+      if (u.id) v25Kat.rows.set(u.id, u);
+      if (r.foto === "eklendi" && r.foto_anahtar) { const at = new Date().toISOString(); v25Kat.foto[r.foto_anahtar] = at; v25Foto[r.foto_anahtar] = { at, v: foto }; cachePut(V25_FOTO_C, { map: v25Foto }); }
+      cachePut(V25_KAT_C, { rows: Array.from(v25Kat.rows.values()), foto: v25Kat.foto, son: v25Kat.son });
+      m.close();
+      showToast(r.yeni ? `${u.kod || "Ürün"} PRONTO Teklif kataloğuna eklendi.` : `Bu ürün zaten katalogda (${u.kod || ""}).`);
+      if (currentView === "products" && v25Tab === "kat") v25Ciz(false);
+    } catch (er) { btn.disabled = false; btn.textContent = "Kataloğa Ekle"; hata.textContent = "Eklenemedi: " + v25Hata(er); }
+  });
+}
+
+(function v25Kur() {
+  const sec = document.getElementById("view-products"); if (!sec) return;
+  sec.addEventListener("click", (e) => { const t = e.target.closest("[data-v25-tab]"); if (t) v25SekmeAc(t.dataset.v25Tab); });
+  const a = document.getElementById("v25Ara"); if (a) a.addEventListener("input", debounce((e) => { v25AraQ = sanitizeSearchText(e.target.value, 100); v25Ciz(false); }, 200));
+  const y = document.getElementById("v25Yeni"); if (y) y.addEventListener("click", v25YeniAc);
+})();
 </script>
 </body>
 </html>
