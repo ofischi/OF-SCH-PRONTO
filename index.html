@@ -2336,8 +2336,8 @@ table.v98-t{width:100%;border-collapse:collapse;font-size:13px}
     <!-- ================= STOK TAKİBİ ================= -->
     <section class="view hidden" id="view-stock">
       <div class="page-header">
-        <div><h1>Stok Takibi</h1><p class="subtitle">Stok adedini buradan güncelle. Kategori ve birim için satıra tıkla.</p></div>
-        <div class="header-actions">
+        <div><h1>Stok Takibi</h1><p class="subtitle" id="v27Alt">Ürün çeşidi bazında depo stoğu: satın almadan gelenler, sayımlar ve aktarımlar.</p></div>
+        <div class="header-actions v27-eski">
           <button class="btn btn-secondary" id="stockExportBtn">
             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
             Excel'e Aktar
@@ -2346,7 +2346,28 @@ table.v98-t{width:100%;border-collapse:collapse;font-size:13px}
         </div>
       </div>
 
-      <div class="summary-grid">
+      <div class="v101-tabs" role="tablist" id="v27Tabs">
+        <button type="button" class="v101-tab active" role="tab" aria-selected="true" data-v27-tab="depo">Depo Stoğu</button>
+        <button type="button" class="v101-tab" role="tab" aria-selected="false" data-v27-tab="tasi">Eski Stoğu Taşı<span class="v101-n" id="v27TasiSay"></span></button>
+        <button type="button" class="v101-tab" role="tab" aria-selected="false" data-v27-tab="eski">Eski Stok</button>
+      </div>
+      <div id="v27Depo">
+        <div class="v26-ozet" id="v27Ozet"></div>
+        <div class="v26-bar">
+          <div class="search-box">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+            <input type="text" id="v27Ara" maxlength="100" placeholder="Kategori, model, renk, ölçü ara…" autocomplete="off">
+          </div>
+          <div class="v26-filtre" id="v27Filtre"></div>
+          <button type="button" class="btn btn-secondary" id="v27Sayim">Sayım / Düzeltme</button>
+        </div>
+        <div id="v27Liste"></div>
+      </div>
+      <div id="v27Tasi">
+        <p class="v101-info">Ürünler listesindeki eski stok adetlerini yeni <b>Depo Stoğu</b>'na taşıyın: her eski ürün için katalogdaki karşılığını (kategori → model → … → yön) seçip <b>Aktar</b>'a basın. Eski kayıt değişmez, silinmez; aynı ürün yalnızca bir kez aktarılır.</p>
+        <div id="v27TasiListe"></div>
+      </div>
+      <div class="summary-grid v27-eski">
         <div class="summary-card"><span class="summary-label">Stokta Takip Edilen Ürün</span><span class="summary-value" id="stockStatTracked">0</span></div>
         <div class="summary-card"><span class="summary-label">Toplam Rezerve Adet</span><span class="summary-value" id="stockStatReserved">0</span></div>
       </div>
@@ -3426,6 +3447,7 @@ function subscribeToChanges() {
     .on("broadcast", { event: "esl" }, () => { try { v101Geldi(); } catch (_) {} })
     .on("broadcast", { event: "kat" }, () => { try { v25Geldi(); } catch (_) {} })
     .on("broadcast", { event: "sa" }, ({ payload }) => { try { v26Geldi(payload); } catch (_) {} })
+    .on("broadcast", { event: "stok" }, ({ payload }) => { try { v27Geldi(payload); } catch (_) {} })
     .on("broadcast", { event: "reload" }, ({ payload }) => {
       const store = payload && payload.store;
       if (!TABLES[store] || (store === "stockMovements" && !stockLoaded)) return;
@@ -4035,6 +4057,7 @@ function switchView(view) {
   v106BarAktif();
   if (view === "products") renderProductsView();
   if (view === "purchase") { try { v26Ciz(false); } catch (e) { console.warn(e); } }
+  if (view === "stock") { try { v27SekmeAc(v27Tab); } catch (e) { console.warn(e); } }
   if (view === "customers") renderCustomersView();
   if (view === "suppliers") renderSuppliersView();
   if (view === "settings") v103YedekCiz();
@@ -10491,6 +10514,281 @@ function v26Detay(id) {
     const mb = e.target.closest("[data-sam]"); if (mb) { e.stopPropagation(); const r = v26.rows.get(Number(mb.dataset.sam)); if (r) v26Menu(mb, r); return; }
     const row = e.target.closest("[data-sa]"); if (row) v26Detay(Number(row.dataset.sa));
   });
+})();
+</script>
+<style id="v27-stok">
+/* v27: Depo stoğu */
+#view-stock:not(.v27-on-eski) .v27-eski,#view-stock:not(.v27-on-eski) #stockTableWrap,#view-stock:not(.v27-on-eski) #stockCardsWrap,
+#view-stock:not(.v27-on-eski) #stockPagination,#view-stock:not(.v27-on-eski) #stockEmptyState,#view-stock:not(.v27-on-eski)>.toolbar{display:none !important}
+#view-stock:not(.v27-on-depo) #v27Depo,#view-stock:not(.v27-on-tasi) #v27Tasi{display:none}
+.v27-kat{margin:0 0 16px}
+.v27-m{border:1px solid var(--color-border);border-radius:14px;background:var(--color-surface-solid);overflow:hidden;margin-bottom:10px}
+.v27-mh{display:flex;gap:10px;align-items:center;padding:10px 12px;border-bottom:1px solid var(--color-border)}
+.v27-mh .v25-th{flex:0 0 44px;width:44px;height:44px;border-radius:8px;font-size:9px}
+.v27-mh b{font-size:15px}
+.v27-v{display:grid;grid-template-columns:minmax(140px,2fr) repeat(4,minmax(64px,1fr));gap:8px;align-items:center;padding:9px 12px;border-top:1px solid var(--color-border);cursor:pointer;font-size:14px}
+.v27-v:first-of-type{border-top:0}
+.v27-v:hover{background:rgba(27,92,153,.04)}
+.v27-v.bas{cursor:default;font-size:11.5px;font-weight:700;color:var(--color-text-muted);background:rgba(127,127,127,.05)}
+.v27-v>span:not(:first-child){text-align:right}
+.v27-v .say b{font-size:15px}
+.v27-v .eksi{color:#C0392B;font-weight:800}
+.v27-v .sifir{color:var(--color-text-muted)}
+.v27-v .yol{color:#1B5C99;font-weight:700}
+.v27-h{max-height:46vh;overflow:auto;border:1px solid var(--color-border);border-radius:12px;margin-top:8px}
+.v27-h div{display:grid;grid-template-columns:110px 1fr 70px 70px;gap:8px;padding:8px 12px;border-top:1px solid var(--color-border);font-size:13px;align-items:center}
+.v27-h div:first-child{border-top:0}
+.v27-h .art{color:#2E9B57;font-weight:800;text-align:right}
+.v27-h .eks{color:#C0392B;font-weight:800;text-align:right}
+.v27-h .son{text-align:right;color:var(--color-text-muted)}
+.v27-t{border:1px solid var(--color-border);border-radius:14px;overflow:hidden;background:var(--color-surface-solid)}
+.v27-tr{display:grid;grid-template-columns:minmax(160px,2fr) minmax(100px,1fr) 90px 150px;gap:10px;align-items:center;padding:10px 12px;border-top:1px solid var(--color-border)}
+.v27-tr:first-child{border-top:0}
+.v27-tr.bas{font-size:12px;font-weight:700;color:var(--color-text-muted);background:rgba(127,127,127,.05)}
+.v27-tr.ok{opacity:.65}
+.v27-tr .btn{min-height:36px}
+@media (max-width:720px){
+ .v27-v{grid-template-columns:1fr repeat(3,auto);font-size:13px}
+ .v27-v>.c-ayr{display:none}
+ .v27-tr{grid-template-columns:1fr auto;grid-template-areas:"a b" "c d"}
+ .v27-tr.bas{display:none}
+ .v27-tr>:nth-child(1){grid-area:a}.v27-tr>:nth-child(2){grid-area:c;font-size:12px;color:var(--color-text-muted)}
+ .v27-tr>:nth-child(3){grid-area:b;text-align:right}.v27-tr>:nth-child(4){grid-area:d;justify-self:end}
+ .v27-h div{grid-template-columns:86px 1fr 52px 52px;font-size:12px}
+}
+</style>
+<script id="v27-stok-js">
+/* ===== v27: Depo stoğu (sunucu: pronto-stok.sql) =====
+   Trafik: stok satırları cihazda saklanır, sekme açılınca yalnızca değişenler istenir.
+   Hareket geçmişi yalnızca bir ürün açılınca (son 100 hareket) okunur. */
+const V27_C = "v27_stok";
+let v27 = null, v27P = null, v27Yok = false, v27Tab = "depo", v27AraQ = "", v27Filtre = "stokta", v27Eski = null;
+const v27Anahtar = (r) => ["kategori", "model", "modul", "olcu", "renk", "yon"].map((k) => v25Ky(r[k])).join("|");
+const V27_TUR = { satin_alma: "Satın alma teslimi", satin_alma_geri: "Teslim geri alındı", sayim: "Sayım / düzeltme", eski_aktarim: "Eski stoktan aktarım", teslim: "Müşteriye teslim", teslim_geri: "Teslim geri alındı", ayir: "Müşteriye ayrıldı", ayir_geri: "Ayırma kaldırıldı" };
+function v27Hata(er) {
+  const t = String((er && (er.message || er.details)) || er || "");
+  if (/pronto_stok|schema cache|does not exist|Could not find the function/i.test(t)) return "Stok kurulumu (pronto-stok.sql) henüz yapılmamış.";
+  return (typeof v26Hata === "function") ? v26Hata(er) : t;
+}
+async function v27Yukle() {
+  if (v27P) return v27P;
+  v27P = (async () => {
+    if (!v27) { const c = await cacheGet(V27_C); v27 = { rows: new Map(((c && c.rows) || []).map((r) => [r.anahtar, r])), son: (c && c.son) || null }; }
+    if (!supa) return v27;
+    let q = supa.from("pronto_stok").select("*");
+    if (v27.son) q = q.gt("updated_at", new Date(new Date(v27.son).getTime() - 120000).toISOString());
+    const { data, error } = await q.order("updated_at").limit(10000);
+    if (error) { if (/does not exist|schema cache|relation|42P01|PGRST205|permission/i.test((error.message || "") + " " + (error.code || ""))) { v27Yok = true; return v27; } throw error; }
+    v27Yok = false;
+    for (const r of data || []) v27Al(r, false);
+    v27Kaydet();
+    return v27;
+  })().finally(() => { v27P = null; });
+  return v27P;
+}
+function v27Al(r, kaydet = true) {
+  if (!r || !r.anahtar || !v27) return;
+  const o = v27.rows.get(r.anahtar);
+  if (o && o.updated_at && r.updated_at && o.updated_at > r.updated_at) return;
+  v27.rows.set(r.anahtar, r);
+  if (r.updated_at && (!v27.son || r.updated_at > v27.son)) v27.son = r.updated_at;
+  if (kaydet) v27Kaydet();
+}
+let v27KT = null;
+function v27Kaydet() { clearTimeout(v27KT); v27KT = setTimeout(() => cachePut(V27_C, { rows: Array.from(v27.rows.values()), son: v27.son }), 400); }
+function v27Geldi(payload) {
+  const r = payload && payload.row; if (!r || !v27) return;
+  v27Al(r);
+  if (currentView === "stock" && v27Tab === "depo") v27Ciz(false);
+}
+/* yolda: açık satın almaların kalan adedi (çeşit bazında) */
+function v27Yolda() {
+  const m = new Map();
+  if (typeof v26 === "undefined" || !v26) return m;
+  for (const r of v26.rows.values()) if (v26Acik(r)) { const k = v27Anahtar(r); const e = m.get(k) || { adet: 0, list: [], r }; e.adet += r.adet - r.gelen; e.list.push(r); m.set(k, e); }
+  return m;
+}
+const V27_FILTRE = [["stokta", "Stokta olan"], ["yolda", "Yolda"], ["eksi", "Eksi"], ["hepsi", "Tümü"]];
+function v27Kalemler() {
+  const Y = v27Yolda(), out = new Map();
+  for (const r of v27.rows.values()) out.set(r.anahtar, { k: r.anahtar, r, depoda: r.depoda, ayrilmis: r.ayrilmis || 0, yolda: (Y.get(r.anahtar) || {}).adet || 0 });
+  for (const [k, e] of Y) if (!out.has(k)) out.set(k, { k, r: e.r, depoda: 0, ayrilmis: 0, yolda: e.adet });
+  return Array.from(out.values());
+}
+function v27OzetCiz(L) {
+  const el = document.getElementById("v27Ozet"); if (!el) return;
+  const dep = L.reduce((a, x) => a + Math.max(0, x.depoda), 0), cesit = L.filter((x) => x.depoda > 0).length, yol = L.reduce((a, x) => a + x.yolda, 0), eksi = L.filter((x) => x.depoda < 0).length;
+  el.innerHTML = `<div class="v26-k"><span>Depodaki adet</span><b>${dep}</b></div><div class="v26-k"><span>Stoklu çeşit</span><b>${cesit}</b></div>
+    <div class="v26-k"><span>Yolda (satın alma)</span><b>${yol}</b></div><div class="v26-k${eksi ? " kirmizi" : ""}"><span>Eksi stok</span><b>${eksi}</b></div>`;
+}
+async function v27Ciz(force) {
+  const box = document.getElementById("v27Liste"); if (!box) return;
+  const fl = document.getElementById("v27Filtre");
+  if (fl && !fl.children.length) fl.innerHTML = V27_FILTRE.map(([k, l]) => `<button type="button" class="v26-chip" data-v27f="${k}">${l}</button>`).join("");
+  if (fl) fl.querySelectorAll("[data-v27f]").forEach((b) => b.classList.toggle("on", b.dataset.v27f === v27Filtre));
+  if (!v27 || force) {
+    if (!v27) box.innerHTML = `<div class="v26-bos">Yükleniyor…</div>`;
+    try { await Promise.all([v27Yukle(), v26Yukle(false).catch(() => {}), v25KatYukle(false).catch(() => {})]); }
+    catch (e) { box.innerHTML = `<div class="v26-bos">Stok okunamadı: ${escapeHtml(v27Hata(e))}</div>`; return; }
+  }
+  const sb = document.getElementById("v27Sayim"); if (sb) sb.disabled = v27Yok;
+  if (v27Yok) { document.getElementById("v27Ozet").innerHTML = ""; box.innerHTML = `<div class="v98-warn">Depo stoğu henüz kurulmamış. Supabase'de <b>pronto-stok.sql</b> dosyasını bir kez çalıştırın.</div>`; return; }
+  const T = v27Kalemler(); v27OzetCiz(T);
+  const q = v106Ara(v27AraQ);
+  const L = T.filter((x) => {
+    if (v27Filtre === "stokta" && !(x.depoda > 0)) return false;
+    if (v27Filtre === "yolda" && !(x.yolda > 0)) return false;
+    if (v27Filtre === "eksi" && !(x.depoda < 0)) return false;
+    if (q && !v106Ara([x.r.kategori, x.r.model, x.r.modul, x.r.olcu, x.r.renk, x.r.yon].join(" ")).includes(q)) return false;
+    return true;
+  });
+  if (!T.length) { box.innerHTML = `<div class="v26-bos">Depoda henüz ürün yok.<br>Satın Alma'da <b>Teslim Al</b> dediğinizde, <b>Sayım / Düzeltme</b> ile ya da <b>Eski Stoğu Taşı</b> sekmesinden stok eklenir.</div>`; return; }
+  if (!L.length) { box.innerHTML = `<div class="v26-bos">Bu filtrede ürün yok.</div>`; return; }
+  const kats = new Map();
+  for (const x of L) { const kk = v25Ky(x.r.kategori), mk = v25Ky(x.r.model); let K = kats.get(kk); if (!K) kats.set(kk, (K = { ad: x.r.kategori, m: new Map() })); let M = K.m.get(mk); if (!M) K.m.set(mk, (M = { ad: x.r.model, kat: x.r.kategori, modul: x.r.modul, list: [] })); M.list.push(x); }
+  const sayi = (n, cls) => `<span class="say"><b class="${n < 0 ? "eksi" : n === 0 ? "sifir" : cls || ""}">${n}</b></span>`;
+  let n = 0; const LIM = 400, parcalar = [];
+  for (const K of Array.from(kats.values()).sort((a, b) => String(a.ad).localeCompare(String(b.ad), "tr"))) {
+    if (n >= LIM) break;
+    parcalar.push(`<div class="v27-kat"><div class="v25-kat-h">${escapeHtml(K.ad)} <span>${K.m.size} model</span></div>` +
+      Array.from(K.m.values()).sort((a, b) => String(a.ad).localeCompare(String(b.ad), "tr")).map((M) => { n += M.list.length; const fk = v25FotoBul(M.kat, M.ad, M.modul);
+        return `<div class="v27-m"><div class="v27-mh"><span class="v25-th"${fk ? ` data-fk="${escapeHtml(fk)}"` : ""}>${fk ? "" : "Foto yok"}</span><b>${escapeHtml(M.ad)}</b></div>
+          <div class="v27-v bas"><span>Çeşit</span><span>Depoda</span><span>Yolda</span><span class="c-ayr">Ayrılmış</span><span>Serbest</span></div>` +
+          M.list.sort((a, b) => v26VarAd(a.r).localeCompare(v26VarAd(b.r), "tr")).map((x) => `<div class="v27-v" data-v27k="${escapeHtml(x.k)}"><span>${escapeHtml(v26VarAd(x.r) || "Standart")}</span>${sayi(x.depoda)}<span class="say"><b class="${x.yolda ? "yol" : "sifir"}">${x.yolda}</b></span><span class="say c-ayr"><b class="${x.ayrilmis ? "" : "sifir"}">${x.ayrilmis}</b></span>${sayi(x.depoda - x.ayrilmis)}</div>`).join("") + `</div>`; }).join("") + `</div>`);
+  }
+  box.innerHTML = parcalar.join("") + (L.length > LIM ? `<div class="v98-s" style="text-align:center;padding:8px">Daha fazlası için aramayı daraltın.</div>` : "");
+  try { v25ThumbBagla(box); } catch (_) {}
+}
+async function v27Detay(k) {
+  const x = v27Kalemler().find((y) => y.k === k); if (!x) return;
+  const Y = (v27Yolda().get(k) || { list: [] }).list;
+  const m = v98Ov(`<div class="modal-head"><h2>${escapeHtml(x.r.kategori)} / ${escapeHtml(x.r.model)}</h2><button class="icon-btn" data-x aria-label="Kapat">✕</button></div>
+    <div class="modal-body"><p style="margin:0 0 10px"><b>${escapeHtml(v26VarAd(x.r) || "Standart")}</b></p>
+      <div class="v26-ozet"><div class="v26-k"><span>Depoda</span><b>${x.depoda}</b></div><div class="v26-k"><span>Yolda</span><b>${x.yolda}</b></div><div class="v26-k"><span>Ayrılmış</span><b>${x.ayrilmis}</b></div><div class="v26-k"><span>Serbest</span><b>${x.depoda - x.ayrilmis}</b></div></div>
+      ${Y.length ? `<h3 style="font-size:13px;margin:6px 0 0;color:var(--color-text-muted)">YOLDAKİ SATIN ALMALAR</h3><div class="v27-h">${Y.map((r) => `<div><span>${escapeHtml(r.no)}</span><span>${escapeHtml(r.tedarikci)}${r.teslim_tarihi ? " · " + escapeHtml(formatDate(r.teslim_tarihi)) : ""}</span><span class="son">${r.gelen}/${r.adet}</span><span class="art">${r.adet - r.gelen}</span></div>`).join("")}</div>` : ""}
+      <h3 style="font-size:13px;margin:14px 0 0;color:var(--color-text-muted)">HAREKETLER</h3><div class="v27-h" id="v27H"><div><span></span><span>Yükleniyor…</span></div></div></div>
+    <div class="modal-foot"><button class="btn btn-secondary" type="button" data-sy>Sayım / Düzelt</button><button class="btn btn-ghost" type="button" data-x>Kapat</button></div>`);
+  m.ov.querySelector(".modal").classList.add("v25-modal");
+  m.$("[data-sy]").addEventListener("click", () => { m.close(); v27SayimAc(x.r); });
+  if (!v27.rows.has(k)) { m.$("#v27H").innerHTML = `<div><span></span><span>Henüz hareket yok.</span></div>`; return; }
+  try {
+    const { data, error } = await supa.from("pronto_stok_hareket").select("id,delta,sonra,tur,kaynak,not,created_at").eq("anahtar", k).order("id", { ascending: false }).limit(100);
+    if (error) throw error;
+    m.$("#v27H").innerHTML = (data || []).length ? data.map((h) => `<div><span>${escapeHtml(formatDate(String(h.created_at).slice(0, 10)))}</span><span>${escapeHtml(V27_TUR[h.tur] || h.tur)}${h.kaynak ? " · " + escapeHtml(h.kaynak) : ""}${h.not ? `<br><span class="v26-us">${escapeHtml(h.not)}</span>` : ""}</span><span class="${h.delta > 0 ? "art" : "eks"}">${h.delta > 0 ? "+" : ""}${h.delta}</span><span class="son">→ ${h.sonra}</span></div>`).join("") : `<div><span></span><span>Henüz hareket yok.</span></div>`;
+  } catch (e) { m.$("#v27H").innerHTML = `<div><span></span><span>${escapeHtml(v27Hata(e))}</span></div>`; }
+}
+async function v27SayimAc(on) {
+  if (!supa) { showToast("Sayım için internet bağlantısı gerekli."); return; }
+  try { await Promise.all([v25KatYukle(false), v27Yukle()]); } catch (e) { showToast(v27Hata(e)); return; }
+  if (v27Yok) { showToast("Stok kurulumu (pronto-stok.sql) henüz yapılmamış."); return; }
+  const m = v98Ov(`<div class="modal-head"><h2>Sayım / Düzeltme</h2><button class="icon-btn" data-x aria-label="Kapat">✕</button></div>
+    <div class="modal-body"><div id="v27SSec"></div>
+      <div class="v26-g" style="margin-top:12px">
+        <label><span>Şu an sistemde</span><input id="v27Sis" disabled></label>
+        <label><span>Sayılan (gerçek) adet <b>*</b></span><input id="v27Say" type="number" inputmode="numeric" min="0" max="1000000" step="1"></label>
+        <label class="tam"><span>Neden <b>*</b></span><input id="v27Not" maxlength="300" placeholder="Örn. depo sayımı, hasarlı ürün ayrıldı"></label>
+        <div class="tam v26-top" id="v27Fark"></div>
+      </div><div class="v25-hata" id="v27SH" role="alert"></div></div>
+    <div class="modal-foot"><button class="btn btn-ghost" type="button" data-x>Vazgeç</button><button class="btn btn-primary" type="button" id="v27SK">Kaydet</button></div>`);
+  m.ov.querySelector(".modal").classList.add("v25-modal");
+  let kirli = false; v26KirliKoru(m, () => kirli);
+  const h = m.$("#v27SH"), b = m.$("#v27SK");
+  let S = null, sonApi = null;
+  const mevcut = () => { const api = S || sonApi; if (!api) return 0; const r = v27.rows.get(v27Anahtar(api.deger())); return r ? r.depoda : 0; };
+  const fark = () => { const sv = m.$("#v27Say").value; const d = sv === "" ? null : Number(sv) - mevcut(); m.$("#v27Fark").innerHTML = d == null || !isFinite(d) ? "" : d === 0 ? "Fark yok." : `Fark: <b style="color:${d > 0 ? "#2E9B57" : "#C0392B"}">${d > 0 ? "+" : ""}${d}</b>`; };
+  S = v25Secici(m.$("#v27SSec"), { deger: on ? { kategori: on.kategori, model: on.model, modul: on.modul, olcu: on.olcu, renk: on.renk, yon: on.yon } : {}, onChange: (api) => { sonApi = api; kirli = true; h.textContent = ""; m.$("#v27Sis").value = api.gecerli() ? String(mevcut()) : ""; fark(); } });
+  m.ov.querySelector(".modal-body").addEventListener("input", (e) => { if (!e.target.closest("#v27SSec")) kirli = true; fark(); });
+  kirli = false;
+  setTimeout(() => { if (on) m.$("#v27Say").focus(); else S.odak(); }, 50);
+  b.addEventListener("click", async () => {
+    const sv = String(m.$("#v27Say").value || "").trim(), nt = sanitizeText(m.$("#v27Not").value, 300).trim();
+    const er = [];
+    if (!S.gecerli()) er.push("Kategori ve model zorunlu.");
+    if (!/^\d{1,7}$/.test(sv) || Number(sv) > 1000000) er.push("Sayılan adet 0 veya daha büyük olmalı.");
+    if (!nt) er.push("Nedeni yazın.");
+    if (er.length) { h.textContent = er.join(" "); return; }
+    b.disabled = true; b.textContent = "Kaydediliyor…";
+    try {
+      const { data, error } = await supa.rpc("pronto_stok_sayim", { p_urun: S.deger(), p_sayi: Number(sv), p_not: nt });
+      if (error) throw error;
+      if (data && data.stok) v27Al(data.stok);
+      m.close();
+      showToast(data && data.degisti ? `Stok güncellendi: ${data.once} → ${data.stok.depoda}` : "Fark yok, stok aynı kaldı.");
+      try { await v25KatYukle(true); } catch (_) {}
+      if (currentView === "stock") v27Ciz(false);
+    } catch (e) { b.disabled = false; b.textContent = "Kaydet"; h.textContent = "Kaydedilemedi: " + v27Hata(e); }
+  });
+}
+/* ---- Eski stoğu taşı ---- */
+async function v27EskiYukle() {
+  const { data, error } = await supa.from("pronto_stok_eski").select("product_id,urun_adi,anahtar,adet,created_at").order("id").limit(5000);
+  if (error) throw error;
+  v27Eski = new Map((data || []).map((e) => [Number(e.product_id), e]));
+  return v27Eski;
+}
+async function v27TasiCiz() {
+  const box = document.getElementById("v27TasiListe"); if (!box) return;
+  box.innerHTML = `<div class="v26-bos">Yükleniyor…</div>`;
+  try { await Promise.all([v27Yukle(), v25KatYukle(false)]); if (!v27Yok) await v27EskiYukle(); }
+  catch (e) { box.innerHTML = `<div class="v26-bos">${escapeHtml(v27Hata(e))}</div>`; return; }
+  if (v27Yok) { box.innerHTML = `<div class="v98-warn">Depo stoğu henüz kurulmamış. Supabase'de <b>pronto-stok.sql</b> dosyasını bir kez çalıştırın.</div>`; return; }
+  const P = (allProducts || []).filter((p) => p && Number(p.stock) > 0 && !/\[\[COPKUTUSU:/i.test(String(p.description || "")));
+  const bek = P.filter((p) => !v27Eski.has(p.id)), ok = P.filter((p) => v27Eski.has(p.id));
+  const say = document.getElementById("v27TasiSay"); if (say) say.textContent = bek.length ? `(${bek.length})` : "";
+  if (!P.length) { box.innerHTML = `<div class="v26-bos">Eski listede stoğu olan ürün yok.</div>`; return; }
+  box.innerHTML = `<div class="v27-t"><div class="v27-tr bas"><span>Eski ürün</span><span>Kategori</span><span>Stok</span><span></span></div>` +
+    bek.map((p) => `<div class="v27-tr"><span><b>${escapeHtml(p.name)}</b></span><span>${escapeHtml(p.category || "—")}</span><span><b>${Number(p.stock)}</b> ${escapeHtml(p.unit || "")}</span><span><button type="button" class="btn btn-primary" data-v27ak="${p.id}">Eşleştir ve Aktar</button></span></div>`).join("") +
+    ok.map((p) => { const e = v27Eski.get(p.id), r = v27.rows.get(e.anahtar); return `<div class="v27-tr ok"><span><b>${escapeHtml(p.name)}</b></span><span>${r ? escapeHtml(r.kategori + " / " + r.model + (v26VarAd(r) ? " / " + v26VarAd(r) : "")) : ""}</span><span>${Number(e.adet)} aktarıldı</span><span>✓ Aktarıldı</span></div>`; }).join("") + `</div>`;
+}
+function v27AktarAc(pid) {
+  const p = (allProducts || []).find((x) => x.id === pid); if (!p) return;
+  const m = v98Ov(`<div class="modal-head"><h2>Eski Stoğu Aktar</h2><button class="icon-btn" data-x aria-label="Kapat">✕</button></div>
+    <div class="modal-body"><p style="margin:0 0 10px">Eski ürün: <b>${escapeHtml(p.name)}</b>${p.category ? ` · ${escapeHtml(p.category)}` : ""} — stok <b>${Number(p.stock)}</b></p>
+      <p class="v98-s" style="margin:0 0 10px">Katalogdaki karşılığını seçin. Katalogda yoksa yazın; kataloğa da eklenir.</p>
+      <div id="v27ASec"></div>
+      <div class="v26-g" style="margin-top:12px"><label><span>Aktarılacak adet <b>*</b></span><input id="v27AA" type="number" inputmode="numeric" min="1" max="1000000" step="1" value="${Number(p.stock)}"></label></div>
+      <div class="v25-hata" id="v27AH" role="alert"></div></div>
+    <div class="modal-foot"><button class="btn btn-ghost" type="button" data-x>Vazgeç</button><button class="btn btn-primary" type="button" id="v27AK">Aktar</button></div>`);
+  m.ov.querySelector(".modal").classList.add("v25-modal");
+  const h = m.$("#v27AH"), b = m.$("#v27AK");
+  const S = v25Secici(m.$("#v27ASec"), { onChange: () => { h.textContent = ""; } });
+  setTimeout(() => S.odak(), 50);
+  b.addEventListener("click", async () => {
+    const a = String(m.$("#v27AA").value || "").trim();
+    if (!S.gecerli()) { h.textContent = "Kategori ve model zorunlu."; return; }
+    if (!/^\d{1,7}$/.test(a) || Number(a) < 1 || Number(a) > 1000000) { h.textContent = "Adet 1 veya daha büyük olmalı."; return; }
+    b.disabled = true; b.textContent = "Aktarılıyor…";
+    try {
+      const { data, error } = await supa.rpc("pronto_stok_aktar", { p_product_id: p.id, p_urun: S.deger(), p_adet: Number(a) });
+      if (error) throw error;
+      if (data && data.stok) v27Al(data.stok);
+      m.close(); showToast(`${p.name}: ${a} adet Depo Stoğu'na aktarıldı.`);
+      try { await v25KatYukle(true); } catch (_) {}
+      v27TasiCiz();
+    } catch (e) { b.disabled = false; b.textContent = "Aktar"; h.textContent = "Aktarılamadı: " + v27Hata(e); }
+  });
+}
+const V27_ALT = { depo: "Ürün çeşidi bazında depo stoğu: satın almadan gelenler, sayımlar ve aktarımlar.", tasi: "Eski stok adetlerini yeni Depo Stoğu'na bir kez aktarın.", eski: "Eski stok listesi (değiştirilmeden duruyor). Kategori ve birim için satıra tıkla." };
+function v27SekmeAc(t) {
+  v27Tab = ["depo", "tasi", "eski"].includes(t) ? t : "depo";
+  const sec = document.getElementById("view-stock"); if (!sec) return;
+  ["depo", "tasi", "eski"].forEach((k) => sec.classList.toggle("v27-on-" + k, v27Tab === k));
+  sec.querySelectorAll("[data-v27-tab]").forEach((b) => { const on = b.dataset.v27Tab === v27Tab; b.classList.toggle("active", on); b.setAttribute("aria-selected", on ? "true" : "false"); });
+  const alt = document.getElementById("v27Alt"); if (alt) alt.textContent = V27_ALT[v27Tab];
+  if (v27Tab === "depo") v27Ciz(true);
+  if (v27Tab === "tasi") v27TasiCiz();
+}
+(function v27Kur() {
+  const sec = document.getElementById("view-stock"); if (!sec) return;
+  sec.classList.add("v27-on-depo");
+  sec.addEventListener("click", (e) => {
+    const t = e.target.closest("[data-v27-tab]"); if (t) { v27SekmeAc(t.dataset.v27Tab); return; }
+    const f = e.target.closest("[data-v27f]"); if (f) { v27Filtre = f.dataset.v27f; v27Ciz(false); return; }
+    const a = e.target.closest("[data-v27ak]"); if (a) { v27AktarAc(Number(a.dataset.v27ak)); return; }
+    const v = e.target.closest("[data-v27k]"); if (v) { v27Detay(v.dataset.v27k); return; }
+  });
+  document.getElementById("v27Ara").addEventListener("input", debounce((e) => { v27AraQ = sanitizeSearchText(e.target.value, 100); v27Ciz(false); }, 200));
+  document.getElementById("v27Sayim").addEventListener("click", () => v27SayimAc(null));
 })();
 </script>
 </body>
