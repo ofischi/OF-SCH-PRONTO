@@ -1999,6 +1999,10 @@ table.v98-t{width:100%;border-collapse:collapse;font-size:13px}
         <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
         Ürünler
       </button>
+      <button class="nav-item" data-view="purchase">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 4h2l2.4 11.2a2 2 0 0 0 2 1.6h7.8a2 2 0 0 0 2-1.5L21 8H6.2"/><circle cx="10" cy="20" r="1.4"/><circle cx="17" cy="20" r="1.4"/></svg>
+        Satın Alma
+      </button>
       <button class="nav-item" data-view="stock">
         <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 8V21H3V8M1 3H23V8H1V3Z"/><path d="M10 12H14"/></svg>
         Stok Takibi
@@ -2192,6 +2196,22 @@ table.v98-t{width:100%;border-collapse:collapse;font-size:13px}
     </section>
 
     <!-- ================= ÜRÜNLER ================= -->
+    <section class="view hidden" id="view-purchase">
+      <div class="page-header">
+        <div><h1>Satın Alma</h1><p class="subtitle">Stok için tedarikçilere verilen siparişler. Alış fiyatları yalnızca burada görünür.</p></div>
+        <div class="header-actions"><button class="btn btn-primary" id="v26Yeni" type="button">+ Yeni Satın Alma</button></div>
+      </div>
+      <div class="v26-ozet" id="v26Ozet"></div>
+      <div class="v26-bar">
+        <div class="search-box">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+          <input type="text" id="v26Ara" maxlength="100" placeholder="No, ürün, renk, tedarikçi ara…" autocomplete="off">
+        </div>
+        <div class="v26-filtre" id="v26Filtre" role="tablist"></div>
+      </div>
+      <div id="v26Liste"></div>
+    </section>
+
     <section class="view hidden" id="view-products">
       <div class="page-header">
         <div><h1>Ürünler</h1><p class="subtitle">Sipariş formlarında seçilebilecek ürün listesi.</p></div>
@@ -3405,6 +3425,7 @@ function subscribeToChanges() {
     .on("broadcast", { event: "foto" }, ({ payload }) => { try { v99FotoGeldi(payload); } catch (_) {} })
     .on("broadcast", { event: "esl" }, () => { try { v101Geldi(); } catch (_) {} })
     .on("broadcast", { event: "kat" }, () => { try { v25Geldi(); } catch (_) {} })
+    .on("broadcast", { event: "sa" }, ({ payload }) => { try { v26Geldi(payload); } catch (_) {} })
     .on("broadcast", { event: "reload" }, ({ payload }) => {
       const store = payload && payload.store;
       if (!TABLES[store] || (store === "stockMovements" && !stockLoaded)) return;
@@ -4013,6 +4034,7 @@ function switchView(view) {
   document.getElementById("sidebarOverlay").classList.remove("open");
   v106BarAktif();
   if (view === "products") renderProductsView();
+  if (view === "purchase") { try { v26Ciz(false); } catch (e) { console.warn(e); } }
   if (view === "customers") renderCustomersView();
   if (view === "suppliers") renderSuppliersView();
   if (view === "settings") v103YedekCiz();
@@ -8823,7 +8845,7 @@ async function v106StokOnay(list) {
 }
 
 /* ---------- Telefon / tablet: cam alt bar ---------- */
-const V106_DAHA = [["products", "Ürünler"], ["stock", "Stok Takibi"], ["customers", "Müşteriler"], ["suppliers", "Tedarikçiler"], ["delivery-form", "Teslim Formu"], ["reports", "Raporlar"], ["settings", "Ayarlar"]];
+const V106_DAHA = [["products", "Ürünler"], ["purchase", "Satın Alma"], ["stock", "Stok Takibi"], ["customers", "Müşteriler"], ["suppliers", "Tedarikçiler"], ["delivery-form", "Teslim Formu"], ["reports", "Raporlar"], ["settings", "Ayarlar"]];
 const V106_IC = {
   orders: '<rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>',
   gelen: '<path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/>',
@@ -8831,6 +8853,7 @@ const V106_IC = {
   daha: '<circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/>',
   arti: '<path d="M12 5v14M5 12h14"/>',
   products: '<path d="M21 8l-9-5-9 5v8l9 5 9-5z"/><path d="M3 8l9 5 9-5M12 13v8"/>',
+  purchase: '<path d="M3 4h2l2.4 11.2a2 2 0 0 0 2 1.6h7.8a2 2 0 0 0 2-1.5L21 8H6.2"/><circle cx="10" cy="20" r="1.4"/><circle cx="17" cy="20" r="1.4"/>',
   stock: '<rect x="3" y="4" width="18" height="5" rx="1"/><path d="M5 9v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V9M10 13h4"/>',
   customers: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>',
   suppliers: '<path d="M10 17h4V5H2v12h3M14 9h4l4 4v4h-2"/><circle cx="7.5" cy="17.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/>',
@@ -9849,9 +9872,11 @@ const V25_KAT_C = "v25_katalog", V25_FOTO_C = "v25_katalog_foto";
 let v25Kat = null, v25KatP = null, v25Yok = false, v25Eski = false, v25Tab = "list", v25AraQ = "", v25GeldiT = null;
 let v25Foto = null;            // { anahtar: { at, v } }
 const v25Lw = (x) => String(x == null ? "" : x).replace(/[\u0000-\u001f\u007f<>]/g, " ").replace(/\s+/g, " ").trim().replace(/I/g, "ı").replace(/İ/g, "i").toLocaleLowerCase("tr-TR");
+/* karşılaştırma: büyük/küçük harf, İ/I/ı/i farkı ve fazla boşluk yok sayılır (sunucudaki pronto_kat_anahtar ile aynı) */
+const v25Ky = (x) => String(x == null ? "" : x).replace(/[\u0000-\u001f\u007f<>]/g, " ").replace(/\s+/g, " ").trim().replace(/[İIı]/g, "i").toLocaleLowerCase("tr-TR");
 const v25Up = (x) => String(x == null ? "" : x).replace(/[\u0000-\u001f\u007f<>]/g, " ").replace(/\s+/g, " ").trim().slice(0, 60).replace(/i/g, "İ").replace(/ı/g, "I").toLocaleUpperCase("tr-TR");
 const V25_ALAN = [["kategori", "Kategori", true], ["model", "Model", true], ["modul", "Modül"], ["olcu", "Ölçü"], ["renk", "Renk"], ["yon", "Yön"]];
-const v25Anahtar = (r) => V25_ALAN.map(([k]) => v25Lw(r[k])).join("|");
+const v25Anahtar = (r) => V25_ALAN.map(([k]) => v25Ky(r[k])).join("|");
 const v25FotoKey = (k, m, mod) => v25Lw(k) + "|" + v25Lw(m) + "|" + v25Lw(mod || "");
 const v25FotoKey2 = (k, m) => v25Lw(k) + "|" + v25Lw(m);
 const v25ImgOk = (v) => typeof v === "string" && /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/]+=*$/.test(v) && v.length < 600000;
@@ -9892,8 +9917,15 @@ function v25Geldi() {
   v25GeldiT = setTimeout(() => { if (currentView === "products" && v25Tab === "kat") v25Ciz(true); }, 1500);
 }
 /* model fotoğrafı: önce kategori|model|modül, yoksa kategori|model */
+let v25KanonM = null, v25KanonN = -1;
+function v25Kanon(k, m) {   // yazılan kategori/model → katalogdaki yazım ("takimlari" → "TAKIMLARI")
+  if (!v25Kat) return [k, m];
+  if (!v25KanonM || v25KanonN !== v25Kat.rows.size) { v25KanonM = new Map(); v25KanonN = v25Kat.rows.size; for (const r of v25Kat.rows.values()) { const x = v25Ky(r.kategori) + "|" + v25Ky(r.model); if (!v25KanonM.has(x)) v25KanonM.set(x, [r.kategori, r.model]); } }
+  return v25KanonM.get(v25Ky(k) + "|" + v25Ky(m)) || [k, m];
+}
 function v25FotoBul(k, m, mod) {
   if (!v25Kat) return null;
+  [k, m] = v25Kanon(k, m);
   const a = v25FotoKey(k, m, mod), b = v25FotoKey2(k, m), c = v25FotoKey(k, m, "");
   for (const x of [a, c, b]) if (v25Kat.foto[x]) return x;
   return null;
@@ -9933,7 +9965,7 @@ function v25Gruplar(q) {
   const kats = new Map();
   for (const r of v25Kat ? v25Kat.rows.values() : []) {
     if (q) { const t = v106Ara([r.kod, r.kategori, r.model, r.modul, r.olcu, r.renk, r.yon].join(" ")); if (!t.includes(q)) continue; }
-    const kk = v25Lw(r.kategori), mk = v25Lw(r.model);
+    const kk = v25Ky(r.kategori), mk = v25Ky(r.model);
     let K = kats.get(kk); if (!K) kats.set(kk, (K = { ad: r.kategori, modeller: new Map() }));
     let M = K.modeller.get(mk); if (!M) K.modeller.set(mk, (M = { ad: r.model, kat: r.kategori, list: [] }));
     M.list.push(r);
@@ -9987,10 +10019,10 @@ function v25Secici(host, opt) {
     <div class="v25-durum" data-v25d></div>`;
   const inp = (k) => host.querySelector(`[data-v25k="${k}"]`);
   const rows = () => (v25Kat ? Array.from(v25Kat.rows.values()) : []);
-  const uniq = (arr) => { const m = new Map(); for (const x of arr) { const t = String(x || "").trim(); if (t && !m.has(v25Lw(t))) m.set(v25Lw(t), t); } return Array.from(m.values()).sort((a, b) => a.localeCompare(b, "tr")); };
+  const uniq = (arr) => { const m = new Map(); for (const x of arr) { const t = String(x || "").trim(); if (t && !m.has(v25Ky(t))) m.set(v25Ky(t), t); } return Array.from(m.values()).sort((a, b) => a.localeCompare(b, "tr")); };
   const listeler = () => {
-    const R = rows(), kk = v25Lw(v.kategori), mk = v25Lw(v.model);
-    const kat = R.filter((r) => v25Lw(r.kategori) === kk), mod = kat.filter((r) => v25Lw(r.model) === mk);
+    const R = rows(), kk = v25Ky(v.kategori), mk = v25Ky(v.model);
+    const kat = R.filter((r) => v25Ky(r.kategori) === kk), mod = kat.filter((r) => v25Ky(r.model) === mk);
     const L = { kategori: uniq(R.map((r) => r.kategori)), model: uniq(kat.map((r) => r.model)), modul: uniq(mod.map((r) => r.modul)),
       olcu: uniq((mod.length ? mod : kat).map((r) => r.olcu)), renk: uniq((mod.length ? mod : kat).map((r) => r.renk)), yon: uniq(["SOL", "SAĞ"].concat(R.map((r) => r.yon))) };
     for (const [k] of V25_ALAN) { const dl = host.querySelector(`#${id}-${k}`); if (dl) dl.innerHTML = L[k].slice(0, 300).map((x) => `<option value="${escapeHtml(x)}">`).join(""); }
@@ -9998,10 +10030,10 @@ function v25Secici(host, opt) {
   const tam = () => { const a = v25Anahtar(v); return rows().find((r) => v25Anahtar(r) === a) || null; };
   const durum = () => {
     const d = host.querySelector("[data-v25d]"), t = tam();
-    if (!v25Lw(v.kategori) || !v25Lw(v.model)) { d.className = "v25-durum"; d.textContent = "Kategori ve model seçin."; }
+    if (!v25Ky(v.kategori) || !v25Ky(v.model)) { d.className = "v25-durum"; d.textContent = "Kategori ve model seçin."; }
     else if (t) { d.className = "v25-durum var"; d.innerHTML = `<b>Katalogda var:</b> ${escapeHtml(t.kod || "")} — ${escapeHtml(t.kategori)} / ${escapeHtml(t.model)} / ${escapeHtml(v25VarAd(t))}`; }
     else {
-      const modelVar = rows().some((r) => v25Lw(r.kategori) === v25Lw(v.kategori) && v25Lw(r.model) === v25Lw(v.model));
+      const modelVar = rows().some((r) => v25Ky(r.kategori) === v25Ky(v.kategori) && v25Ky(r.model) === v25Ky(v.model));
       d.className = "v25-durum yeni"; d.innerHTML = `<b>Yeni ${modelVar ? "çeşit" : "ürün"}:</b> kaydedilince PRONTO Teklif kataloğuna da eklenir.`;
     }
     opt.onChange && opt.onChange(api);
@@ -10010,7 +10042,7 @@ function v25Secici(host, opt) {
   host.addEventListener("change", (e) => { const k = e.target.dataset && e.target.dataset.v25k; if (!k) return; v[k] = e.target.value; listeler(); durum(); });
   const api = {
     deger: () => { const o = {}; for (const [k] of V25_ALAN) o[k] = v25Up(v[k]); return o; },
-    tam, gecerli: () => !!v25Lw(v.kategori) && !!v25Lw(v.model),
+    tam, gecerli: () => !!v25Ky(v.kategori) && !!v25Ky(v.model),
     fotoAnahtar: () => v25FotoBul(v.kategori, v.model, v.modul),
     yenile: () => { listeler(); durum(); }, odak: () => inp("kategori") && inp("kategori").focus()
   };
@@ -10092,6 +10124,373 @@ async function v25YeniAc() {
   sec.addEventListener("click", (e) => { const t = e.target.closest("[data-v25-tab]"); if (t) v25SekmeAc(t.dataset.v25Tab); });
   const a = document.getElementById("v25Ara"); if (a) a.addEventListener("input", debounce((e) => { v25AraQ = sanitizeSearchText(e.target.value, 100); v25Ciz(false); }, 200));
   const y = document.getElementById("v25Yeni"); if (y) y.addEventListener("click", v25YeniAc);
+})();
+</script>
+<style id="v26-satin-alma">
+/* v26: Satın Alma */
+.v26-ozet{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:0 0 14px}
+.v26-k{padding:12px 14px;border:1px solid var(--color-border);border-radius:14px;background:var(--color-surface-solid);min-width:0}
+.v26-k span{display:block;font-size:12px;color:var(--color-text-muted);font-weight:600}
+.v26-k b{display:block;font-size:20px;margin-top:2px;word-break:break-word}
+.v26-k b small{font-size:13px;font-weight:600}
+.v26-k.kirmizi b{color:#C0392B}
+.v26-bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:0 0 12px}
+.v26-bar .search-box{flex:1 1 260px;min-width:0}
+.v26-filtre{display:flex;gap:6px;flex-wrap:wrap}
+.v26-chip{appearance:none;border:1px solid var(--color-border);background:var(--color-surface-solid);color:var(--color-text);border-radius:999px;padding:7px 12px;font:inherit;font-size:13px;font-weight:600;cursor:pointer;min-height:36px}
+.v26-chip.on{background:#17181A;color:#fff;border-color:#17181A}
+[data-theme="dark"] .v26-chip.on{background:#F2F2EE;color:#17181A}
+.v26-tab{border:1px solid var(--color-border);border-radius:14px;overflow:hidden;background:var(--color-surface-solid)}
+.v26-r{display:grid;grid-template-columns:96px minmax(220px,2.2fr) minmax(120px,1.2fr) 110px 120px minmax(120px,1fr) 118px 44px;gap:10px;align-items:center;padding:10px 12px;border-top:1px solid var(--color-border);cursor:pointer}
+.v26-r:first-child{border-top:0}
+.v26-r.bas{cursor:default;font-size:12px;font-weight:700;color:var(--color-text-muted);background:rgba(127,127,127,.06)}
+.v26-r:not(.bas):hover{background:rgba(27,92,153,.04)}
+.v26-no{font-weight:700;font-size:13px}
+.v26-u{display:flex;gap:10px;align-items:center;min-width:0}
+.v26-u .v25-th{flex:0 0 44px;width:44px;height:44px;font-size:9px;border-radius:8px}
+.v26-un{font-weight:700;word-break:break-word}
+.v26-us{font-size:12px;color:var(--color-text-muted)}
+.v26-ad b{font-size:15px}
+.v26-bar2{height:5px;border-radius:9px;background:rgba(127,127,127,.18);margin-top:4px;overflow:hidden}
+.v26-bar2 i{display:block;height:100%;background:#2E9B57;border-radius:9px}
+.v26-t{font-size:12.5px;line-height:1.35}
+.v26-t.gec{color:#C0392B;font-weight:700}
+.v26-f{font-size:12.5px;line-height:1.35}
+.v26-f b{font-size:13.5px}
+.v26-d{display:inline-block;padding:4px 9px;border-radius:999px;font-size:12px;font-weight:700;white-space:nowrap;border:1px solid transparent}
+.v26-d.Beklemede{background:rgba(127,127,127,.14)}
+.v26-d.Üretimde{background:rgba(230,126,34,.15);border-color:rgba(230,126,34,.35)}
+.v26-d.Yolda{background:rgba(27,92,153,.12);border-color:rgba(27,92,153,.3)}
+.v26-d.Kismen{background:rgba(142,68,173,.12);border-color:rgba(142,68,173,.3)}
+.v26-d.Alindi{background:rgba(46,160,67,.14);border-color:rgba(46,160,67,.35)}
+.v26-d.İptal{background:rgba(192,57,43,.1);border-color:rgba(192,57,43,.3);color:#C0392B}
+.v26-r.iptal .v26-un,.v26-r.iptal .v26-no{text-decoration:line-through;opacity:.6}
+.v26-bos{padding:28px;text-align:center;color:var(--color-text-muted)}
+/* form */
+.v26-modal{max-width:760px !important}
+.v26-blok{margin-top:16px}
+.v26-blok h3{font-size:13px;letter-spacing:.03em;text-transform:uppercase;color:var(--color-text-muted);margin:0 0 8px}
+.v26-g{display:grid;grid-template-columns:1fr 1fr;gap:10px 12px}
+.v26-g label{display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:700;color:var(--color-text-muted);min-width:0}
+.v26-g label b{color:#C0392B}
+.v26-g input,.v26-g select,.v26-g textarea{min-height:42px;border:1px solid var(--color-border);border-radius:10px;padding:0 12px;background:var(--color-surface-solid);color:var(--color-text);font:inherit;font-size:16px;font-weight:500;box-sizing:border-box;width:100%}
+.v26-g textarea{padding:10px 12px;min-height:70px;resize:vertical}
+.v26-g .tam{grid-column:1 / -1}
+.v26-top{font-size:13px;color:var(--color-text-muted);margin-top:6px}
+.v26-top b{color:var(--color-text)}
+.v26-not{font-size:12.5px;line-height:1.4;padding:8px 10px;border-radius:10px;background:rgba(230,126,34,.1);border:1px solid rgba(230,126,34,.35);margin-top:8px}
+.v26-gecmis{margin-top:10px;border:1px solid var(--color-border);border-radius:12px;overflow:hidden}
+.v26-gecmis div{display:flex;gap:10px;justify-content:space-between;padding:8px 12px;border-top:1px solid var(--color-border);font-size:13px}
+.v26-gecmis div:first-child{border-top:0}
+.v26-gecmis .geri{opacity:.55;text-decoration:line-through}
+.v26-dl{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;font-size:14px;margin:0}
+.v26-dl dt{color:var(--color-text-muted);font-weight:600}
+.v26-dl dd{margin:0;word-break:break-word}
+@media (max-width:1100px){
+ .v26-ozet{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .v26-tab{border:0;background:none;display:flex;flex-direction:column;gap:10px}
+ .v26-r.bas{display:none}
+ .v26-r{grid-template-columns:1fr auto;grid-template-areas:"u d" "a a" "t f" "n m";border:1px solid var(--color-border);border-radius:14px;background:var(--color-surface-solid);padding:12px}
+ .v26-r:first-child{border-top:1px solid var(--color-border)}
+ .v26-r>.c-no{grid-area:n;align-self:center}
+ .v26-r>.c-u{grid-area:u}
+ .v26-r>.c-ted{display:none}
+ .v26-r>.c-ad{grid-area:a}
+ .v26-r>.c-t{grid-area:t}
+ .v26-r>.c-f{grid-area:f;text-align:right}
+ .v26-r>.c-d{grid-area:d;align-self:start}
+ .v26-r>.c-m{grid-area:m;justify-self:end}
+ .v26-us .m-ted{display:inline}
+}
+.v26-us .m-ted{display:none}
+@media (max-width:640px){
+ .v26-g{grid-template-columns:1fr}
+ .v26-bar .search-box{flex-basis:100%}
+}
+</style>
+<script id="v26-satin-alma-js">
+/* ===== v26: Satın Alma (sunucu: pronto-satin-alma.sql) =====
+   Trafik: kayıtlar cihazda saklanır; açılışta yalnızca değişenler istenir.
+   Değişiklik = 1 istek; diğer bilgisayarlara sunucu küçük bir "sa" yayını gönderir. */
+const V26_C = "v26_satin_alma";
+let v26 = null, v26P = null, v26Yok = false, v26Filtre = "acik", v26AraQ = "";
+const V26_DURUM = ["Beklemede", "Üretimde", "Yolda"];
+const V26_DOVIZ = { TRY: "₺", USD: "$", EUR: "€", GBP: "£" };
+const v26Para = (n, d) => (n == null || n === "" || !isFinite(Number(n))) ? "—" : new Intl.NumberFormat("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(n)) + " " + (V26_DOVIZ[d] || d || "");
+const v26Bugun = () => { try { return todayISO(); } catch (_) { return new Date().toISOString().slice(0, 10); } };
+function v26Hata(er) {
+  const t = String((er && (er.message || er.details)) || er || "");
+  if (/pronto_sa_|pronto_satin_alma|schema cache|does not exist|Could not find the function/i.test(t)) return "Satın alma kurulumu (pronto-satin-alma.sql) henüz yapılmamış.";
+  if (/pronto_katalog/i.test(t)) return "Katalog kurulumu (pronto-katalog.sql) henüz yapılmamış.";
+  return t || "Bilinmeyen hata";
+}
+async function v26Yukle(force) {
+  if (v26 && !force) return v26;
+  if (v26P) return v26P;
+  v26P = (async () => {
+    if (!v26) { const c = await cacheGet(V26_C); v26 = { rows: new Map(((c && c.rows) || []).map((r) => [r.id, r])), son: (c && c.son) || null }; }
+    if (!supa) return v26;
+    let q = supa.from("pronto_satin_alma").select("*");
+    if (v26.son) q = q.gt("updated_at", new Date(new Date(v26.son).getTime() - 120000).toISOString());
+    const { data, error } = await q.order("updated_at").limit(5000);
+    if (error) { if (/does not exist|schema cache|relation|42P01|PGRST205|permission/i.test((error.message || "") + " " + (error.code || ""))) { v26Yok = true; return v26; } throw error; }
+    v26Yok = false;
+    for (const r of data || []) v26Al(r, false);
+    v26Kaydet();
+    return v26;
+  })().finally(() => { v26P = null; });
+  return v26P;
+}
+function v26Al(r, kaydet = true) {
+  if (!r || r.id == null || !v26) return;
+  const o = v26.rows.get(r.id);
+  if (o && o.updated_at && r.updated_at && o.updated_at > r.updated_at) return;   // eski yayın yenisini ezmesin
+  v26.rows.set(r.id, r);
+  if (r.updated_at && (!v26.son || r.updated_at > v26.son)) v26.son = r.updated_at;
+  if (kaydet) v26Kaydet();
+}
+let v26KT = null;
+function v26Kaydet() { clearTimeout(v26KT); v26KT = setTimeout(() => cachePut(V26_C, { rows: Array.from(v26.rows.values()), son: v26.son }), 400); }
+function v26Geldi(payload) {
+  const r = payload && payload.row; if (!r || !v26) return;
+  v26Al(r);
+  if (currentView === "purchase") v26Ciz(false);
+}
+/* görünür durum: kısmen geldi / gecikti hesaplanır */
+function v26Hal(r) {
+  if (r.durum === "İptal") return { ad: "İptal", cls: "İptal" };
+  if (r.gelen >= r.adet) return { ad: "Teslim Alındı", cls: "Alindi" };
+  if (r.gelen > 0) return { ad: `Kısmen geldi (${r.gelen}/${r.adet})`, cls: "Kismen" };
+  return { ad: r.durum, cls: r.durum };
+}
+const v26Acik = (r) => r.durum !== "İptal" && r.gelen < r.adet;
+const v26Gec = (r) => v26Acik(r) && r.teslim_tarihi && r.teslim_tarihi < v26Bugun();
+const v26VarAd = (r) => [r.modul, r.olcu, r.renk, r.yon].filter(Boolean).join(" · ");
+const V26_FILTRE = [["acik", "Açık"], ["gec", "Geciken"], ["alindi", "Teslim Alındı"], ["iptal", "İptal"], ["hepsi", "Tümü"]];
+function v26Liste() {
+  const q = v106Ara(v26AraQ);
+  return Array.from(v26.rows.values()).filter((r) => {
+    if (v26Filtre === "acik" && !v26Acik(r)) return false;
+    if (v26Filtre === "gec" && !v26Gec(r)) return false;
+    if (v26Filtre === "alindi" && !(r.durum !== "İptal" && r.gelen >= r.adet)) return false;
+    if (v26Filtre === "iptal" && r.durum !== "İptal") return false;
+    if (q && !v106Ara([r.no, r.kategori, r.model, r.modul, r.olcu, r.renk, r.yon, r.tedarikci, r.aciklama].join(" ")).includes(q)) return false;
+    return true;
+  }).sort((a, b) => (v26Gec(b) - v26Gec(a)) || String(a.teslim_tarihi || "9999").localeCompare(String(b.teslim_tarihi || "9999")) || b.id - a.id);
+}
+function v26OzetCiz() {
+  const el = document.getElementById("v26Ozet"); if (!el) return;
+  const R = Array.from(v26.rows.values()), acik = R.filter(v26Acik);
+  const yolda = acik.reduce((a, r) => a + (r.adet - r.gelen), 0), gec = acik.filter(v26Gec).length;
+  const tut = {}; for (const r of acik) if (r.alis_fiyat != null) tut[r.doviz] = (tut[r.doviz] || 0) + Number(r.alis_fiyat) * (r.adet - r.gelen);
+  const tutS = Object.keys(tut).length ? Object.entries(tut).map(([d, n]) => v26Para(n, d)).join("<br>") : "—";
+  el.innerHTML = `<div class="v26-k"><span>Açık satın alma</span><b>${acik.length}</b></div>
+    <div class="v26-k"><span>Bekleyen adet</span><b>${yolda}</b></div>
+    <div class="v26-k${gec ? " kirmizi" : ""}"><span>Geciken</span><b>${gec}</b></div>
+    <div class="v26-k"><span>Bekleyen tutar (alış)</span><b><small>${tutS}</small></b></div>`;
+}
+async function v26Ciz(force) {
+  const box = document.getElementById("v26Liste"); if (!box) return;
+  const fl = document.getElementById("v26Filtre");
+  if (fl && !fl.children.length) fl.innerHTML = V26_FILTRE.map(([k, l]) => `<button type="button" class="v26-chip" data-v26f="${k}">${l}</button>`).join("");
+  if (fl) fl.querySelectorAll("[data-v26f]").forEach((b) => b.classList.toggle("on", b.dataset.v26f === v26Filtre));
+  if (!v26 || force) {
+    if (!v26) box.innerHTML = `<div class="v26-bos">Yükleniyor…</div>`;
+    try { await v26Yukle(force || !v26); } catch (e) { box.innerHTML = `<div class="v26-bos">Satın almalar okunamadı: ${escapeHtml(v26Hata(e))}</div>`; return; }
+  }
+  const yb = document.getElementById("v26Yeni"); if (yb) yb.disabled = v26Yok;
+  if (v26Yok) { document.getElementById("v26Ozet").innerHTML = ""; box.innerHTML = `<div class="v98-warn">Satın alma tablosu henüz kurulmamış. Supabase'de <b>pronto-katalog.sql</b> ve ardından <b>pronto-satin-alma.sql</b> dosyasını bir kez çalıştırın.</div>`; return; }
+  v26OzetCiz();
+  try { if (!v25Kat) v25KatYukle(false).then(() => { if (currentView === "purchase") v26Ciz(false); }).catch(() => {}); } catch (_) {}
+  const L = v26Liste();
+  if (!v26.rows.size) { box.innerHTML = `<div class="v26-bos">Henüz satın alma yok.<br><b>+ Yeni Satın Alma</b> ile stok için tedarikçiye sipariş girin.</div>`; return; }
+  if (!L.length) { box.innerHTML = `<div class="v26-bos">Bu filtrede kayıt yok.</div>`; return; }
+  const LIM = 300, G = L.slice(0, LIM);
+  box.innerHTML = `<div class="v26-tab"><div class="v26-r bas"><span>No</span><span>Ürün</span><span>Tedarikçi</span><span>Adet</span><span>Teslim</span><span>Alış fiyatı</span><span>Durum</span><span></span></div>` +
+    G.map((r) => { const h = v26Hal(r), gec = v26Gec(r), fk = (typeof v25FotoBul === "function") ? v25FotoBul(r.kategori, r.model, r.modul) : null, yuz = Math.round(100 * r.gelen / Math.max(1, r.adet));
+      return `<div class="v26-r${r.durum === "İptal" ? " iptal" : ""}" data-sa="${r.id}">
+        <span class="c-no v26-no">${escapeHtml(r.no)}</span>
+        <span class="c-u v26-u"><span class="v25-th"${fk ? ` data-fk="${escapeHtml(fk)}"` : ""}>${fk ? "" : "Foto yok"}</span><span style="min-width:0"><span class="v26-un">${escapeHtml(r.kategori)} / ${escapeHtml(r.model)}</span><br><span class="v26-us">${escapeHtml(v26VarAd(r) || "Standart")}<span class="m-ted"> · ${escapeHtml(r.tedarikci)}</span></span></span></span>
+        <span class="c-ted">${escapeHtml(r.tedarikci)}</span>
+        <span class="c-ad v26-ad"><b>${r.gelen}</b> / ${r.adet} geldi<div class="v26-bar2"><i style="width:${yuz}%"></i></div></span>
+        <span class="c-t v26-t${gec ? " gec" : ""}">${r.teslim_tarihi ? escapeHtml(formatDate(r.teslim_tarihi)) : "Tarih yok"}${gec ? "<br>Gecikti" : ""}</span>
+        <span class="c-f v26-f">${r.alis_fiyat != null ? `<b>${escapeHtml(v26Para(Number(r.alis_fiyat) * r.adet, r.doviz))}</b><br>${escapeHtml(v26Para(r.alis_fiyat, r.doviz))} / adet` : "Fiyat yok"}</span>
+        <span class="c-d"><span class="v26-d ${h.cls}">${escapeHtml(h.ad)}</span></span>
+        <span class="c-m"><button class="menu-trigger" type="button" data-sam="${r.id}" aria-label="İşlemler">⋯</button></span></div>`; }).join("") + `</div>` +
+    (L.length > LIM ? `<div class="v98-s" style="text-align:center;padding:8px">${L.length - LIM} kayıt daha var — aramayı daraltın.</div>` : "");
+  try { v25ThumbBagla(box); } catch (_) {}
+}
+function v26Menu(btn, r) {
+  const items = [];
+  if (v26Acik(r)) items.push({ label: "Teslim Al…", onClick: () => v26TeslimAc(r.id) });
+  if (r.durum !== "İptal") items.push({ label: "Düzenle", onClick: () => v26FormAc(r.id) });
+  if (v26Acik(r)) for (const d of V26_DURUM) if (d !== r.durum) items.push({ label: "Durum: " + d, onClick: () => v26Durum(r.id, d) });
+  if ((r.teslimler || []).some((t) => !t.geri)) items.push({ label: "Son teslimi geri al", onClick: () => v26Geri(r.id) });
+  if (r.durum === "İptal") items.push({ label: "Yeniden aç", onClick: () => v26Durum(r.id, "Beklemede") });
+  else if (!r.gelen) items.push({ label: "İptal et", danger: true, onClick: () => showConfirm(`${r.no} iptal edilsin mi? Kayıt silinmez, "İptal" olarak kalır.`, () => v26Durum(r.id, "İptal")) });
+  items.push({ label: "Ayrıntılar", onClick: () => v26Detay(r.id) });
+  showRowMenu(btn, items);
+}
+async function v26Rpc(ad, arg, basari) {
+  try {
+    const { data, error } = await supa.rpc(ad, arg);
+    if (error) throw error;
+    const r = (data && data.kayit) || data; v26Al(r);
+    if (basari) showToast(basari);
+    if (currentView === "purchase") v26Ciz(false);
+    return data;
+  } catch (er) { showToast(v26Hata(er)); throw er; }
+}
+const v26Durum = (id, d) => v26Rpc("pronto_sa_durum", { p_id: id, p_durum: d }, d === "İptal" ? "Satın alma iptal edildi." : `Durum: ${d}`).catch(() => {});
+const v26Geri = (id) => showConfirm("Son teslim geri alınsın mı? Kayıt silinmez, \"geri alındı\" olarak işaretlenir.", () => v26Rpc("pronto_sa_teslim_geri", { p_id: id }, "Son teslim geri alındı.").catch(() => {}));
+function v26KirliKoru(m, kirli) {
+  const sor = (e) => { if (!kirli()) return; e.stopImmediatePropagation(); showConfirm("Kaydedilmemiş değişiklikler var. Çıkmak istersen bu değişiklikler kaybolacak. Devam edilsin mi?", () => m.close()); };
+  m.ov.addEventListener("mousedown", (e) => { if (e.target === m.ov) sor(e); }, true);
+  m.ov.addEventListener("click", (e) => { if (e.target.closest("[data-x]")) sor(e); }, true);
+}
+/* fiyat: "1.250,50" → "1250.50" */
+function v26FiyatCevir(t) {
+  t = String(t || "").replace(/\s|₺|\$|€|£/g, ""); if (!t) return "";
+  if (t.includes(",")) t = t.replace(/\./g, "").replace(",", ".");
+  return t;
+}
+async function v26FormAc(id) {
+  if (!supa) { showToast("Satın alma için internet bağlantısı gerekli."); return; }
+  try { await Promise.all([v25KatYukle(false), v26Yukle(false)]); } catch (e) { showToast(v26Hata(e)); return; }
+  if (v25Yok) { showToast("Katalog kurulumu (pronto-katalog.sql) henüz yapılmamış."); return; }
+  if (v26Yok) { showToast("Satın alma kurulumu (pronto-satin-alma.sql) henüz yapılmamış."); return; }
+  const e = id != null ? v26.rows.get(id) : null;
+  const kilit = !!(e && e.gelen > 0);
+  const m = v98Ov(`<div class="modal-head"><h2>${e ? "Satın Almayı Düzenle — " + escapeHtml(e.no) : "Yeni Satın Alma"}</h2><button class="icon-btn" data-x aria-label="Kapat">✕</button></div>
+    <div class="modal-body">
+      <div class="v26-blok" style="margin-top:0"><h3>Ürün</h3><div id="v26Sec"></div>${kilit ? `<div class="v26-not">Teslim alınmaya başlandığı için ürün değiştirilemez.</div>` : ""}
+        <div class="v25-foto" id="v26FotoS" style="display:none"><span class="v25-th" id="v26FTh">Fotoğraf yok</span><div><div class="v98-s" id="v26FBilgi"></div>
+          <button type="button" class="btn btn-secondary" id="v26FSec" style="margin-top:6px">Model fotoğrafı seç</button>
+          <input type="file" id="v26FDosya" accept="image/jpeg,image/png,image/webp" hidden></div></div></div>
+      <div class="v26-blok"><h3>Miktar ve tedarikçi</h3><div class="v26-g">
+        <label><span>Adet <b>*</b></span><input id="v26Adet" type="number" inputmode="numeric" min="${e ? Math.max(1, e.gelen) : 1}" max="100000" step="1" value="${e ? e.adet : ""}"></label>
+        <label><span>Tedarikçi <b>*</b></span><input id="v26Ted" list="dl_suppliers" maxlength="200" autocomplete="off" value="${escapeHtml(e ? e.tedarikci : "")}"></label>
+      </div></div>
+      <div class="v26-blok"><h3>Tarihler</h3><div class="v26-g">
+        <label><span>Sipariş tarihi</span><input id="v26Sip" type="date" value="${escapeHtml(e ? e.siparis_tarihi : v26Bugun())}"></label>
+        <label><span>Beklenen teslim tarihi</span><input id="v26Tes" type="date" value="${escapeHtml(e && e.teslim_tarihi ? e.teslim_tarihi : "")}"></label>
+      </div></div>
+      <div class="v26-blok"><h3>Alış fiyatı (yalnızca Sipariş'te görünür)</h3><div class="v26-g">
+        <label><span>Birim alış fiyatı</span><input id="v26Fiyat" inputmode="decimal" maxlength="16" placeholder="0,00" value="${e && e.alis_fiyat != null ? escapeHtml(String(e.alis_fiyat).replace(".", ",")) : ""}"></label>
+        <label><span>Döviz</span><select id="v26Doviz">${Object.keys(V26_DOVIZ).map((d) => `<option value="${d}"${(e ? e.doviz : "TRY") === d ? " selected" : ""}>${d}</option>`).join("")}</select></label>
+        <div class="tam v26-top" id="v26Top"></div>
+      </div></div>
+      <div class="v26-blok"><h3>Durum ve not</h3><div class="v26-g">
+        ${e && e.gelen > 0 ? `<label><span>Durum</span><input value="${escapeHtml(v26Hal(e).ad)}" disabled></label>` : `<label><span>Durum</span><select id="v26Durum">${V26_DURUM.map((d) => `<option${(e ? e.durum : "Beklemede") === d ? " selected" : ""}>${d}</option>`).join("")}</select></label>`}
+        <label class="tam"><span>Not</span><textarea id="v26Not" maxlength="1000" placeholder="Örn. kumaş kodu, tedarikçiye özel istek">${escapeHtml(e ? e.aciklama : "")}</textarea></label>
+      </div></div>
+      <div class="v25-hata" id="v26H" role="alert"></div></div>
+    <div class="modal-foot"><button class="btn btn-ghost" type="button" data-x>Vazgeç</button><button class="btn btn-primary" type="button" id="v26Kaydet">${e ? "Değişiklikleri Kaydet" : "Satın Almayı Kaydet"}</button></div>`);
+  m.ov.querySelector(".modal").classList.add("v25-modal", "v26-modal");
+  let kirli = false, foto = "", son = null;
+  v26KirliKoru(m, () => kirli);
+  const hata = m.$("#v26H"), btn = m.$("#v26Kaydet"), fs = m.$("#v26FotoS"), th = m.$("#v26FTh"), fb = m.$("#v26FBilgi"), fsec = m.$("#v26FSec");
+  const thG = (v) => { th.textContent = ""; if (v && v25ImgOk(v)) { const im = new Image(); im.alt = ""; im.src = v; th.appendChild(im); } else th.textContent = "Fotoğraf yok"; };
+  const S = v25Secici(m.$("#v26Sec"), { deger: e ? { kategori: e.kategori, model: e.model, modul: e.modul, olcu: e.olcu, renk: e.renk, yon: e.yon } : {}, onChange: (api) => {
+    kirli = true; hata.textContent = "";
+    if (!api.gecerli()) { fs.style.display = "none"; return; }
+    fs.style.display = "";
+    const fk = api.fotoAnahtar();
+    if (fk) { fsec.style.display = "none"; fb.textContent = "Model fotoğrafı (katalogdan)."; if (son !== fk) { son = fk; thG(""); v25FotoIste(fk, (v) => { if (son === fk) thG(v); }); } }
+    else { son = null; fsec.style.display = kilit ? "none" : ""; fb.textContent = "Bu modelin fotoğrafı yok. İsterseniz ekleyin (Teklif'te de görünür)."; thG(foto); fsec.textContent = foto ? "Fotoğrafı değiştir" : "Model fotoğrafı seç"; }
+  } });
+  if (kilit) m.$("#v26Sec").querySelectorAll("input").forEach((i) => { i.disabled = true; });
+  const topla = () => {
+    const a = Number(m.$("#v26Adet").value), f = v26FiyatCevir(m.$("#v26Fiyat").value), d = m.$("#v26Doviz").value;
+    m.$("#v26Top").innerHTML = a > 0 && f && isFinite(Number(f)) ? `Toplam: <b>${escapeHtml(v26Para(a * Number(f), d))}</b>` : "";
+  };
+  m.ov.querySelector(".modal-body").addEventListener("input", (ev) => { if (!ev.target.closest("#v26Sec")) { kirli = true; hata.textContent = ""; } topla(); });
+  m.ov.querySelector(".modal-body").addEventListener("change", topla);
+  topla(); kirli = false;
+  setTimeout(() => { if (!e) S.odak(); }, 50);
+  fsec.addEventListener("click", () => m.$("#v26FDosya").click());
+  m.$("#v26FDosya").addEventListener("change", async (ev) => { const f = ev.target.files && ev.target.files[0]; ev.target.value = ""; if (!f) return; try { foto = await v25Gorsel(f); kirli = true; thG(foto); fsec.textContent = "Fotoğrafı değiştir"; } catch (er) { hata.textContent = er.message || String(er); } });
+  btn.addEventListener("click", async () => {
+    const adetS = String(m.$("#v26Adet").value || "").trim(), ted = sanitizeText(m.$("#v26Ted").value, 200).trim(), fiyat = v26FiyatCevir(m.$("#v26Fiyat").value);
+    const sip = m.$("#v26Sip").value, tes = m.$("#v26Tes").value;
+    const er = [];
+    if (!kilit && !S.gecerli()) er.push("Kategori ve model zorunlu.");
+    if (!/^\d{1,6}$/.test(adetS) || Number(adetS) < 1 || Number(adetS) > 100000) er.push("Adet 1 ile 100000 arasında olmalı.");
+    else if (e && Number(adetS) < e.gelen) er.push(`Adet, teslim alınan miktardan (${e.gelen}) az olamaz.`);
+    if (!ted) er.push("Tedarikçi seçin.");
+    if (fiyat && !/^\d{1,10}(\.\d{1,2})?$/.test(fiyat)) er.push("Alış fiyatı geçersiz (örn. 1.250,50).");
+    if (tes && sip && tes < sip) er.push("Teslim tarihi sipariş tarihinden önce olamaz.");
+    if (er.length) { hata.textContent = er.join(" "); return; }
+    const p = { adet: adetS, tedarikci: ted, siparis_tarihi: sip || "", teslim_tarihi: tes || "", alis_fiyat: fiyat, doviz: m.$("#v26Doviz").value, aciklama: sanitizeText(m.$("#v26Not").value, 1000) };
+    if (e) p.id = e.id;
+    if (!kilit) { p.urun = S.deger(); if (!S.fotoAnahtar() && foto) p.foto = foto; }
+    const dz = m.$("#v26Durum"); if (dz) p.durum = dz.value;
+    btn.disabled = true; btn.textContent = "Kaydediliyor…"; hata.textContent = "";
+    try {
+      const { data, error } = await supa.rpc("pronto_sa_kaydet", { p });
+      if (error) throw error;
+      const r = data && data.kayit; v26Al(r);
+      const k = data && data.katalog;
+      if (k && k.urun && k.urun.id && v25Kat) { v25Kat.rows.set(k.urun.id, k.urun); if (k.foto === "eklendi" && p.foto) { const fk2 = v25FotoKey(k.urun.kategori, k.urun.model, k.urun.modul), at = new Date().toISOString(); v25Kat.foto[fk2] = at; v25Foto[fk2] = { at, v: p.foto }; cachePut(V25_FOTO_C, { map: v25Foto }); } cachePut(V25_KAT_C, { rows: Array.from(v25Kat.rows.values()), foto: v25Kat.foto, son: v25Kat.son }); }
+      m.close();
+      showToast(e ? `${r.no} güncellendi.` : `${r.no} kaydedildi${k && k.yeni ? " — yeni ürün Teklif kataloğuna da eklendi" : ""}.`);
+      try { refreshDatalists(true); } catch (_) {}
+      if (currentView === "purchase") v26Ciz(false);
+    } catch (er2) { btn.disabled = false; btn.textContent = e ? "Değişiklikleri Kaydet" : "Satın Almayı Kaydet"; hata.textContent = "Kaydedilemedi: " + v26Hata(er2); }
+  });
+}
+function v26TeslimAc(id) {
+  const r = v26.rows.get(id); if (!r) return;
+  const kalan = r.adet - r.gelen;
+  const m = v98Ov(`<div class="modal-head"><h2>Teslim Al — ${escapeHtml(r.no)}</h2><button class="icon-btn" data-x aria-label="Kapat">✕</button></div>
+    <div class="modal-body"><p style="margin:0 0 10px"><b>${escapeHtml(r.kategori)} / ${escapeHtml(r.model)}</b><br><span class="v26-us">${escapeHtml(v26VarAd(r) || "Standart")} · ${escapeHtml(r.tedarikci)}</span></p>
+      <p class="v98-s" style="margin:0 0 10px">Sipariş: <b>${r.adet}</b> · Gelen: <b>${r.gelen}</b> · Kalan: <b>${kalan}</b></p>
+      <div class="v26-g">
+        <label><span>Gelen adet <b>*</b></span><input id="v26TA" type="number" inputmode="numeric" min="1" max="${kalan}" step="1" value="${kalan}"></label>
+        <label><span>Teslim tarihi</span><input id="v26TT" type="date" value="${escapeHtml(v26Bugun())}"></label>
+        <label class="tam"><span>Not</span><input id="v26TN" maxlength="300" placeholder="Örn. irsaliye no"></label>
+      </div><div class="v25-hata" id="v26TH" role="alert"></div></div>
+    <div class="modal-foot"><button class="btn btn-ghost" type="button" data-x>Vazgeç</button><button class="btn btn-primary" type="button" id="v26TK">Teslim Al</button></div>`);
+  m.ov.querySelector(".modal").classList.add("v25-modal");
+  const b = m.$("#v26TK"), h = m.$("#v26TH");
+  setTimeout(() => m.$("#v26TA").select(), 50);
+  b.addEventListener("click", async () => {
+    const s = String(m.$("#v26TA").value || "").trim();
+    if (!/^\d{1,6}$/.test(s) || Number(s) < 1 || Number(s) > kalan) { h.textContent = `Gelen adet 1 ile ${kalan} arasında olmalı.`; return; }
+    b.disabled = true; b.textContent = "Kaydediliyor…";
+    try { await v26Rpc("pronto_sa_teslim_al", { p_id: r.id, p_adet: Number(s), p_tarih: m.$("#v26TT").value || null, p_not: sanitizeText(m.$("#v26TN").value, 300) }, Number(s) === kalan ? `${r.no} tamamen teslim alındı.` : `${r.no}: ${s} adet teslim alındı, ${kalan - Number(s)} bekleniyor.`); m.close(); }
+    catch (er) { b.disabled = false; b.textContent = "Teslim Al"; h.textContent = v26Hata(er); }
+  });
+}
+function v26Detay(id) {
+  const r = v26.rows.get(id); if (!r) return;
+  const h = v26Hal(r), T = (r.teslimler || []).slice().reverse();
+  const m = v98Ov(`<div class="modal-head"><h2>${escapeHtml(r.no)}</h2><button class="icon-btn" data-x aria-label="Kapat">✕</button></div>
+    <div class="modal-body"><dl class="v26-dl">
+      <dt>Ürün</dt><dd>${escapeHtml(r.kategori)} / ${escapeHtml(r.model)}${v26VarAd(r) ? " — " + escapeHtml(v26VarAd(r)) : ""}</dd>
+      <dt>Tedarikçi</dt><dd>${escapeHtml(r.tedarikci)}</dd>
+      <dt>Adet</dt><dd>${r.gelen} / ${r.adet} geldi</dd>
+      <dt>Durum</dt><dd><span class="v26-d ${h.cls}">${escapeHtml(h.ad)}</span></dd>
+      <dt>Sipariş tarihi</dt><dd>${escapeHtml(formatDate(r.siparis_tarihi))}</dd>
+      <dt>Teslim tarihi</dt><dd>${r.teslim_tarihi ? escapeHtml(formatDate(r.teslim_tarihi)) : "—"}</dd>
+      <dt>Alış fiyatı</dt><dd>${r.alis_fiyat != null ? escapeHtml(v26Para(r.alis_fiyat, r.doviz)) + " / adet · Toplam " + escapeHtml(v26Para(Number(r.alis_fiyat) * r.adet, r.doviz)) : "—"}</dd>
+      ${r.aciklama ? `<dt>Not</dt><dd>${escapeHtml(r.aciklama)}</dd>` : ""}
+    </dl>
+    <h3 style="font-size:13px;margin:16px 0 0;color:var(--color-text-muted)">TESLİM GEÇMİŞİ</h3>
+    <div class="v26-gecmis">${T.length ? T.map((t) => `<div class="${t.geri ? "geri" : ""}"><span>${escapeHtml(formatDate(t.tarih))}${t.not ? " · " + escapeHtml(t.not) : ""}${t.geri ? " (geri alındı)" : ""}</span><b>${Number(t.adet) || 0} adet</b></div>`).join("") : `<div><span>Henüz teslim yok.</span></div>`}</div></div>
+    <div class="modal-foot">${v26Acik(r) ? `<button class="btn btn-primary" type="button" data-ta>Teslim Al…</button>` : ""}<button class="btn btn-ghost" type="button" data-x>Kapat</button></div>`);
+  m.ov.querySelector(".modal").classList.add("v25-modal");
+  const ta = m.$("[data-ta]"); if (ta) ta.addEventListener("click", () => { m.close(); v26TeslimAc(id); });
+}
+(function v26Kur() {
+  const sec = document.getElementById("view-purchase"); if (!sec) return;
+  document.getElementById("v26Yeni").addEventListener("click", () => v26FormAc(null));
+  document.getElementById("v26Ara").addEventListener("input", debounce((e) => { v26AraQ = sanitizeSearchText(e.target.value, 100); v26Ciz(false); }, 200));
+  sec.addEventListener("click", (e) => {
+    const f = e.target.closest("[data-v26f]"); if (f) { v26Filtre = f.dataset.v26f; v26Ciz(false); return; }
+    const mb = e.target.closest("[data-sam]"); if (mb) { e.stopPropagation(); const r = v26.rows.get(Number(mb.dataset.sam)); if (r) v26Menu(mb, r); return; }
+    const row = e.target.closest("[data-sa]"); if (row) v26Detay(Number(row.dataset.sa));
+  });
 })();
 </script>
 </body>
