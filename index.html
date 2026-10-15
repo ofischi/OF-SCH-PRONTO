@@ -4067,7 +4067,7 @@ function switchView(view) {
   if (view === "reports") renderReportsView();
   if (view === "shipment") renderShipmentView();
   if (view === "delivery-form") renderDeliveryForm();
-  if (view === "stock") ensureStockLoaded().then(() => { if (currentView === "stock") renderStockView(); }).catch(() => showToast("Stok verileri yüklenemedi."));
+  // v31: eski stok hareketleri v27SekmeAc içinde, yalnızca "Eski Stok" sekmesinde yüklenir
 }
 
 /* =======================================================
@@ -10793,6 +10793,7 @@ function v27SekmeAc(t) {
   if (v27Tab === "depo") v27Ciz(true);
   if (v27Tab === "tasi") v27TasiCiz();
   if (v27Tab === "rapor") v29RaporCiz();
+  if (v27Tab === "eski" && currentView === "stock") ensureStockLoaded().then(() => { if (currentView === "stock" && v27Tab === "eski") renderStockView(); }).catch(() => showToast("Stok verileri yüklenemedi."));
 }
 (function v27Kur() {
   const sec = document.getElementById("view-stock"); if (!sec) return;
