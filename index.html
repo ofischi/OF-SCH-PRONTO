@@ -8066,7 +8066,7 @@ function v93ReadHistoryRange() {
    onay ekranı açılınca en fazla 3 küçük okuma; onay/ret tek istek. */
 let v98Gelen = [], v98Aktif = true;
 const v98Lbl = (x) => ({ dahil: "Dahil", haric: "Hariç", fabrika: "Fabrika teslim", adres: "Adrese teslim" }[x] || x || "-");
-const v98TurTxt = t => (t === "guncelleme" ? "Güncelleme" : "Yeni sipariş");
+const v98TurTxt = t => (t === "guncelleme" ? "Güncelleme" : t === "silme" ? "Silme talebi" : "Yeni sipariş");
 function v98TrAlt(s) { return String(s || "").replace(/I/g, "ı").replace(/İ/g, "i").toLocaleLowerCase("tr-TR").trim(); }
 async function v98Yukle() {
   if (!supa) return;
@@ -8089,7 +8089,7 @@ function v98Ciz() {
 }
 function v98ListeHtml() {
   if (!v98Gelen.length) return `<div class="history-empty" style="padding:26px;text-align:center">Onay bekleyen sipariş yok.</div>`;
-  return v98Gelen.map((g) => `<div class="v98-row" data-id="${g.id}"><div style="min-width:0;flex:1"><div class="v98-t">Teklif ${escapeHtml(g.teklif_no)} · ${escapeHtml(g.musteri)}</div><div class="v98-s">${v98TurTxt(g.tur)} · ${g.kalem} kalem · ${escapeHtml(new Date(g.created_at).toLocaleString("tr-TR", { dateStyle: "short", timeStyle: "short" }))}</div></div><span class="status-badge ${g.tur === "guncelleme" ? "status-uretimde" : "status-beklemede"}">${v98TurTxt(g.tur)}</span><button class="btn btn-primary" data-ac="${g.id}">İncele</button></div>`).join("");
+  return v98Gelen.map((g) => `<div class="v98-row" data-id="${g.id}"><div style="min-width:0;flex:1"><div class="v98-t">Teklif ${escapeHtml(g.teklif_no)} · ${escapeHtml(g.musteri)}</div><div class="v98-s">${v98TurTxt(g.tur)} · ${g.tur === "silme" ? "Teklif silinmek isteniyor" : g.kalem + " kalem"} · ${escapeHtml(new Date(g.created_at).toLocaleString("tr-TR", { dateStyle: "short", timeStyle: "short" }))}</div></div><span class="status-badge ${g.tur === "guncelleme" ? "status-uretimde" : g.tur === "silme" ? "status-iptal" : "status-beklemede"}">${v98TurTxt(g.tur)}</span><button class="btn btn-primary" data-ac="${g.id}">İncele</button></div>`).join("");
 }
 function v98Ov(html, wide) {
   const ov = document.createElement("div"); ov.className = "modal-overlay v98-ov"; ov.style.zIndex = "1150";
@@ -8136,7 +8136,7 @@ function v98Canli(p) {
   } else {
     if (i >= 0) v98Gelen.splice(i, 1);
     const acik = document.querySelector(`.v98-ov[data-gelen="${p.id}"]`);
-    if (acik) { acik.remove(); showToast(`Teklif ${p.teklif_no} başka bir bilgisayarda ${p.durum === "onaylandi" ? "onaylandı" : p.durum === "reddedildi" ? "reddedildi" : "güncellendi"}.`); }
+    if (acik) { acik.remove(); showToast(`Teklif ${p.teklif_no} başka bir bilgisayarda ${p.durum === "onaylandi" ? "onaylandı" : p.durum === "reddedildi" ? "reddedildi" : "Teklif'ten geri çekildi ya da değişti"}.`); }
   }
   v98Ciz();
 }
@@ -8146,6 +8146,7 @@ async function v98Onay(id) {
     if (error || !data) return showToast("Kayıt okunamadı: " + ((error && error.message) || "bulunamadı"));
     if (data.durum !== "bekliyor") { v98Canli({ id, durum: data.durum, teklif_no: data.teklif_no }); return showToast("Bu kayıt artık onay beklemiyor."); }
     row = data; }
+  if (row.tur === "silme") return v30SilmeAc(row);
   const v = row.veri || {}, c = v.cari || {}, kal = Array.isArray(v.kalemler) ? v.kalemler : [];
   // v101: öneri tek istekle (model → kategori varsayılanı → son seçilen → geçmiş siparişler)
   const p_kalemler = kal.slice(0, 300).map((k) => ({ uid: String(k.uid || "").slice(0, 60), kategori: String(k.kategori || "").slice(0, 200), model: String(k.model || "").slice(0, 200), urun: String(k.urun || "").slice(0, 200) }));
@@ -8258,7 +8259,7 @@ function v98Reddet(row, parent) {
     const { error } = await supa.rpc("pronto_gelen_reddet", { p_id: row.id, p_not: not });
     if (error) { b.disabled = false; return showToast("Reddedilemedi: " + error.message); }
     m.close(); parent.close(); v98Gelen = v98Gelen.filter((g) => g.id !== row.id); v98Ciz();
-    showToast(`Teklif ${row.teklif_no} reddedildi.`);
+    showToast(row.tur === "silme" ? `Teklif ${row.teklif_no} silme talebi reddedildi; teklif ve siparişler aynen duruyor.` : `Teklif ${row.teklif_no} reddedildi.`);
   });
 }
 
@@ -10287,18 +10288,20 @@ function v26Geldi(payload) {
 }
 /* görünür durum: kısmen geldi / gecikti hesaplanır */
 function v26Hal(r) {
+  if (r.silindi_at) return { ad: "Çöp kutusunda", cls: "Cop" };
   if (r.durum === "İptal") return { ad: "İptal", cls: "İptal" };
   if (r.gelen >= r.adet) return { ad: "Teslim Alındı", cls: "Alindi" };
   if (r.gelen > 0) return { ad: `Kısmen geldi (${r.gelen}/${r.adet})`, cls: "Kismen" };
   return { ad: r.durum, cls: r.durum };
 }
-const v26Acik = (r) => r.durum !== "İptal" && r.gelen < r.adet;
+const v26Acik = (r) => !r.silindi_at && r.durum !== "İptal" && r.gelen < r.adet;
 const v26Gec = (r) => v26Acik(r) && r.teslim_tarihi && r.teslim_tarihi < v26Bugun();
 const v26VarAd = (r) => [r.modul, r.olcu, r.renk, r.yon].filter(Boolean).join(" · ");
-const V26_FILTRE = [["acik", "Açık"], ["gec", "Geciken"], ["alindi", "Teslim Alındı"], ["iptal", "İptal"], ["hepsi", "Tümü"]];
+const V26_FILTRE = [["acik", "Açık"], ["gec", "Geciken"], ["alindi", "Teslim Alındı"], ["iptal", "İptal"], ["hepsi", "Tümü"], ["cop", "🗑 Çöp kutusu"]];
 function v26Liste() {
   const q = v106Ara(v26AraQ);
   return Array.from(v26.rows.values()).filter((r) => {
+    if (!!r.silindi_at !== (v26Filtre === "cop")) return false;   // çöptekiler yalnızca "Çöp kutusu"nda
     if (v26Filtre === "acik" && !v26Acik(r)) return false;
     if (v26Filtre === "gec" && !v26Gec(r)) return false;
     if (v26Filtre === "alindi" && !(r.durum !== "İptal" && r.gelen >= r.adet)) return false;
@@ -10333,11 +10336,11 @@ async function v26Ciz(force) {
   try { if (!v25Kat) v25KatYukle(false).then(() => { if (currentView === "purchase") v26Ciz(false); }).catch(() => {}); } catch (_) {}
   const L = v26Liste();
   if (!v26.rows.size) { box.innerHTML = `<div class="v26-bos">Henüz satın alma yok.<br><b>+ Yeni Satın Alma</b> ile stok için tedarikçiye sipariş girin.</div>`; return; }
-  if (!L.length) { box.innerHTML = `<div class="v26-bos">Bu filtrede kayıt yok.</div>`; return; }
+  if (!L.length) { box.innerHTML = `<div class="v26-bos">${v26Filtre === "cop" ? "Çöp kutusu boş." : "Bu filtrede kayıt yok."}</div>`; return; }
   const LIM = 300, G = L.slice(0, LIM);
   box.innerHTML = `<div class="v26-tab"><div class="v26-r bas"><span>No</span><span>Ürün</span><span>Tedarikçi</span><span>Adet</span><span>Teslim</span><span>Alış fiyatı</span><span>Durum</span><span></span></div>` +
     G.map((r) => { const h = v26Hal(r), gec = v26Gec(r), fk = (typeof v25FotoBul === "function") ? v25FotoBul(r.kategori, r.model, r.modul) : null, yuz = Math.round(100 * r.gelen / Math.max(1, r.adet));
-      return `<div class="v26-r${r.durum === "İptal" ? " iptal" : ""}" data-sa="${r.id}">
+      return `<div class="v26-r${r.durum === "İptal" || r.silindi_at ? " iptal" : ""}" data-sa="${r.id}">
         <span class="c-no v26-no">${escapeHtml(r.no)}</span>
         <span class="c-u v26-u"><span class="v25-th"${fk ? ` data-fk="${escapeHtml(fk)}"` : ""}>${fk ? "" : "Foto yok"}</span><span style="min-width:0"><span class="v26-un">${escapeHtml(r.kategori)} / ${escapeHtml(r.model)}</span><br><span class="v26-us">${escapeHtml(v26VarAd(r) || "Standart")}<span class="m-ted"> · ${escapeHtml(r.tedarikci)}</span></span></span></span>
         <span class="c-ted">${escapeHtml(r.tedarikci)}</span>
@@ -10351,6 +10354,11 @@ async function v26Ciz(force) {
 }
 function v26Menu(btn, r) {
   const items = [];
+  if (r.silindi_at) {
+    items.push({ label: "Geri al (çöp kutusundan çıkar)", onClick: () => v30SaGeri(r.id) });
+    items.push({ label: "Ayrıntılar", onClick: () => v26Detay(r.id) });
+    return showRowMenu(btn, items);
+  }
   if (v26Acik(r)) items.push({ label: "Teslim Al…", onClick: () => v26TeslimAc(r.id) });
   if (r.durum !== "İptal") items.push({ label: "Düzenle", onClick: () => v26FormAc(r.id) });
   if (v26Acik(r)) for (const d of V26_DURUM) if (d !== r.durum) items.push({ label: "Durum: " + d, onClick: () => v26Durum(r.id, d) });
@@ -10358,6 +10366,7 @@ function v26Menu(btn, r) {
   if (r.durum === "İptal") items.push({ label: "Yeniden aç", onClick: () => v26Durum(r.id, "Beklemede") });
   else if (!r.gelen) items.push({ label: "İptal et", danger: true, onClick: () => showConfirm(`${r.no} iptal edilsin mi? Kayıt silinmez, "İptal" olarak kalır.`, () => v26Durum(r.id, "İptal")) });
   items.push({ label: "Ayrıntılar", onClick: () => v26Detay(r.id) });
+  items.push({ label: "Sil (çöp kutusuna)", danger: true, onClick: () => v30SaSil(r) });
   showRowMenu(btn, items);
 }
 async function v26Rpc(ad, arg, basari) {
@@ -10975,13 +10984,13 @@ async function v29RaporCiz() {
   } catch (_) { v29Teslim = new Map(); }
   // ortalama alış fiyatı (çeşit bazında, satın almalardan; adet ağırlıklı, para birimine göre)
   const alis = new Map();
-  for (const r of v26.rows.values()) { if (r.durum === "İptal" || r.alis_fiyat == null) continue; const k = v27Anahtar(r); const e = alis.get(k) || {}; const d = e[r.doviz] || { t: 0, n: 0 }; d.t += Number(r.alis_fiyat) * r.adet; d.n += r.adet; e[r.doviz] = d; alis.set(k, e); }
+  for (const r of v26.rows.values()) { if (r.durum === "İptal" || r.silindi_at || r.alis_fiyat == null) continue; const k = v27Anahtar(r); const e = alis.get(k) || {}; const d = e[r.doviz] || { t: 0, n: 0 }; d.t += Number(r.alis_fiyat) * r.adet; d.n += r.adet; e[r.doviz] = d; alis.set(k, e); }
   const ortAlis = (k) => { const e = alis.get(k); if (!e) return null; const [d, v] = Object.entries(e).sort((a, b) => b[1].n - a[1].n)[0]; return { fiyat: v.t / v.n, doviz: d }; };
   // satış fiyatı: siparişlerden (ürün adı kategori + model ile başlıyorsa), son 365 gün
   const satis = new Map(), modelSat = new Map(), sinir90 = new Date(Date.now() - 90 * 864e5).toISOString().slice(0, 10);
   const stoklar = Array.from(v27.rows.values());
   const modeller = new Map(); for (const r of stoklar) modeller.set(v25Ky(r.kategori) + " " + v25Ky(r.model), r);
-  for (const r of v26.rows.values()) modeller.set(v25Ky(r.kategori) + " " + v25Ky(r.model), r);
+  for (const r of v26.rows.values()) if (!r.silindi_at) modeller.set(v25Ky(r.kategori) + " " + v25Ky(r.model), r);
   for (const o of allOrders || []) {
     if (!o || o.status === "İptal" || /\[\[SIPARISCOP:/i.test(String(o.description || ""))) continue;
     const ad = v25Ky(o.product);
@@ -11071,6 +11080,75 @@ async function v29SayimModu() {
   const f = document.getElementById("v29Form"); if (f) f.addEventListener("click", v29FormAc);
   const sm = document.getElementById("v29SayimModu"); if (sm) sm.addEventListener("click", v29SayimModu);
 })();
+</script>
+<style id="v30-silme">
+.v26-d.Cop{background:rgba(127,127,127,.16);color:var(--color-text-muted)}
+.v30-sl{margin:10px 0 0;padding:0;list-style:none;display:grid;gap:6px}
+.v30-sl li{display:flex;gap:8px;align-items:center;justify-content:space-between;padding:8px 10px;border:1px solid var(--color-border);border-radius:10px;background:var(--color-surface-solid);font-size:13.5px}
+.v30-sl li b{font-weight:800}
+.v30-sl li.kapali{opacity:.6}
+.v30-uy{margin-top:12px}
+</style>
+<script id="v30-silme-js">
+/* ===== v30: Satın alma çöp kutusu + Teklif silme talebi (sunucu: pronto-silme.sql) =====
+   Trafik: her işlem tek istek; listeler değişen satırı canlı yayınla alır. */
+function v30Hata(er) {
+  const t = String((er && (er.message || er.details)) || er || "");
+  if (/pronto_sa_sil|pronto_sa_geri_al|pronto_silme_onayla|Could not find the function|schema cache/i.test(t)) return "Silme kurulumu (pronto-silme.sql) henüz yapılmamış.";
+  return t || "Bilinmeyen hata";
+}
+function v30SaSil(r) {
+  if (r.gelen > 0) return showToast("Bu kayıttan teslim alınmış (stoğa girdi). Silmek için önce \"Son teslimi geri al\" ile teslimleri geri alın.");
+  showConfirm(`${r.no} — ${r.kategori} / ${r.model} çöp kutusuna taşınsın mı? Listelerden ve toplamlardan kalkar; "Çöp kutusu" filtresinden geri alabilirsiniz. Kataloğa eklenen ürün silinmez.`, async () => {
+    try { const { data, error } = await supa.rpc("pronto_sa_sil", { p_id: r.id }); if (error) throw error; v26Al(data); showToast(`${r.no} çöp kutusuna taşındı.`); if (currentView === "purchase") v26Ciz(false); }
+    catch (er) { showToast("Silinemedi: " + v30Hata(er)); }
+  });
+}
+async function v30SaGeri(id) {
+  try { const { data, error } = await supa.rpc("pronto_sa_geri_al", { p_id: id }); if (error) throw error; v26Al(data); showToast(`${data.no} geri alındı.`); if (currentView === "purchase") v26Ciz(false); }
+  catch (er) { showToast("Geri alınamadı: " + v30Hata(er)); }
+}
+/* Teklif'ten gelen silme talebi: bağlı siparişleri gösterir; Onayla → açık siparişler İptal, teklif Teklif'in geri dönüşüm kutusuna */
+function v30SilmeAc(row) {
+  const v = row.veri || {}, c = v.cari || {}, sip = Array.isArray(v.siparisler) ? v.siparisler : [];
+  const kapali = (d) => d === "Teslim Edildi" || d === "İptal" || d === "SSH";
+  // güncel durumları yerel listeden al (talepten sonra değişmiş olabilir)
+  const L = sip.map((x) => { const o = (allOrders || []).find((y) => y.id === x.id); return { id: x.id, urun: o ? o.product : x.urun, adet: o ? o.quantity : x.adet, durum: o ? o.status : x.durum, ted: o ? o.supplier : x.tedarikci }; });
+  const iptal = L.filter((x) => !kapali(x.durum)), teslim = L.filter((x) => x.durum === "Teslim Edildi" || x.durum === "SSH");
+  const no = (id) => "PR-" + String(id).padStart(5, "0");
+  const m = v98Ov(`<div class="modal-head"><h2>Teklif ${escapeHtml(row.teklif_no)} — Silme talebi</h2><button class="icon-btn" data-x aria-label="Kapat">✕</button></div>
+    <div class="modal-body">
+      <div class="v98-card"><b>${escapeHtml(c.unvan || "")}</b>${v.personel ? ` · ${escapeHtml(v.personel)}` : ""}<div class="v98-s">PRONTO Teklif'te bu teklif silinmek isteniyor.${v.neden ? ` Neden: <b>${escapeHtml(v.neden)}</b>` : ""}</div></div>
+      <div class="v98-l" style="margin-top:12px">Bu teklife bağlı siparişler (${L.length})</div>
+      ${L.length ? `<ul class="v30-sl">${L.map((x) => `<li class="${kapali(x.durum) ? "kapali" : ""}"><span><b>${escapeHtml(no(x.id))}</b> · ${escapeHtml(x.urun || "")} × ${escapeHtml(x.adet)}${x.ted ? ` · <span class="v98-s">${escapeHtml(x.ted)}</span>` : ""}</span><span class="status-badge ${kapali(x.durum) ? "status-iptal" : "status-beklemede"}">${escapeHtml(x.durum || "")}</span></li>`).join("")}</ul>` : `<div class="v98-s">Bağlı sipariş yok.</div>`}
+      ${teslim.length ? `<div class="v98-warn v30-uy">Teslim edilmiş / SSH'de sipariş var (${teslim.map((x) => escapeHtml(no(x.id))).join(", ")}). Bu teklif silinemez — talebi <b>Reddet</b>in.</div>`
+        : `<div class="v98-warn v30-uy">Onaylarsanız <b>${iptal.length} açık sipariş İptal</b> yapılır (silinmez, kayıt kalır) ve teklif PRONTO Teklif'te <b>Geri Dönüşüm Kutusu</b>'na taşınır (7 gün içinde geri alınabilir).${iptal.some((x) => /DEPO \(STOK\)/.test(x.ted || "")) ? " Stoktan ayrılan ürünler depoya serbest kalır." : ""}</div>`}
+    </div>
+    <div class="modal-foot"><button class="btn btn-ghost" data-x>Kapat</button><button class="btn btn-secondary" data-red>Reddet</button><button class="btn btn-danger" data-sok ${teslim.length ? "disabled" : ""}>Silmeyi Onayla</button></div>`);
+  m.ov.dataset.gelen = String(row.id);
+  m.ov.addEventListener("click", async (e) => {
+    if (e.target.closest("[data-red]")) return v98Reddet(row, m);
+    const b = e.target.closest("[data-sok]"); if (!b || b.disabled) return;
+    b.disabled = true; b.textContent = "Onaylanıyor…";
+    try {
+      const { data, error } = await supa.rpc("pronto_silme_onayla", { p_id: row.id });
+      if (error) throw error;
+      const ords = (data && data.orders) || [];
+      if (ords.length) {
+        const clean = ords.map((o) => { const { teklif_kalem, ...r } = o; if (!v105Acik) delete r.teklif_id; return r; });
+        upsertLocalStore("orders", clean.map((o) => fromRow("orders", o)));
+        liveSend("orders", "UPDATE", clean);
+        if (currentView === "orders") renderOrdersView();
+      }
+      v98Gelen = v98Gelen.filter((g) => g.id !== row.id); v98Ciz(); m.close();
+      showToast(`Teklif ${row.teklif_no} silindi: ${ords.length} sipariş İptal yapıldı.`);
+    } catch (er) {
+      b.disabled = false; b.textContent = "Silmeyi Onayla";
+      showToast("Onaylanamadı: " + v30Hata(er));
+      if (/onay beklemiyor/.test((er && er.message) || "")) { m.close(); v98Yukle(); }
+    }
+  });
+}
 </script>
 </body>
 </html>
