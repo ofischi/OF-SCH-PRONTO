@@ -4214,6 +4214,7 @@ async function updateOrderStatus(id, status) {
   if (!order || order.status === status) return;
   if (status === "SSH") { if (order.status === "Teslim Edildi" && !order.sshAnaId) v105SshAc(id); else showToast("SSH yalnızca teslim edilmiş siparişte açılır."); return; }
   if (order.status === "SSH") { if (status === "Teslim Edildi") v105SshKapat(id); else showToast("Bu sipariş SSH'de. Önce SSH'yi kapatın."); return; }
+  if ((status === "Teslim Edildi" || status === "İptal") && !(await v32KisiSor(`Durum: ${status}`))) return;
   if (status === "Teslim Edildi" && !(await v32OdemeOnay(order))) return;
   if (status === "Teslim Edildi" && !(await v106StokOnay([order]))) return;
   if (order.status === status || !allOrders.includes(order)) return;
@@ -5731,6 +5732,7 @@ function confirmMarkDelivered(id) {
   showConfirm("Bu sipariş teslim edildi olarak işaretlensin mi?", async () => {
     const order = allOrders.find((o) => o.id === id);
     if (!order || order.status === "Teslim Edildi") return;
+    if (!(await v32KisiSor("Durum: Teslim Edildi"))) return;
     if (!(await v32OdemeOnay(order))) return;
     if (!(await v106StokOnay([order]))) return;
     const oldStatus = order.status;
@@ -5820,6 +5822,7 @@ function renderOrderTrash() {
     const order = allOrders.find((o) => o.id === id);
     if (!order) return;
     showConfirm(`“${orderNo(order)}” siparişi kalıcı olarak silinsin mi? Bu işlem geri alınamaz.`, async () => {
+      closeConfirmModal(); if (!(await v32KisiSor("Siparişi kalıcı sil"))) return;
       await deleteOrderPhoto(id);
       await dbDelete("orders", id);
       await reloadAll();
@@ -5985,6 +5988,7 @@ function bindOrderEvents() {
       closeConfirmModal();
       const orders = ids.map((id) => allOrders.find((o) => o.id === id)).filter(Boolean);
       if (!orders.length) return;
+      if ((newStatus === "Teslim Edildi" || newStatus === "İptal") && !(await v32KisiSor(`Toplu durum: ${newStatus}`))) return;
       if (newStatus === "Teslim Edildi" && !(await v106StokOnay(orders.filter((o) => o.status !== "Teslim Edildi" && o.status !== "SSH")))) return;
 
       const productMap = new Map(allProducts.map((p) => [normName(p.name), p]));
@@ -8151,7 +8155,8 @@ function v98Canli(p) {
 }
 async function v98Onay(id) {
   let row;
-  { const { data, error } = await supa.from("pronto_gelen").select("id,teklif_id,teklif_no,tur,durum,veri").eq("id", id).maybeSingle();
+  { let { data, error } = await supa.from("pronto_gelen").select("id,teklif_id,teklif_no,tur,durum,veri,gonderen").eq("id", id).maybeSingle();
+    if (error && /gonderen/i.test(String(error.message || ""))) ({ data, error } = await supa.from("pronto_gelen").select("id,teklif_id,teklif_no,tur,durum,veri").eq("id", id).maybeSingle());
     if (error || !data) return showToast("Kayıt okunamadı: " + ((error && error.message) || "bulunamadı"));
     if (data.durum !== "bekliyor") { v98Canli({ id, durum: data.durum, teklif_no: data.teklif_no }); return showToast("Bu kayıt artık onay beklemiyor."); }
     row = data; }
@@ -8188,7 +8193,7 @@ async function v98Onay(id) {
       <div class="v98-grid">
         <div class="v98-card"><div class="v98-l">Müşteri</div><div class="v98-v">${escapeHtml(c.unvan || "-")}</div><div class="v98-s">${escapeHtml([c.gsm, c.eposta].filter(Boolean).join(" · ") || "-")}</div><div class="v98-s">${escapeHtml(adres || "-")}</div>
           <label class="v98-l" style="margin-top:10px;display:block">Kayıt</label><select class="v98-in" id="v98Cust" ${row.tur === "guncelleme" ? "disabled" : ""}>${custOpts}</select></div>
-        <div class="v98-card"><div class="v98-l">Teklif</div><div class="v98-s">Teklif tarihi: ${escapeHtml(v.tarih ? formatDate(v.tarih) : "-")} · Personel: ${escapeHtml(v.personel || "-")}</div><div class="v98-s">Montaj: ${escapeHtml(v98Lbl(v.montaj))} · Nakliye: ${escapeHtml(v98Lbl(v.nakliye))} · Teslim yeri: ${escapeHtml(v98Lbl(v.teslimYeri))}</div>
+        <div class="v98-card"><div class="v98-l">Teklif</div><div class="v98-s">Teklif tarihi: ${escapeHtml(v.tarih ? formatDate(v.tarih) : "-")} · Personel: ${escapeHtml(v.personel || "-")}${row.gonderen ? ` · Gönderen: <b>${escapeHtml(row.gonderen)}</b>` : ""}</div><div class="v98-s">Montaj: ${escapeHtml(v98Lbl(v.montaj))} · Nakliye: ${escapeHtml(v98Lbl(v.nakliye))} · Teslim yeri: ${escapeHtml(v98Lbl(v.teslimYeri))}</div>
           <label class="v98-l" style="margin-top:10px;display:block">Teslim tarihi</label><input type="date" class="v98-in" id="v98Teslim" value="${escapeHtml(v.teslim || "")}"></div>
       </div>
       ${cikanHtml}
@@ -8216,6 +8221,7 @@ async function v98Onay(id) {
     const teslim = m.$("#v98Teslim").value; if (!teslim) return showToast("Teslim tarihi seçin.");
     const custId = m.$("#v98Cust").value ? Number(m.$("#v98Cust").value) : null;
     const vars = {}; m.ov.querySelectorAll("tbody tr[data-uid]").forEach((tr) => { const cb = tr.querySelector(".v101-vk:not([hidden]) input"); if (cb && cb.checked && ted[tr.dataset.uid]) vars[tr.dataset.uid] = true; });
+    if (!(await v32KisiSor("Teklif'ten geleni onayla"))) return;
     const btn = m.$("[data-ok]"); btn.disabled = true; btn.textContent = "Onaylanıyor…";
     try {
       const args = { p_id: id, p_tedarikci: ted, p_musteri_id: custId, p_teslim: teslim };
@@ -8264,6 +8270,7 @@ function v98Reddet(row, parent) {
   m.ov.addEventListener("click", async (e) => {
     if (!e.target.closest("[data-rok]")) return;
     const not = m.$("#v98Not").value.trim(); if (!not) { m.$("#v98Not").focus(); return showToast("Ret nedenini yazın."); }
+    if (!(await v32KisiSor("Teklif'ten geleni reddet"))) return;
     const b = m.$("[data-rok]"); b.disabled = true;
     const { error } = await supa.rpc("pronto_gelen_reddet", { p_id: row.id, p_not: not });
     if (error) { b.disabled = false; return showToast("Reddedilemedi: " + error.message); }
@@ -10731,6 +10738,7 @@ async function v27SayimAc(on) {
     if (!/^\d{1,7}$/.test(sv) || Number(sv) > 1000000) er.push("Sayılan adet 0 veya daha büyük olmalı.");
     if (!nt) er.push("Nedeni yazın.");
     if (er.length) { h.textContent = er.join(" "); return; }
+    if (!(await v32KisiSor("Stok sayımı / düzeltme"))) return;
     b.disabled = true; b.textContent = "Kaydediliyor…";
     try {
       const { data, error } = await supa.rpc("pronto_stok_sayim", { p_urun: S.deger(), p_sayi: Number(sv), p_not: nt });
@@ -11072,6 +11080,7 @@ async function v29SayimModu() {
   ov.querySelector("#v29SmK").addEventListener("click", async () => {
     const deg = Array.from(sayi.entries()).filter(([k, v]) => v !== v27.rows.get(k).depoda);
     if (!deg.length) return;
+    if (!(await v32KisiSor("Depo sayımı"))) return;
     const btn = ov.querySelector("#v29SmK"); btn.disabled = true;
     const not = "Depo sayımı " + formatDate(todayISO()); let ok = 0; const hata = [];
     for (const [k, v] of deg) {
@@ -11128,7 +11137,7 @@ function v30SilmeAc(row) {
   const no = (id) => "PR-" + String(id).padStart(5, "0");
   const m = v98Ov(`<div class="modal-head"><h2>Teklif ${escapeHtml(row.teklif_no)} — Silme talebi</h2><button class="icon-btn" data-x aria-label="Kapat">✕</button></div>
     <div class="modal-body">
-      <div class="v98-card"><b>${escapeHtml(c.unvan || "")}</b>${v.personel ? ` · ${escapeHtml(v.personel)}` : ""}<div class="v98-s">PRONTO Teklif'te bu teklif silinmek isteniyor.${v.neden ? ` Neden: <b>${escapeHtml(v.neden)}</b>` : ""}</div></div>
+      <div class="v98-card"><b>${escapeHtml(c.unvan || "")}</b>${v.personel ? ` · ${escapeHtml(v.personel)}` : ""}${row.gonderen ? ` · Talep eden: <b>${escapeHtml(row.gonderen)}</b>` : ""}<div class="v98-s">PRONTO Teklif'te bu teklif silinmek isteniyor.${v.neden ? ` Neden: <b>${escapeHtml(v.neden)}</b>` : ""}</div></div>
       <div class="v98-l" style="margin-top:12px">Bu teklife bağlı siparişler (${L.length})</div>
       ${L.length ? `<ul class="v30-sl">${L.map((x) => `<li class="${kapali(x.durum) ? "kapali" : ""}"><span><b>${escapeHtml(no(x.id))}</b> · ${escapeHtml(x.urun || "")} × ${escapeHtml(x.adet)}${x.ted ? ` · <span class="v98-s">${escapeHtml(x.ted)}</span>` : ""}</span><span class="status-badge ${kapali(x.durum) ? "status-iptal" : "status-beklemede"}">${escapeHtml(x.durum || "")}</span></li>`).join("")}</ul>` : `<div class="v98-s">Bağlı sipariş yok.</div>`}
       ${teslim.length ? `<div class="v98-warn v30-uy">Teslim edilmiş / SSH'de sipariş var (${teslim.map((x) => escapeHtml(no(x.id))).join(", ")}). Bu teklif silinemez — talebi <b>Reddet</b>in.</div>`
@@ -11139,6 +11148,7 @@ function v30SilmeAc(row) {
   m.ov.addEventListener("click", async (e) => {
     if (e.target.closest("[data-red]")) return v98Reddet(row, m);
     const b = e.target.closest("[data-sok]"); if (!b || b.disabled) return;
+    if (!(await v32KisiSor("Teklif silme talebini onayla"))) return;
     b.disabled = true; b.textContent = "Onaylanıyor…";
     try {
       const { data, error } = await supa.rpc("pronto_silme_onayla", { p_id: row.id });
@@ -11335,6 +11345,7 @@ function v33BosaltSor(tur, liste, sil) {
   m.ov.addEventListener("click", async (e) => {
     const b = e.target.closest("#v33Ok"); if (!b) return;
     if (m.$("#v33Yaz").value.trim().toLocaleUpperCase("tr-TR") !== "BOŞALT") { m.$("#v33H").textContent = "Onay için BOŞALT yazın."; return; }
+    if (!(await v32KisiSor("Çöp kutusunu boşalt"))) return;
     b.disabled = true; b.textContent = "Siliniyor…";
     try {
       v33Indir(`PRONTO-${tur === "siparis" ? "Siparis" : "Urun"}-cop-yedek-${v33Damga()}.json`, { tur: `PRONTO ${ad} cop kutusu yedegi`, tarih: new Date().toISOString(), kayitlar: liste });
@@ -11398,6 +11409,7 @@ function v33StogaAc(order) {
     const a = String(m.$("#v33A").value || "").trim();
     if (!S.gecerli()) { h.textContent = "Kategori ve model zorunlu."; return; }
     if (!/^\d{1,6}$/.test(a) || Number(a) < 1 || Number(a) > max) { h.textContent = `Adet 1 ile ${max} arasında olmalı.`; return; }
+    if (!(await v32KisiSor("İptal siparişin malını stoğa gir"))) return;
     b.disabled = true; b.textContent = "Giriliyor…";
     try {
       const { data, error } = await supa.rpc("pronto_iptal_stoga_al", { p_order_id: order.id, p_urun: S.deger(), p_adet: Number(a) });
@@ -11426,5 +11438,52 @@ async function v33DetayButon(id) {
   d.querySelector("#v33DetBtn")?.addEventListener("click", () => v33StogaAc(o));
 }
 </script>
+<script id="v34-kim-js">
+/* ===== v34: "Bu cihazı kim kullanıyor?" — kritik işlemlerde sorulur (sunucu: pronto-kim.sql) =====
+   Ad listesi: Sipariş adları + PRONTO Teklif Personelleri (tek liste). Liste 10 dk önbellekte; yalnızca pencere açılınca okunur.
+   Seçilen ad bu cihazda hatırlanır ve hazır işaretli gelir (Enter / tek dokunuş). */
+let v34Liste = null, v34T = 0;
+async function v34Adlar() {
+  if (v34Liste && Date.now() - v34T < 600000) return v34Liste;
+  let L = null;
+  try { const { data, error } = await supa.rpc("pronto_kisi_liste"); if (!error && Array.isArray(data)) L = data; } catch (_) {}
+  if (!L) { try { const { data } = await supa.from("pronto_kisi").select("ad").order("ad").limit(60); L = (data || []).map((r) => r.ad); } catch (_) { L = []; } }
+  v34Liste = [...new Set(L.map((x) => v32Temiz(x, 40)).filter(Boolean))]; v34T = Date.now();
+  return v34Liste;
+}
+v32KisiSor = function (islem) {
+  return new Promise(async (res) => {
+    const liste = supa ? await v34Adlar() : [];
+    const cur = window.__prontoKisi || "";
+    let bitti = false, iv = 0;
+    const sec = (ad) => { window.__prontoKisi = v32Temiz(ad, 40); v32S("pronto_kisi", window.__prontoKisi); v32ChipCiz(); };
+    const m = v98Ov(`<div class="modal-head"><h2>Bu cihazı kim kullanıyor?</h2><button class="icon-btn" data-x aria-label="Kapat">✕</button></div><div class="modal-body">
+      ${islem ? `<div class="v34-is">${escapeHtml(islem)}</div>` : ""}
+      <p class="v98-s" style="margin:0 0 10px">${islem ? "Bu işlem seçtiğiniz adla kaydedilir. Adınıza dokunun." : "Yaptığınız değişiklikler bu adla kaydedilir (sipariş geçmişinde görünür). Ayarlar'dan değiştirilebilir."} Bu bir şifre değildir.</p>
+      ${liste.length ? `<div class="v32-kg">${liste.map((a) => `<button type="button" class="btn ${a === cur ? "btn-primary" : "btn-secondary"}" data-ad="${escapeHtml(a)}">${a === cur ? "✓ " : ""}${escapeHtml(a)}</button>`).join("")}</div>` : ""}
+      <label class="v98-l" style="margin-top:14px;display:block">${liste.length ? "Listede yoksa adınızı yazın" : "Adınızı yazın"}</label>
+      <input class="v98-in" id="v32Yeni" maxlength="40" placeholder="Ad Soyad" autocomplete="off"><p class="v98-s" id="v32H" style="color:#B02A37;margin:6px 0 0">${cur && islem ? `Son kullanan: <b>${escapeHtml(cur)}</b> — Enter ile devam.` : ""}</p></div>
+      <div class="modal-foot"><button class="btn btn-ghost" data-x>${islem ? "Vazgeç" : "Şimdi değil"}</button><button class="btn btn-primary" id="v32Devam">Devam</button></div>`);
+    m.ov.style.zIndex = "1300";
+    const bit = (v) => { if (bitti) return; bitti = true; clearInterval(iv); document.removeEventListener("keydown", tus, true); try { if (m.ov.isConnected) m.close(); } catch (_) {} res(v); };
+    const devam = async () => {
+      const ad = v32Temiz(m.$("#v32Yeni").value, 40);
+      if (!ad) { if (cur && islem) return bit(true); m.$("#v32H").textContent = "Bir ad seçin ya da yazın."; return; }
+      let son = ad.replace(/i/g, "İ").replace(/ı/g, "I").toLocaleUpperCase("tr-TR");
+      try { const { data, error } = await supa.rpc("pronto_kisi_ekle", { p_ad: ad }); if (!error && data && data.ad) son = data.ad; } catch (_) {}
+      v34Liste = null; sec(son); if (!islem) showToast(`Bu cihazda çalışan: ${window.__prontoKisi}`); bit(true);
+    };
+    const tus = (e) => { if (e.key === "Enter" && document.body.lastElementChild === m.ov) { e.preventDefault(); devam(); } };
+    document.addEventListener("keydown", tus, true);
+    m.ov.addEventListener("click", (e) => {
+      const b = e.target.closest("[data-ad]"); if (b) { sec(b.dataset.ad); if (!islem) showToast(`Bu cihazda çalışan: ${window.__prontoKisi}`); return bit(true); }
+      if (e.target.closest("#v32Devam")) devam();
+    });
+    iv = setInterval(() => { if (!m.ov.isConnected) bit(false); }, 250);
+    if (!islem || !cur) setTimeout(() => { try { m.$("#v32Yeni").focus(); } catch (_) {} }, 60);
+  });
+};
+</script>
+<style id="v34-css">.v34-is{display:inline-block;background:var(--color-surface-solid);border:1px solid var(--color-border);border-radius:8px;padding:3px 10px;font-weight:800;margin-bottom:10px}</style>
 </body>
 </html>
