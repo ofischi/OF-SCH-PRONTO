@@ -2003,6 +2003,10 @@ table.v98-t{width:100%;border-collapse:collapse;font-size:13px}
         <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 4h2l2.4 11.2a2 2 0 0 0 2 1.6h7.8a2 2 0 0 0 2-1.5L21 8H6.2"/><circle cx="10" cy="20" r="1.4"/><circle cx="17" cy="20" r="1.4"/></svg>
         Satın Alma
       </button>
+      <button class="nav-item" data-view="takvim">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/></svg>
+        Teslimat Takvimi
+      </button>
       <button class="nav-item" data-view="stock">
         <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 8V21H3V8M1 3H23V8H1V3Z"/><path d="M10 12H14"/></svg>
         Stok Takibi
@@ -2196,6 +2200,16 @@ table.v98-t{width:100%;border-collapse:collapse;font-size:13px}
     </section>
 
     <!-- ================= ÜRÜNLER ================= -->
+    <section class="view hidden" id="view-takvim">
+      <div class="page-header">
+        <div><h1>Teslimat Takvimi</h1><p class="subtitle">Bekleyen siparişler teslim tarihine göre. Teslim edilen ve iptal olanlar görünmez.</p></div>
+        <div class="header-actions"><button class="btn btn-secondary" id="v35Pdf" type="button">Yükleme Listesi (PDF)</button></div>
+      </div>
+      <div class="tkv-ust" id="v35Ust"></div>
+      <div id="v35Uyari"></div>
+      <div id="v35Govde"></div>
+      <div class="tkv-lej"><span><i style="background:rgba(46,160,67,.35)"></i>Teslim / nakliye</span><span><i style="background:rgba(27,92,153,.35)"></i>Montajlı</span><span><i style="background:rgba(230,165,0,.45)"></i>Yoğun gün</span><span class="tkv-ipucu">Masaüstünde kartı başka güne sürükleyerek teslim tarihini değiştirebilirsiniz.</span></div>
+    </section>
     <section class="view hidden" id="view-purchase">
       <div class="page-header">
         <div><h1>Satın Alma</h1><p class="subtitle">Stok için tedarikçilere verilen siparişler. Alış fiyatları yalnızca burada görünür.</p></div>
@@ -4070,6 +4084,7 @@ function switchView(view) {
   if (view === "settings") v103YedekCiz();
   if (view === "reports") renderReportsView();
   if (view === "shipment") renderShipmentView();
+  if (view === "takvim") { try { v35Ciz(); } catch (e) { console.warn(e); } }
   if (view === "delivery-form") renderDeliveryForm();
   // v31: eski stok hareketleri v27SekmeAc içinde, yalnızca "Eski Stok" sekmesinde yüklenir
 }
@@ -8891,7 +8906,7 @@ async function v106StokOnay(list) {
 }
 
 /* ---------- Telefon / tablet: cam alt bar ---------- */
-const V106_DAHA = [["products", "Ürünler"], ["purchase", "Satın Alma"], ["stock", "Stok Takibi"], ["customers", "Müşteriler"], ["suppliers", "Tedarikçiler"], ["delivery-form", "Teslim Formu"], ["reports", "Raporlar"], ["settings", "Ayarlar"]];
+const V106_DAHA = [["products", "Ürünler"], ["purchase", "Satın Alma"], ["takvim", "Teslimat Takvimi"], ["stock", "Stok Takibi"], ["customers", "Müşteriler"], ["suppliers", "Tedarikçiler"], ["delivery-form", "Teslim Formu"], ["reports", "Raporlar"], ["settings", "Ayarlar"]];
 const V106_IC = {
   orders: '<rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>',
   gelen: '<path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/>',
@@ -11485,5 +11500,193 @@ v32KisiSor = function (islem) {
 };
 </script>
 <style id="v34-css">.v34-is{display:inline-block;background:var(--color-surface-solid);border:1px solid var(--color-border);border-radius:8px;padding:3px 10px;font-weight:800;margin-bottom:10px}</style>
+<style id="v35-css">
+.tkv-ust{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 14px}
+.tkv-ust .tkv-bas{font-size:16px;font-weight:800;min-width:170px;text-align:center}
+.tkv-ust .tkv-sag{margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.tkv-sek{display:inline-flex;border:1px solid var(--color-border);border-radius:10px;overflow:hidden;background:var(--color-surface-solid)}
+.tkv-sek button{border:0;background:transparent;padding:7px 14px;font:inherit;font-weight:700;font-size:13px;color:var(--color-text-muted);cursor:pointer}
+.tkv-sek button.on{background:var(--color-text);color:var(--color-bg,#fff)}
+.tkv-sinir{font-size:12.5px;color:var(--color-text-muted);display:flex;gap:6px;align-items:center}
+.tkv-sinir select{padding:5px 8px;border-radius:8px;border:1px solid var(--color-border);background:var(--color-surface-solid);color:var(--color-text);font:inherit}
+.tkv-uy{background:rgba(220,53,69,.08);border:1px solid rgba(220,53,69,.35);color:#B02A37;border-radius:12px;padding:10px 14px;margin:0 0 14px;font-size:13.5px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.tkv-uy b{font-weight:800}.tkv-uy .btn{margin-left:auto}
+[data-theme="dark"] .tkv-uy{color:#F1AEB5}
+.tkv-g{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px}
+.tkv-d{background:var(--color-surface-solid);border:1px solid var(--color-border);border-radius:14px;padding:9px;min-height:300px;transition:border-color .15s,background .15s}
+.tkv-d.bugun{border-color:var(--color-primary,#E6A800);border-width:2px}
+.tkv-d.yogun{border-color:#E6A500;background:rgba(230,165,0,.06)}
+.tkv-d.pazar{opacity:.85}
+.tkv-d.hedef{border-color:#1B5C99;border-style:dashed;background:rgba(27,92,153,.06)}
+.tkv-h{display:flex;justify-content:space-between;align-items:center;gap:4px;margin-bottom:8px;font-size:12.5px;color:var(--color-text-muted)}
+.tkv-h b{font-size:14.5px;color:var(--color-text)}.tkv-h .yg{color:#B07A00;font-weight:800}
+.tkv-h button{border:0;background:transparent;color:var(--color-text-muted);cursor:pointer;font:inherit;font-size:11px;font-weight:700;padding:2px 4px;border-radius:6px}
+.tkv-h button:hover{background:var(--color-border)}
+.tkv-c{border-radius:10px;padding:7px 8px;margin-bottom:7px;font-size:12px;line-height:1.38;border:1px solid transparent;cursor:pointer;word-break:break-word}
+.tkv-c .m{font-weight:800;font-size:12.3px;display:block}
+.tkv-c .s{display:flex;gap:5px;align-items:center;margin-top:5px;flex-wrap:wrap}
+.tkv-c.t{background:rgba(46,160,67,.09);border-color:rgba(46,160,67,.35)}
+.tkv-c.mo{background:rgba(27,92,153,.08);border-color:rgba(27,92,153,.3)}
+.tkv-c.gec{box-shadow:inset 3px 0 0 #DC3545}
+.tkv-c[draggable="true"]{cursor:grab}.tkv-c.surukle{opacity:.45}
+.tkv-c .status-badge{font-size:10.5px;padding:2px 7px;pointer-events:none}
+.tkv-mt{font-size:10.5px;font-weight:800;color:#1B5C99}[data-theme="dark"] .tkv-mt{color:#8DB8E8}
+.tkv-bos{color:var(--color-text-muted);font-size:12px;text-align:center;margin-top:36px}
+.tkv-ay{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px}
+.tkv-ay .gb{font-size:11.5px;font-weight:800;color:var(--color-text-muted);text-align:center;padding:2px 0}
+.tkv-ag{background:var(--color-surface-solid);border:1px solid var(--color-border);border-radius:10px;padding:6px 7px;min-height:92px;cursor:pointer;font-size:11.5px;overflow:hidden}
+.tkv-ag.disi{opacity:.4}.tkv-ag.bugun{border-color:var(--color-primary,#E6A800);border-width:2px}.tkv-ag.yogun{border-color:#E6A500;background:rgba(230,165,0,.07)}
+.tkv-ag .n{display:flex;justify-content:space-between;font-weight:800;font-size:12.5px;margin-bottom:3px}.tkv-ag .n span{color:var(--color-text-muted);font-weight:700;font-size:11px}
+.tkv-ag .k{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--color-text)}
+.tkv-ls .gun{margin:14px 0 6px;font-weight:800;font-size:14px;display:flex;justify-content:space-between;align-items:center}
+.tkv-ls .gun.gec{color:#B02A37}
+.tkv-lr{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1.6fr) auto auto;gap:10px;align-items:center;padding:9px 12px;border:1px solid var(--color-border);border-radius:10px;background:var(--color-surface-solid);margin-bottom:6px;cursor:pointer;font-size:13px}
+.tkv-lr b{font-weight:800}
+.tkv-lej{display:flex;gap:16px;flex-wrap:wrap;font-size:12.5px;color:var(--color-text-muted);margin-top:12px;align-items:center}
+.tkv-lej i{display:inline-block;width:12px;height:12px;border-radius:4px;vertical-align:-1px;margin-right:5px}
+.tkv-gs{display:grid;gap:6px;margin-top:4px}.tkv-gs button{display:flex;justify-content:space-between;text-align:left}
+@media (max-width:900px){
+  .tkv-g{grid-template-columns:1fr}.tkv-d{min-height:0}.tkv-d.bos-gun{display:none}
+  .tkv-ust .tkv-sag{margin-left:0;width:100%}.tkv-ipucu{display:none}
+  .tkv-ag{min-height:54px;padding:4px}.tkv-ag .k{display:none}
+  .tkv-lr{grid-template-columns:1fr auto}.tkv-lr .u{grid-column:1/-1;order:3}
+}
+</style>
+<script id="v35-takvim-js">
+/* ===== v35: Teslimat Takvimi — hafta / ay / liste, yoğun gün, geciken, sürükle-bırak, yükleme listesi PDF =====
+   Trafik: ek istek yok (siparişler zaten yüklü). Yalnızca tarih değiştirince 1 kayıt güncellemesi. */
+const V35_GUN = ["Pzt", "Sal", "Çar", "Per", "Cum", "Cmt", "Paz"];
+const V35_AY = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
+let v35Gor = (() => { try { const v = localStorage.getItem("pronto_tkv_gor"); return ["hafta", "ay", "liste"].includes(v) ? v : "hafta"; } catch (_) { return "hafta"; } })();
+let v35Sinir = (() => { try { const n = Number(localStorage.getItem("pronto_tkv_sinir")); return n >= 2 && n <= 20 ? n : 4; } catch (_) { return 4; } })();
+let v35Bas = null, v35SadeceGec = false;
+const v35Iso = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+const v35Tarih = (iso) => { const [y, m, d] = String(iso).split("-").map(Number); return new Date(y, m - 1, d, 12); };
+const v35Ekle = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); return x; };
+const v35Pzt = (d) => { const x = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 12); const g = (x.getDay() + 6) % 7; return v35Ekle(x, -g); };
+const v35Acik = (o) => o && !isDeletedOrder(o) && !["Teslim Edildi", "İptal", "SSH"].includes(o.status) && /^\d{4}-\d{2}-\d{2}$/.test(String(o.deliveryDate || ""));
+const v35Montaj = (o) => String(o.montaj || "") === "dahil";
+function v35Isler() {
+  const m = new Map();
+  for (const o of allOrders || []) if (v35Acik(o)) { const k = o.deliveryDate; if (!m.has(k)) m.set(k, []); m.get(k).push(o); }
+  for (const l of m.values()) l.sort((a, b) => String(a.customer).localeCompare(String(b.customer), "tr") || a.id - b.id);
+  return m;
+}
+function v35Kart(o, bugun) {
+  const gec = o.deliveryDate < bugun, surukle = matchMedia("(pointer:fine)").matches && !matchMedia("(max-width:900px)").matches;
+  return `<div class="tkv-c ${v35Montaj(o) ? "mo" : "t"}${gec ? " gec" : ""}" data-tkv="${o.id}"${surukle ? ' draggable="true"' : ""} title="${escapeHtml(orderNo(o))}">
+    <span class="m">${escapeHtml(o.customer || "")}</span>${escapeHtml(o.product || "")} × ${escapeHtml(o.quantity)}
+    <span class="s"><span class="status-badge status-${STATUS_SLUG[o.status] || "beklemede"}">${escapeHtml(o.status)}</span>${v35Montaj(o) ? '<span class="tkv-mt">MONTAJLI</span>' : ""}${gec ? '<span class="tkv-mt" style="color:#B02A37">GECİKTİ</span>' : ""}</span></div>`;
+}
+function v35Ciz() {
+  const ust = document.getElementById("v35Ust"), gv = document.getElementById("v35Govde"), uy = document.getElementById("v35Uyari");
+  if (!ust || !gv) return;
+  const bugun = todayISO(), M = v35Isler();
+  if (!v35Bas) v35Bas = v35Tarih(bugun);
+  // geciken
+  const gec = [...M.entries()].filter(([k]) => k < bugun).flatMap(([, l]) => l).sort((a, b) => a.deliveryDate.localeCompare(b.deliveryDate));
+  uy.innerHTML = gec.length ? `<div class="tkv-uy">⚠ <b>${gec.length} sipariş gecikti</b> — ${gec.slice(0, 3).map((o) => `${escapeHtml(o.customer)} (${escapeHtml(formatDate(o.deliveryDate))}, ${escapeHtml(o.status)})`).join(" · ")}${gec.length > 3 ? ` · +${gec.length - 3}` : ""}<button type="button" class="btn btn-secondary" data-tkv-gec>Göster</button></div>` : "";
+  // başlık
+  let bas = "";
+  if (v35Gor === "hafta") { const p = v35Pzt(v35Bas), z = v35Ekle(p, 6); bas = p.getMonth() === z.getMonth() ? `${p.getDate()} – ${z.getDate()} ${V35_AY[z.getMonth()]} ${z.getFullYear()}` : `${p.getDate()} ${V35_AY[p.getMonth()]} – ${z.getDate()} ${V35_AY[z.getMonth()]} ${z.getFullYear()}`; }
+  else if (v35Gor === "ay") bas = `${V35_AY[v35Bas.getMonth()]} ${v35Bas.getFullYear()}`;
+  else bas = v35SadeceGec ? "Geciken siparişler" : "Bugünden itibaren";
+  ust.innerHTML = `<button type="button" class="btn btn-secondary" data-tkv-git="-1" aria-label="Önceki"${v35Gor === "liste" ? " hidden" : ""}>‹</button><span class="tkv-bas">${escapeHtml(bas)}</span><button type="button" class="btn btn-secondary" data-tkv-git="1" aria-label="Sonraki"${v35Gor === "liste" ? " hidden" : ""}>›</button><button type="button" class="btn btn-ghost" data-tkv-bugun>${v35Gor === "liste" ? "Tümü" : "Bugün"}</button>
+    <span class="tkv-sag"><label class="tkv-sinir">Yoğun gün: <select id="v35Sinir">${[2, 3, 4, 5, 6, 7, 8, 10, 12, 15].map((n) => `<option value="${n}"${n === v35Sinir ? " selected" : ""}>${n}'ten fazla iş</option>`).join("")}</select></label>
+    <span class="tkv-sek" role="tablist">${[["hafta", "Hafta"], ["ay", "Ay"], ["liste", "Liste"]].map(([k, l]) => `<button type="button" data-tkv-gor="${k}" class="${k === v35Gor ? "on" : ""}" aria-selected="${k === v35Gor}">${l}</button>`).join("")}</span></span>`;
+  if (v35Gor === "hafta") {
+    const p = v35Pzt(v35Bas); let h = '<div class="tkv-g">';
+    for (let i = 0; i < 7; i++) {
+      const d = v35Ekle(p, i), k = v35Iso(d), L = M.get(k) || [], yg = L.length > v35Sinir;
+      h += `<div class="tkv-d${k === bugun ? " bugun" : ""}${yg ? " yogun" : ""}${i === 6 ? " pazar" : ""}${L.length ? "" : " bos-gun"}" data-tkv-gun="${k}">
+        <div class="tkv-h"><span><b>${V35_GUN[i]} ${d.getDate()}</b> ${V35_AY[d.getMonth()]}</span><span>${L.length ? `<span class="${yg ? "yg" : ""}">${L.length} iş${yg ? " · yoğun" : ""}</span> <button type="button" data-tkv-pdf="${k}" title="Bu günün yükleme listesi">PDF</button>` : ""}</span></div>
+        ${L.length ? L.map((o) => v35Kart(o, bugun)).join("") : '<div class="tkv-bos">Boş gün</div>'}</div>`;
+    }
+    gv.innerHTML = h + "</div>";
+  } else if (v35Gor === "ay") {
+    const ilk = new Date(v35Bas.getFullYear(), v35Bas.getMonth(), 1, 12), p = v35Pzt(ilk);
+    let h = '<div class="tkv-ay">' + V35_GUN.map((g) => `<div class="gb">${g}</div>`).join("");
+    for (let i = 0; i < 42; i++) {
+      const d = v35Ekle(p, i), k = v35Iso(d), L = M.get(k) || [];
+      if (i >= 35 && d.getMonth() !== ilk.getMonth()) break;
+      h += `<div class="tkv-ag${d.getMonth() !== ilk.getMonth() ? " disi" : ""}${k === bugun ? " bugun" : ""}${L.length > v35Sinir ? " yogun" : ""}" data-tkv-ayg="${k}"><div class="n">${d.getDate()}${L.length ? `<span>${L.length} iş</span>` : ""}</div>${L.slice(0, 3).map((o) => `<div class="k">${escapeHtml(o.customer)}</div>`).join("")}${L.length > 3 ? `<div class="k" style="color:var(--color-text-muted)">+${L.length - 3}</div>` : ""}</div>`;
+    }
+    gv.innerHTML = h + "</div>";
+  } else {
+    const gunler = [...M.keys()].filter((k) => (v35SadeceGec ? k < bugun : true)).sort();
+    gv.innerHTML = gunler.length ? `<div class="tkv-ls">${gunler.map((k) => { const L = M.get(k), d = v35Tarih(k); return `<div class="gun${k < bugun ? " gec" : ""}"><span>${V35_GUN[(d.getDay() + 6) % 7]} ${escapeHtml(formatDate(k))}${k < bugun ? " · gecikti" : k === bugun ? " · bugün" : ""}</span><span style="display:flex;gap:8px;align-items:center;font-size:12.5px;color:var(--color-text-muted)">${L.length} iş<button type="button" class="btn btn-ghost" data-tkv-pdf="${k}">PDF</button></span></div>
+      ${L.map((o) => `<div class="tkv-lr" data-tkv="${o.id}"><span><b>${escapeHtml(o.customer)}</b><br><span class="v98-s">${escapeHtml(orderNo(o))}</span></span><span class="u">${escapeHtml(o.product)} × ${escapeHtml(o.quantity)}</span><span>${v35Montaj(o) ? '<span class="tkv-mt">MONTAJLI</span>' : ""}</span><span class="status-badge status-${STATUS_SLUG[o.status] || "beklemede"}">${escapeHtml(o.status)}</span></div>`).join("")}`; }).join("")}</div>`
+      : `<div class="tkv-bos" style="margin:30px 0">${v35SadeceGec ? "Geciken sipariş yok." : "Teslim tarihi olan bekleyen sipariş yok."}</div>`;
+  }
+}
+async function v35TarihDegis(id, yeni) {
+  const o = (allOrders || []).find((x) => x.id === id);
+  if (!o || !/^\d{4}-\d{2}-\d{2}$/.test(yeni) || o.deliveryDate === yeni) return;
+  if (!(await v32KisiSor("Teslim tarihi değiştir"))) return;
+  const eski = o.deliveryDate;
+  showConfirm(`${orderNo(o)} · ${o.customer}: teslim tarihi ${formatDate(eski)} → ${formatDate(yeni)} olarak değişsin mi?`, async () => {
+    o.deliveryDate = yeni;
+    try { await dbPut("orders", o); showToast(`Teslim tarihi ${formatDate(yeni)} olarak değişti.`); }
+    catch (e) { o.deliveryDate = eski; showToast("Tarih değiştirilemedi: " + String((e && e.message) || e).slice(0, 120)); }
+    try { renderOrdersView(); } catch (_) {} v35Ciz();
+  });
+}
+/* ---- Yükleme listesi (PDF) ---- */
+function v35Model(gun) {
+  const L = (v35Isler().get(gun) || []).slice();
+  const grup = new Map(); for (const o of L) { const k = normName(o.customer); if (!grup.has(k)) grup.set(k, []); grup.get(k).push(o); }
+  const musteri = (ad) => (allCustomers || []).find((c) => normName(c.name) === normName(ad)) || {};
+  const d = v35Tarih(gun), adet = L.reduce((n, o) => n + (Number(o.quantity) || 0), 0);
+  return { kind: "yukleme", previewTitle: `Yükleme Listesi · ${formatDate(gun)}`, filename: `Yukleme-Listesi-${gun}.pdf`,
+    title: `YÜKLEME LİSTESİ · ${formatDate(gun)} ${V35_GUN[(d.getDay() + 6) % 7].toLocaleUpperCase("tr-TR")}`, sub: `Hazırlanma: ${formatDate(todayISO())} · ${grup.size} müşteri · ${L.length} kalem · ${adet} adet`,
+    kv: [["Teslim Günü", formatDate(gun)], ["Müşteri", String(grup.size)], ["Toplam Adet", String(adet)]],
+    sections: [...grup.values()].map((G) => { const c = musteri(G[0].customer); const sart = typeof v105SartMetni === "function" && v105Acik ? v105SartMetni(G[0], { eski: false }) : (G.some(v35Montaj) ? "Montajlı" : "");
+      return { heading: G[0].customer, headRight: [c.phone, sart].filter(Boolean).join(" · "),
+        table: { cols: [{ h: "Sipariş No", w: "auto" }, { h: "Ürün", w: "*" }, { h: "Renk/Kumaş", w: "*" }, { h: "Adet", w: "auto", align: "r" }, { h: "Montaj", w: "auto" }, { h: "Durum", w: "auto" }, { h: "✓", w: 18 }],
+          rows: G.map((o) => [{ text: orderNo(o), bold: true }, { text: v97Txt(o.product), bold: true }, v97Txt(colorFabricText(o)), String(o.quantity ?? "-"), v35Montaj(o) ? "Dahil" : "-", v97Txt(o.status), "☐"]) },
+        note: c.address ? { title: "Adres", text: c.address } : null }; }),
+    signs: [{ title: "Teslim Eden" }, { title: "Teslim Alan" }] };
+}
+function v35PdfAc(gun) {
+  const L = v35Isler().get(gun) || [];
+  if (!L.length) return showToast("Bu gün için teslim edilecek iş yok.");
+  v97Open("yukleme", () => v35Model(gun));
+}
+function v35PdfSec() {
+  const M = v35Isler(), bugun = todayISO();
+  const gunler = [...M.keys()].filter((k) => k >= bugun).sort().slice(0, 14);
+  if (!gunler.length) return showToast("Bugünden sonra teslim edilecek iş yok.");
+  const m = v98Ov(`<div class="modal-head"><h2>Yükleme Listesi (PDF)</h2><button class="icon-btn" data-x aria-label="Kapat">✕</button></div><div class="modal-body"><p class="v98-s" style="margin:0 0 8px">Hangi günün listesi hazırlansın?</p>
+    <div class="tkv-gs">${gunler.map((k) => { const d = v35Tarih(k); return `<button type="button" class="btn btn-secondary" data-g="${k}"><span>${V35_GUN[(d.getDay() + 6) % 7]} ${escapeHtml(formatDate(k))}${k === bugun ? " · bugün" : ""}</span><span>${M.get(k).length} iş</span></button>`; }).join("")}</div></div>
+    <div class="modal-foot"><button class="btn btn-ghost" data-x>Kapat</button></div>`);
+  m.ov.addEventListener("click", (e) => { const b = e.target.closest("[data-g]"); if (b) { m.close(); v35PdfAc(b.dataset.g); } });
+}
+/* ---- Olaylar ---- */
+(function v35Bagla() {
+  const sec = document.getElementById("view-takvim"); if (!sec) return;
+  const kaydet = () => { try { localStorage.setItem("pronto_tkv_gor", v35Gor); localStorage.setItem("pronto_tkv_sinir", String(v35Sinir)); } catch (_) {} };
+  sec.addEventListener("click", (e) => {
+    const t = e.target;
+    if (t.closest("#v35Pdf")) return v35PdfSec();
+    const pdf = t.closest("[data-tkv-pdf]"); if (pdf) return v35PdfAc(pdf.dataset.tkvPdf);
+    const gor = t.closest("[data-tkv-gor]"); if (gor) { v35Gor = gor.dataset.tkvGor; v35SadeceGec = false; kaydet(); return v35Ciz(); }
+    const git = t.closest("[data-tkv-git]"); if (git) { const n = Number(git.dataset.tkvGit); v35Bas = v35Gor === "ay" ? new Date(v35Bas.getFullYear(), v35Bas.getMonth() + n, 1, 12) : v35Ekle(v35Bas, 7 * n); return v35Ciz(); }
+    if (t.closest("[data-tkv-bugun]")) { v35Bas = v35Tarih(todayISO()); v35SadeceGec = false; return v35Ciz(); }
+    if (t.closest("[data-tkv-gec]")) { v35Gor = "liste"; v35SadeceGec = true; return v35Ciz(); }
+    const ay = t.closest("[data-tkv-ayg]"); if (ay) { v35Bas = v35Tarih(ay.dataset.tkvAyg); v35Gor = "hafta"; kaydet(); return v35Ciz(); }
+    const k = t.closest("[data-tkv]"); if (k) return openDetailModal(Number(k.dataset.tkv));
+  });
+  sec.addEventListener("change", (e) => { if (e.target.id === "v35Sinir") { v35Sinir = Number(e.target.value) || 4; kaydet(); v35Ciz(); } });
+  let surId = null;
+  sec.addEventListener("dragstart", (e) => { const k = e.target.closest && e.target.closest(".tkv-c[data-tkv]"); if (!k) return; surId = Number(k.dataset.tkv); k.classList.add("surukle"); try { e.dataTransfer.setData("text/plain", String(surId)); e.dataTransfer.effectAllowed = "move"; } catch (_) {} });
+  sec.addEventListener("dragend", () => { surId = null; sec.querySelectorAll(".surukle,.hedef").forEach((x) => x.classList.remove("surukle", "hedef")); });
+  sec.addEventListener("dragover", (e) => { const d = e.target.closest && e.target.closest("[data-tkv-gun]"); if (!d || surId == null) return; e.preventDefault(); sec.querySelectorAll(".hedef").forEach((x) => x !== d && x.classList.remove("hedef")); d.classList.add("hedef"); });
+  sec.addEventListener("drop", (e) => { const d = e.target.closest && e.target.closest("[data-tkv-gun]"); if (!d || surId == null) return; e.preventDefault(); const id = surId; surId = null; d.classList.remove("hedef"); v35TarihDegis(id, d.dataset.tkvGun); });
+})();
+/* Veriler değişince (başka bilgisayar, canlı güncelleme) takvim açıksa yenilenir */
+const _v35Rov = renderOrdersView;
+renderOrdersView = function () { const r = _v35Rov.apply(this, arguments); if (typeof currentView === "string" && currentView === "takvim") { clearTimeout(v35Ciz._t); v35Ciz._t = setTimeout(() => { try { v35Ciz(); } catch (_) {} }, 120); } return r; };
+if (typeof V106_IC === "object") V106_IC.takvim = '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/>';
+</script>
 </body>
 </html>
