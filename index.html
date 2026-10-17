@@ -2738,6 +2738,7 @@ table.v98-t{width:100%;border-collapse:collapse;font-size:13px}
       <div id="orderTrashBody"></div>
     </div>
     <div class="modal-foot">
+      <button class="btn btn-danger" id="v33SipBos" type="button">Çöp Kutusunu Boşalt</button>
       <button class="btn btn-ghost" id="orderTrashCloseBtn">Kapat</button>
     </div>
   </div>
@@ -2754,6 +2755,7 @@ table.v98-t{width:100%;border-collapse:collapse;font-size:13px}
       <div id="productTrashBody"></div>
     </div>
     <div class="modal-foot">
+      <button class="btn btn-danger" id="v33UrnBos" type="button">Çöp Kutusunu Boşalt</button>
       <button class="btn btn-ghost" id="productTrashCloseBtn">Kapat</button>
     </div>
   </div>
@@ -3026,7 +3028,8 @@ function initSupabase() {
   if (supabaseSetupProblem()) return null;
   try {
     supa = window.supabase.createClient(PRONTO_CONFIG.url, PRONTO_CONFIG.anonKey, {
-      auth: { persistSession: true, autoRefreshToken: true }
+      auth: { persistSession: true, autoRefreshToken: true },
+      global: { fetch: (u, o) => (window.__v32F ? window.__v32F(u, o) : fetch(u, o)) }
     });
   } catch (e) {
     console.error("Supabase başlatılamadı:", e);
@@ -3999,6 +4002,7 @@ async function startApp() {
   }
   subscribeToChanges();
   v98Yukle().catch(() => {});
+  try { v32Baslat(); } catch (e) { console.warn("v32:", e); }
   bindNav();
   bindGlobalEvents();
   bindOrderEvents();
@@ -4210,6 +4214,7 @@ async function updateOrderStatus(id, status) {
   if (!order || order.status === status) return;
   if (status === "SSH") { if (order.status === "Teslim Edildi" && !order.sshAnaId) v105SshAc(id); else showToast("SSH yalnızca teslim edilmiş siparişte açılır."); return; }
   if (order.status === "SSH") { if (status === "Teslim Edildi") v105SshKapat(id); else showToast("Bu sipariş SSH'de. Önce SSH'yi kapatın."); return; }
+  if (status === "Teslim Edildi" && !(await v32OdemeOnay(order))) return;
   if (status === "Teslim Edildi" && !(await v106StokOnay([order]))) return;
   if (order.status === status || !allOrders.includes(order)) return;
 
@@ -4267,6 +4272,8 @@ async function updateOrderStatus(id, status) {
       if (stockDone && stockDone.delta) { try { await v93StockAdjust(stockDone.product, -stockDone.delta, stockDone.product.stock); } catch (_) {} }
       throw err;
     }
+    try { v32WaSor(order, status); } catch (_) {}
+    if (status === "İptal") { try { v33IptalSor(order); } catch (_) {} }
   } catch (e) {
     // Ağ/DB hatasında yereli eski hale getir; veri tutarsız kalmasın.
     Object.assign(order, orderSnapshot);
@@ -5724,6 +5731,7 @@ function confirmMarkDelivered(id) {
   showConfirm("Bu sipariş teslim edildi olarak işaretlensin mi?", async () => {
     const order = allOrders.find((o) => o.id === id);
     if (!order || order.status === "Teslim Edildi") return;
+    if (!(await v32OdemeOnay(order))) return;
     if (!(await v106StokOnay([order]))) return;
     const oldStatus = order.status;
     order.status = "Teslim Edildi";
@@ -5734,6 +5742,7 @@ function confirmMarkDelivered(id) {
     closeAllModals();
     renderOrdersView();
     showToast("Sipariş teslim edildi olarak işaretlendi.");
+    try { v32WaSor(order, "Teslim Edildi"); } catch (_) {}
   });
 }
 async function moveOrderToTrash(id) {
@@ -11149,6 +11158,272 @@ function v30SilmeAc(row) {
       if (/onay beklemiyor/.test((er && er.message) || "")) { m.close(); v98Yukle(); }
     }
   });
+}
+</script>
+<style id="v32-yapan">
+.v32-chip{display:flex;align-items:center;gap:8px;width:calc(100% - 24px);margin:8px 12px 12px;padding:9px 12px;border:1px solid var(--color-border);border-radius:12px;background:var(--color-surface-solid);font:inherit;font-size:13px;font-weight:700;color:var(--color-text);cursor:pointer;text-align:left}
+.v32-chip span{color:var(--color-text-muted);font-weight:600;font-size:11.5px;display:block}
+.v32-chip.bos{border-color:#E6A500;background:rgba(230,165,0,.08)}
+.v32-kg{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;margin-top:6px}
+.v32-kg button{padding:13px 8px}
+.v32-gs{display:grid;gap:6px;margin-top:6px}
+.v32-gr{display:grid;grid-template-columns:128px 86px 104px 1fr;gap:8px;font-size:13px;padding:7px 10px;border:1px solid var(--color-border);border-radius:10px;background:var(--color-surface-solid);align-items:start}
+.v32-gr .t{color:var(--color-text-muted)}.v32-gr .k{font-weight:800}.v32-gr .a{color:var(--color-text-muted)}
+@media (max-width:560px){.v32-gr{grid-template-columns:1fr 1fr}.v32-gr .y{grid-column:1/-1}}
+.v32-wa{background:#25D366!important;border-color:#25D366!important;color:#fff!important}
+.v32-wc{margin-bottom:10px}.v32-wc label.t{display:flex;gap:8px;align-items:center;font-weight:800}
+</style>
+<script id="v32-yapan-js">
+/* ===== v32: Çalışan adı + İşlem geçmişi + Teslimde kalan ödeme + WhatsApp (sunucu: pronto-yapan.sql) =====
+   Trafik: ad listesi yalnızca ad seçerken (1 okuma); geçmiş yalnızca sipariş detayı açılınca (1 istek);
+   kalan ödeme yalnızca "Teslim Edildi" denirken (1 istek); WhatsApp ve şablonlar cihazda, sunucuya istek yok. */
+const v32G = (k, d) => { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch (_) { return d; } };
+const v32S = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (_) {} };
+const v32Temiz = (x, n) => String(x == null ? "" : x).replace(/[\u0000-\u001f\u007f<>]/g, " ").replace(/\s+/g, " ").trim().slice(0, n || 40);
+const v32Hex = (t) => Array.from(new TextEncoder().encode(t)).map((b) => b.toString(16).padStart(2, "0")).join("");
+window.__prontoKisi = v32Temiz(v32G("pronto_kisi", ""), 40);
+window.__v32F = (u, o) => {
+  try {
+    const k = window.__prontoKisi;
+    if (k && String(u).indexOf("/rest/v1/") !== -1) { o = Object.assign({}, o); const h = new Headers((o && o.headers) || {}); h.set("x-pronto-kisi", v32Hex(k)); o.headers = h; }
+  } catch (_) {}
+  return fetch(u, o);
+};
+function v32ChipCiz() {
+  const c = document.getElementById("v32Chip"), k = window.__prontoKisi;
+  if (c) { c.classList.toggle("bos", !k); c.innerHTML = `<span style="flex:1;min-width:0"><span>Bu cihazda çalışan</span>${escapeHtml(k || "Ad seçin")}</span><span style="font-size:15px">✎</span>`; }
+  const b = document.getElementById("v32KisiBtn"); if (b) b.textContent = k ? `Çalışan: ${k} — değiştir` : "Çalışan adını seçin";
+}
+async function v32KisiSor() {
+  let liste = [];
+  try { const { data } = await supa.from("pronto_kisi").select("ad").order("ad").limit(60); liste = (data || []).map((r) => r.ad); } catch (_) {}
+  const sec = (ad) => { window.__prontoKisi = v32Temiz(ad, 40); v32S("pronto_kisi", window.__prontoKisi); v32ChipCiz(); showToast(`Bu cihazda çalışan: ${window.__prontoKisi}`); };
+  const m = v98Ov(`<div class="modal-head"><h2>Bu cihazda kim çalışıyor?</h2><button class="icon-btn" data-x aria-label="Kapat">✕</button></div><div class="modal-body">
+    <p class="v98-s" style="margin:0 0 10px">Yaptığınız değişiklikler bu adla kaydedilir (sipariş geçmişinde görünür). Cihaz başına bir kez sorulur; Ayarlar'dan değiştirilebilir. Bu bir şifre değildir, yalnızca kayıt içindir.</p>
+    ${liste.length ? `<div class="v32-kg">${liste.map((a) => `<button type="button" class="btn ${a === window.__prontoKisi ? "btn-primary" : "btn-secondary"}" data-ad="${escapeHtml(a)}">${escapeHtml(a)}</button>`).join("")}</div>` : ""}
+    <label class="v98-l" style="margin-top:14px;display:block">${liste.length ? "Listede yoksa adınızı yazın" : "Adınızı yazın"}</label>
+    <input class="v98-in" id="v32Yeni" maxlength="40" placeholder="Ad Soyad" autocomplete="off"><p class="v98-s" id="v32H" style="color:#B02A37;margin:6px 0 0"></p></div>
+    <div class="modal-foot"><button class="btn btn-ghost" data-x>Şimdi değil</button><button class="btn btn-primary" id="v32Devam">Devam</button></div>`);
+  m.ov.addEventListener("click", async (e) => {
+    const b = e.target.closest("[data-ad]"); if (b) { sec(b.dataset.ad); m.close(); return; }
+    if (!e.target.closest("#v32Devam")) return;
+    const ad = v32Temiz(m.$("#v32Yeni").value, 40);
+    if (!ad) { m.$("#v32H").textContent = "Bir ad seçin ya da yazın."; return; }
+    let son = ad.replace(/i/g, "İ").replace(/ı/g, "I").toLocaleUpperCase("tr-TR");
+    try { const { data, error } = await supa.rpc("pronto_kisi_ekle", { p_ad: ad }); if (!error && data && data.ad) son = data.ad; } catch (_) {}
+    sec(son); m.close();
+  });
+  m.ov.querySelector("#v32Yeni").addEventListener("keydown", (e) => { if (e.key === "Enter") m.$("#v32Devam").click(); });
+}
+/* ---- İşlem geçmişi: sipariş detayı ---- */
+const _v32Odm = openDetailModal;
+openDetailModal = function (id) { _v32Odm.apply(this, arguments); try { v32Gecmis(id); } catch (_) {} };
+async function v32Gecmis(id) {
+  if (!supa) return;
+  const { data, error } = await supa.rpc("pronto_gecmis_getir", { p_order_id: id });
+  if (error || !Array.isArray(data) || currentDetailOrderId !== id) return;
+  const g = document.querySelector("#detailModalBody .detail-grid"); if (!g || document.getElementById("v32Gecmis")) return;
+  const d = document.createElement("div"); d.className = "detail-item detail-item--wide"; d.id = "v32Gecmis";
+  const zt = (z) => { try { return new Date(z).toLocaleString("tr-TR", { dateStyle: "short", timeStyle: "short" }); } catch (_) { return ""; } };
+  d.innerHTML = `<span class="detail-label">İşlem Geçmişi</span>` + (data.length
+    ? `<div class="v32-gs">${data.map((r) => `<div class="v32-gr"><span class="t">${escapeHtml(zt(r.zaman))}</span><span class="k">${escapeHtml(r.kisi || "—")}</span><span class="a">${escapeHtml(r.alan)}</span><span class="y">${r.eski != null ? escapeHtml(r.eski) + " → " : ""}${escapeHtml(r.yeni == null ? "" : r.yeni)}</span></div>`).join("")}</div>`
+    : `<span class="detail-value" style="color:var(--color-text-muted)">Henüz kayıt yok. Kayıtlar bu özellik kurulduktan sonraki değişikliklerle başlar.</span>`);
+  g.appendChild(d);
+}
+/* ---- Teslimde kalan ödeme ---- */
+const v32OdemeBil = new Map();
+async function v32OdemeOnay(order) {
+  try {
+    if (!supa || !order || !order.teklifId) return true;
+    const t = v32OdemeBil.get(order.teklifId); if (t && Date.now() - t < 600000) return true;
+    const { data, error } = await supa.rpc("pronto_teklif_kalan", { p_teklif_id: String(order.teklifId) });
+    if (error || !data || !data.var || !(Number(data.kalan) > 0.005)) return true;
+    return await new Promise((res) => {
+      const m = v98Ov(`<div class="modal-head"><h2>Teslim Edildi olarak işaretlensin mi?</h2><button class="icon-btn" data-x aria-label="Kapat">✕</button></div><div class="modal-body">
+        <div class="v98-card"><b>${escapeHtml(orderNo(order))} · ${escapeHtml(order.customer)}</b><div class="v98-s">${escapeHtml(order.product)} × ${escapeHtml(order.quantity)}${data.no ? " · Teklif " + escapeHtml(data.no) : ""}</div></div>
+        <div class="v98-warn" style="margin-top:12px;background:rgba(220,53,69,.08);border-color:rgba(220,53,69,.4)"><b style="font-size:15px">Müşterinin kalan ödemesi var</b>
+          <div style="display:grid;grid-template-columns:1fr auto;gap:4px 16px;margin-top:8px;font-size:14px"><span>Teklif toplamı</span><b>${escapeHtml(v26Para(data.genel, data.doviz))}</b><span>Alınan (peşinat + ödemeler)</span><b>${escapeHtml(v26Para(data.alinan, data.doviz))}</b><span style="font-weight:800">Kalan</span><b style="color:#B02A37;font-size:16px">${escapeHtml(v26Para(data.kalan, data.doviz))}</b></div>
+          <div class="v98-s" style="margin-top:8px">Ödemeler PRONTO Teklif'ten okunur. Teslimde tahsil ettiyseniz önce Teklif'e ödemeyi girin.</div></div></div>
+        <div class="modal-foot"><button class="btn btn-ghost" data-x>Vazgeç</button><button class="btn btn-secondary" data-yine>Yine de teslim edildi</button></div>`);
+      let bitti = false; const son = (v) => { if (bitti) return; bitti = true; clearInterval(iv); if (v) v32OdemeBil.set(order.teklifId, Date.now()); try { m.close(); } catch (_) {} res(v); };
+      const iv = setInterval(() => { if (!m.ov.isConnected) son(false); }, 250);
+      m.ov.addEventListener("click", (e) => { if (e.target.closest("[data-yine]")) son(true); else if (e.target.closest("[data-x]")) son(false); });
+    });
+  } catch (_) { return true; }
+}
+/* ---- WhatsApp durum mesajı ---- */
+const V32_WA = { "Üretimde": { on: false, metin: "Merhaba {müşteri}, {ürün} siparişiniz üretime alındı. Tahmini teslim: {teslim}." },
+  "Sevkiyata Hazır": { on: true, metin: "Merhaba {müşteri}, {ürün} siparişiniz hazır. Teslimat: {teslim}." },
+  "Teslim Edildi": { on: false, metin: "Merhaba {müşteri}, siparişiniz teslim edildi. Bizi tercih ettiğiniz için teşekkür ederiz." } };
+const v32Sablon = () => { const k = v32G("pronto_wa_sablon", {}) || {}; const o = {}; for (const d of Object.keys(V32_WA)) o[d] = { on: k[d] && typeof k[d].on === "boolean" ? k[d].on : V32_WA[d].on, metin: v32Temiz(k[d] && k[d].metin ? k[d].metin : V32_WA[d].metin, 500) || V32_WA[d].metin }; return o; };
+function v32Doldur(metin, o) {
+  const gun = o.deliveryDate ? new Date(o.deliveryDate + "T12:00:00").toLocaleDateString("tr-TR", { weekday: "long" }) : "";
+  const v = { "müşteri": o.customer, "ürün": o.product, "adet": o.quantity, "teslim": o.deliveryDate ? formatDate(o.deliveryDate) + (gun ? " " + gun : "") : "yakında", "sipariş no": orderNo(o) };
+  return metin.replace(/\{([^}]{1,20})\}/g, (a, k) => (k in v ? String(v[k]) : a));
+}
+function v32WaSor(order, status) {
+  const S = v32Sablon(), c = S[status]; if (!c || !c.on || !order) return;
+  setTimeout(() => {
+    const mus = (allCustomers || []).find((x) => normName(x.name) === normName(order.customer)) || {};
+    const tel = v29Tel(mus.phone);
+    const m = v98Ov(`<div class="modal-head"><h2>Müşteriye haber verilsin mi?</h2><button class="icon-btn" data-x aria-label="Kapat">✕</button></div><div class="modal-body">
+      <div class="v98-s">${escapeHtml(orderNo(order))} <b>${escapeHtml(status)}</b> oldu · ${escapeHtml(order.customer)} · ${tel ? escapeHtml(mus.phone) : "<b>telefon kayıtlı değil</b>"}</div>
+      <label class="v98-l" style="margin-top:12px;display:block">Mesaj (düzenleyebilirsiniz)</label>
+      <textarea class="v98-in" id="v32M" rows="6" maxlength="1000" style="width:100%"></textarea>
+      <label style="display:flex;gap:8px;align-items:center;margin-top:10px;font-size:13px"><input type="checkbox" id="v32Sorma"> "${escapeHtml(status)}" için bir daha sorma</label></div>
+      <div class="modal-foot"><button class="btn btn-ghost" data-x>Şimdi değil</button><button class="btn btn-primary v32-wa" id="v32Gonder">WhatsApp'ta aç</button></div>`);
+    m.$("#v32M").value = v32Doldur(c.metin, order);
+    m.ov.addEventListener("click", (e) => {
+      if (!e.target.closest("#v32Gonder")) return;
+      const metin = v32Temiz(m.$("#v32M").value.replace(/\n/g, "\u0001"), 1000).replace(/\u0001/g, "\n");
+      if (m.$("#v32Sorma").checked) { const k = v32Sablon(); k[status].on = false; v32S("pronto_wa_sablon", k); }
+      window.open(`https://wa.me/${tel}?text=${encodeURIComponent(metin)}`, "_blank", "noopener");
+      if (!tel) showToast("Müşterinin telefonu kayıtlı değil — WhatsApp'ta kişiyi kendiniz seçin.");
+      m.close();
+    });
+  }, 700);
+}
+function v32SablonAc() {
+  const S = v32Sablon();
+  const m = v98Ov(`<div class="modal-head"><h2>WhatsApp mesaj şablonları</h2><button class="icon-btn" data-x aria-label="Kapat">✕</button></div><div class="modal-body">
+    <p class="v98-s" style="margin:0 0 10px">İşaretli durumlara geçince müşteriye mesaj gönderme penceresi açılır. Şablonlar bu cihazda saklanır.</p>
+    ${Object.keys(V32_WA).map((d) => `<div class="v98-card v32-wc"><label class="t"><input type="checkbox" data-on="${escapeHtml(d)}" ${S[d].on ? "checked" : ""}> ${escapeHtml(d)} olunca sor</label><textarea class="v98-in" data-m="${escapeHtml(d)}" rows="3" maxlength="500" style="width:100%;margin-top:6px"></textarea></div>`).join("")}
+    <div class="v98-s">Kullanılabilir: {müşteri} {ürün} {adet} {teslim} {sipariş no}</div></div>
+    <div class="modal-foot"><button class="btn btn-ghost" data-x>Vazgeç</button><button class="btn btn-primary" id="v32Kaydet">Kaydet</button></div>`);
+  Object.keys(V32_WA).forEach((d) => { m.ov.querySelector(`[data-m="${CSS.escape(d)}"]`).value = S[d].metin; });
+  m.ov.addEventListener("click", (e) => {
+    if (!e.target.closest("#v32Kaydet")) return;
+    const k = {}; Object.keys(V32_WA).forEach((d) => { k[d] = { on: m.ov.querySelector(`[data-on="${CSS.escape(d)}"]`).checked, metin: v32Temiz(m.ov.querySelector(`[data-m="${CSS.escape(d)}"]`).value, 500) || V32_WA[d].metin }; });
+    v32S("pronto_wa_sablon", k); m.close(); showToast("Şablonlar kaydedildi.");
+  });
+}
+function v32Baslat() {
+  if (document.getElementById("v32Chip")) return;
+  const sb = document.querySelector(".sidebar");
+  if (sb) { const c = document.createElement("button"); c.type = "button"; c.id = "v32Chip"; c.className = "v32-chip"; c.addEventListener("click", () => v32KisiSor()); sb.appendChild(c); }
+  const set = document.getElementById("view-settings"), ilk = set && set.querySelector(".settings-card");
+  if (ilk) {
+    const k = document.createElement("div"); k.className = "settings-card";
+    k.innerHTML = `<h3>Çalışan ve Müşteri Mesajları</h3><p class="settings-note">Çalışan adı, sipariş geçmişinde "kim değiştirdi" bilgisi için kullanılır. WhatsApp şablonları durum değişince müşteriye haber vermek içindir. İkisi de yalnızca bu cihazda geçerlidir.</p>
+      <div class="settings-actions"><button type="button" class="btn btn-secondary" id="v32KisiBtn"></button><button type="button" class="btn btn-secondary" id="v32WaBtn">WhatsApp mesaj şablonları</button></div>`;
+    ilk.before(k);
+    k.querySelector("#v32KisiBtn").addEventListener("click", () => v32KisiSor());
+    k.querySelector("#v32WaBtn").addEventListener("click", () => v32SablonAc());
+  }
+  v32ChipCiz();
+  if (!window.__prontoKisi) setTimeout(() => { if (!window.__prontoKisi) v32KisiSor(); }, 1500);
+}
+</script>
+<script id="v33-cop-js">
+/* ===== v33: Çöp kutusunu boşalt (önce yedek) + İptal siparişin malını onaylı stoğa giriş (sunucu: pronto-yapan.sql) ===== */
+if (typeof V27_TUR === "object") V27_TUR.iptal_giris = "İptal siparişten stoğa";
+const v33Damga = () => { const d = new Date(), p = (n) => String(n).padStart(2, "0"); return `${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}`; };
+function v33Indir(ad, veri) {
+  const u = URL.createObjectURL(new Blob([JSON.stringify(veri, null, 1)], { type: "application/json" }));
+  const a = document.createElement("a"); a.href = u; a.download = ad; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(u), 4000);
+}
+function v33BosaltSor(tur, liste, sil) {
+  if (!liste.length) { showToast("Çöp kutusu zaten boş."); return; }
+  const ad = tur === "siparis" ? "sipariş" : "ürün";
+  const m = v98Ov(`<div class="modal-head"><h2>Çöp kutusunu boşalt</h2><button class="icon-btn" data-x aria-label="Kapat">✕</button></div><div class="modal-body">
+    <p style="margin:0 0 8px"><b>${liste.length} ${ad}</b> kalıcı olarak silinecek.${tur === "siparis" ? " Fotoğrafları da silinir." : ""}</p>
+    <div class="v98-warn">Önce bu kayıtlar bilgisayarınıza <b>yedek dosyası (JSON)</b> olarak indirilir; dosyayı saklayın. <b>Bu işlem geri alınamaz.</b></div>
+    <label class="v98-l" style="margin-top:12px;display:block">Onaylamak için <b>BOŞALT</b> yazın</label>
+    <input class="v98-in" id="v33Yaz" maxlength="10" autocomplete="off" placeholder="BOŞALT"><p class="v98-s" id="v33H" style="color:#B02A37;margin:6px 0 0"></p></div>
+    <div class="modal-foot"><button class="btn btn-ghost" data-x>Vazgeç</button><button class="btn btn-danger" id="v33Ok">Yedeği indir ve boşalt</button></div>`);
+  m.ov.addEventListener("click", async (e) => {
+    const b = e.target.closest("#v33Ok"); if (!b) return;
+    if (m.$("#v33Yaz").value.trim().toLocaleUpperCase("tr-TR") !== "BOŞALT") { m.$("#v33H").textContent = "Onay için BOŞALT yazın."; return; }
+    b.disabled = true; b.textContent = "Siliniyor…";
+    try {
+      v33Indir(`PRONTO-${tur === "siparis" ? "Siparis" : "Urun"}-cop-yedek-${v33Damga()}.json`, { tur: `PRONTO ${ad} cop kutusu yedegi`, tarih: new Date().toISOString(), kayitlar: liste });
+      const n = await sil(liste);
+      m.close(); showToast(`${n} ${ad} kalıcı olarak silindi. Yedek dosyası indirildi.`);
+    } catch (er) { b.disabled = false; b.textContent = "Yedeği indir ve boşalt"; m.$("#v33H").textContent = "Silinemedi: " + String((er && er.message) || er).slice(0, 160); }
+  });
+}
+async function v33SipSil(liste) {
+  const ids = liste.map((o) => o.id);
+  try { await supa.storage.from(ORDER_PHOTO_BUCKET).remove(ids.map((id) => orderPhotoPath(id))); } catch (_) {}
+  try { v99FotoSil(ids); } catch (_) {}
+  for (let i = 0; i < ids.length; i += 100) await dbDeleteMany("orders", ids.slice(i, i + 100));
+  renderOrderTrash(); renderOrdersView();
+  return ids.length;
+}
+async function v33UrnSil(liste) {
+  const ids = liste.map((p) => p.id);
+  for (let i = 0; i < ids.length; i += 100) await dbDeleteMany("products", ids.slice(i, i + 100));
+  renderProductTrash(); renderProductsView(); renderStockView(); refreshDatalists(true);
+  return ids.length;
+}
+document.getElementById("v33SipBos")?.addEventListener("click", () => v33BosaltSor("siparis", deletedOrdersList(), v33SipSil));
+document.getElementById("v33UrnBos")?.addEventListener("click", () => v33BosaltSor("urun", deletedProductsList(), v33UrnSil));
+
+/* ---- İptal edilen siparişin malı geldiyse stoğa giriş (her sipariş bir kez; sunucu da denetler) ---- */
+let v33Alinan = null, v33AlinanT = 0;
+async function v33AlinanYukle() {
+  if (v33Alinan && Date.now() - v33AlinanT < 300000) return v33Alinan;
+  const { data, error } = await supa.rpc("pronto_iptal_stok_liste");
+  if (error) throw error;
+  v33Alinan = new Map((data || []).map((r) => [Number(r.order_id), Number(r.adet)])); v33AlinanT = Date.now();
+  return v33Alinan;
+}
+const v33Depodan = (o) => /DEPO \(STOK\)/i.test(String(o.supplier || ""));
+function v33IptalSor(order) {
+  if (!order || v33Depodan(order) || typeof v27Yok !== "undefined" && v27Yok) return;
+  setTimeout(() => {
+    const m = v98Ov(`<div class="modal-head"><h2>Sipariş iptal edildi</h2><button class="icon-btn" data-x aria-label="Kapat">✕</button></div><div class="modal-body">
+      <div class="v98-card"><b>${escapeHtml(orderNo(order))} · ${escapeHtml(order.customer)}</b><div class="v98-s">${escapeHtml(order.product)} × ${escapeHtml(order.quantity)}${order.supplier ? " · " + escapeHtml(order.supplier) : ""}</div></div>
+      <p style="margin:12px 0 0;font-size:15px"><b>Tedarikçiden mal geldi mi?</b></p>
+      <p class="v98-s" style="margin:4px 0 0">Geldiyse depo stoğuna girilir. Gelmediyse hiçbir şey yapılmaz. Sonra da sipariş detayından girebilirsiniz.</p></div>
+      <div class="modal-foot"><button class="btn btn-ghost" data-x>Hayır, gelmedi</button><button class="btn btn-primary" id="v33Evet">Evet, stoğa gir</button></div>`);
+    m.ov.addEventListener("click", (e) => { if (e.target.closest("#v33Evet")) { m.close(); v33StogaAc(order); } });
+  }, 500);
+}
+function v33StogaAc(order) {
+  const max = Math.max(1, Number(order.quantity) || 1);
+  const m = v98Ov(`<div class="modal-head"><h2>İptal siparişin malını stoğa gir</h2><button class="icon-btn" data-x aria-label="Kapat">✕</button></div>
+    <div class="modal-body"><p style="margin:0 0 10px">${escapeHtml(orderNo(order))} · <b>${escapeHtml(order.customer)}</b> · ${escapeHtml(order.product)} × ${escapeHtml(order.quantity)}</p>
+      <p class="v98-s" style="margin:0 0 10px">Gelen ürünün katalogdaki karşılığını seçin. Katalogda yoksa yazın; kataloğa da eklenir. Bir sipariş yalnızca bir kez stoğa girilebilir.</p>
+      <div id="v33Sec"></div>
+      <div class="v26-g" style="margin-top:12px"><label><span>Gelen adet <b>*</b> (en çok ${max})</span><input id="v33A" type="number" inputmode="numeric" min="1" max="${max}" step="1" value="${max}"></label></div>
+      <div class="v25-hata" id="v33SH" role="alert"></div></div>
+    <div class="modal-foot"><button class="btn btn-ghost" type="button" data-x>Vazgeç</button><button class="btn btn-primary" type="button" id="v33SK">Stoğa gir</button></div>`);
+  m.ov.querySelector(".modal").classList.add("v25-modal");
+  const h = m.$("#v33SH"), b = m.$("#v33SK");
+  const S = v25Secici(m.$("#v33Sec"), { onChange: () => { h.textContent = ""; } });
+  setTimeout(() => S.odak(), 50);
+  b.addEventListener("click", async () => {
+    const a = String(m.$("#v33A").value || "").trim();
+    if (!S.gecerli()) { h.textContent = "Kategori ve model zorunlu."; return; }
+    if (!/^\d{1,6}$/.test(a) || Number(a) < 1 || Number(a) > max) { h.textContent = `Adet 1 ile ${max} arasında olmalı.`; return; }
+    b.disabled = true; b.textContent = "Giriliyor…";
+    try {
+      const { data, error } = await supa.rpc("pronto_iptal_stoga_al", { p_order_id: order.id, p_urun: S.deger(), p_adet: Number(a) });
+      if (error) throw error;
+      try { if (data && data.stok && typeof v27Al === "function") v27Al(data.stok); } catch (_) {}
+      if (v33Alinan) v33Alinan.set(Number(order.id), Number(a));
+      m.close(); showToast(`${a} adet depo stoğuna girildi (${orderNo(order)}).`);
+      try { await v25KatYukle(true); } catch (_) {}
+      document.getElementById("v33DetStok")?.remove();
+    } catch (e) { b.disabled = false; b.textContent = "Stoğa gir"; h.textContent = "Girilemedi: " + (typeof v27Hata === "function" ? v27Hata(e) : String((e && e.message) || e)); }
+  });
+}
+const _v33Odm = openDetailModal;
+openDetailModal = function (id) { _v33Odm.apply(this, arguments); try { v33DetayButon(id); } catch (_) {} };
+async function v33DetayButon(id) {
+  const o = (allOrders || []).find((x) => x.id === id);
+  if (!supa || !o || o.status !== "İptal" || v33Depodan(o) || isDeletedOrder(o)) return;
+  let M; try { M = await v33AlinanYukle(); } catch (_) { return; }
+  if (currentDetailOrderId !== id) return;
+  const g = document.querySelector("#detailModalBody .detail-grid"); if (!g || document.getElementById("v33DetStok")) return;
+  const d = document.createElement("div"); d.className = "detail-item detail-item--wide"; d.id = "v33DetStok";
+  d.innerHTML = M.has(Number(id))
+    ? `<span class="detail-label">Stok</span><span class="detail-value">✓ İptal sonrası ${M.get(Number(id))} adet depo stoğuna girildi.</span>`
+    : `<span class="detail-label">Stok</span><span class="detail-value" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">Tedarikçiden mal geldiyse depoya girin.<button type="button" class="btn btn-secondary" id="v33DetBtn">Mal geldi — stoğa gir</button></span>`;
+  g.prepend(d);
+  d.querySelector("#v33DetBtn")?.addEventListener("click", () => v33StogaAc(o));
 }
 </script>
 </body>
