@@ -974,20 +974,6 @@ input, select, textarea { font-family: inherit; }
 .status-badge-btn { border: none; cursor: pointer; font-family: inherit; }
 .status-badge-btn:hover { filter: brightness(0.95); box-shadow: 0 0 0 2px rgba(0,0,0,0.06) inset; }
 
-/* ===================== STOK TAKİBİ ===================== */
-.stock-control { display: flex; align-items: center; gap: 6px; }
-.stock-adj {
-  width: 26px; height: 26px; border-radius: 7px; border: 1px solid var(--color-border);
-  background: var(--color-surface); font-weight: 700; font-size: 15px; color: var(--color-text); line-height: 1;
-}
-.stock-adj:hover { background: var(--color-bg); }
-.stock-input {
-  width: 64px; text-align: center; padding: 6px 4px; border: 1px solid var(--color-border);
-  border-radius: 7px; font-size: 13.5px; font-weight: 700;
-}
-.stock-input:focus { outline: none; border-color: var(--color-accent); box-shadow: 0 0 0 3px rgba(230,178,42,0.18); }
-.stock-cell-readonly { font-weight: 700; }
-
 /* ===================== SAYFALAMA ===================== */
 .pagination {
   display: flex; align-items: center; justify-content: space-between; gap: 12px;
@@ -1147,7 +1133,6 @@ body::after {
 .btn-secondary,
 .pill,
 .page-btn,
-.stock-adj,
 .row-actions button,
 .order-card-actions button,
 .page-size-select {
@@ -1319,8 +1304,6 @@ body::after {
 /* Sayfa numaraları */
 .page-btn:hover:not(:disabled):not(.active) { border-color: var(--color-accent); transform: translateY(-1px); }
 
-/* Stok +/- düğmeleri */
-.stock-adj:hover { border-color: var(--color-accent); color: var(--color-accent-dark); }
 
 /* Satır menüsü öğeleri */
 .row-menu button { transition: background-color .14s var(--ease), padding-left .14s var(--ease); }
@@ -1378,7 +1361,6 @@ body::after {
 [data-theme="dark"] .bulk-bar { border-color: rgba(227, 180, 55, 0.30); color: #EFC65F; }
 [data-theme="dark"] .empty-state svg { color: rgba(255,255,255,0.14); }
 [data-theme="dark"] .report-bar-track { background: rgba(255,255,255,0.07); }
-[data-theme="dark"] .stock-input,
 [data-theme="dark"] .form-field input,
 [data-theme="dark"] .form-field select,
 [data-theme="dark"] .form-field textarea,
@@ -1392,12 +1374,6 @@ body::after {
 [data-theme="dark"] .search-box input::placeholder { color: #6F7278; }
 [data-theme="dark"] input[type="date"] { color-scheme: dark; }
 
-/* Stok: 0'dayken azaltma düğmesi pasif */
-.stock-adj:disabled { opacity: 0.32; cursor: not-allowed; }
-.stock-adj:disabled:hover { border-color: var(--glass-edge); color: var(--color-text); }
-
-/* Stok satırı: ürün bilgilerini düzenlemek için tıklanabilir */
-.stock-row { cursor: pointer; }
 
 
 /* ===================== SİPARİŞ FOTOĞRAFI ===================== */
@@ -1711,8 +1687,6 @@ table.pd-t{width:100%;border-collapse:collapse;font-size:9pt}.pd-t thead{display
 @media screen and (max-width:1024px), screen and (pointer:coarse){
  .status-badge-btn{min-height:34px;padding:6px 12px;display:inline-flex;align-items:center}
  .menu-trigger{min-width:42px;min-height:42px}
- .stock-adj{min-width:42px;min-height:42px}
- .stock-input{min-height:42px}
  .shipment-archive-btn,.delivery-form-open-btn,#view-shipment .btn,#view-delivery-form .btn{min-height:42px}
  .filter-pills .pill{min-height:38px}
  .search-box{min-height:44px}
@@ -1829,7 +1803,6 @@ table.v98-t{width:100%;border-collapse:collapse;font-size:13px}
 <style id="v106-css">
 /* ===== v106: telefon/tablet cam alt bar (C · cam hap + ortada artı) ===== */
 .v106-bar, .v106-ov, .v106-kalem { display: none; }
-.stock-input.v106-eksi { color: #C62828; font-weight: 700; border-color: #E8A39B; }
 @media screen and (max-width:1024px) {
   #hamburgerBtn, #v98MobBadge { display: none !important; }
   .mobile-topbar {
@@ -2255,7 +2228,7 @@ table.v98-t{width:100%;border-collapse:collapse;font-size:13px}
       </div>
       <div class="table-wrap" id="productsTableWrap">
         <table class="orders-table">
-          <thead><tr><th>Ürün Adı</th><th>Kategori</th><th>Birim</th><th>Stok</th><th>Açıklama</th><th></th></tr></thead>
+          <thead><tr><th>Ürün Adı</th><th>Kategori</th><th>Birim</th><th>Açıklama</th><th></th></tr></thead>
           <tbody id="productsTableBody"></tbody>
         </table>
       </div>
@@ -2352,20 +2325,12 @@ table.v98-t{width:100%;border-collapse:collapse;font-size:13px}
     <section class="view hidden" id="view-stock">
       <div class="page-header">
         <div><h1>Stok Takibi</h1><p class="subtitle" id="v27Alt">Ürün çeşidi bazında depo stoğu: satın almadan gelenler, sayımlar ve aktarımlar.</p></div>
-        <div class="header-actions v27-eski">
-          <button class="btn btn-secondary" id="stockExportBtn">
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
-            Excel'e Aktar
-          </button>
-          <button class="btn btn-primary" id="newStockInBtn">+ Stok Girişi</button>
-        </div>
       </div>
 
       <div class="v101-tabs" role="tablist" id="v27Tabs">
         <button type="button" class="v101-tab active" role="tab" aria-selected="true" data-v27-tab="depo">Depo Stoğu</button>
         <button type="button" class="v101-tab" role="tab" aria-selected="false" data-v27-tab="tasi">Eski Stoğu Taşı<span class="v101-n" id="v27TasiSay"></span></button>
         <button type="button" class="v101-tab" role="tab" aria-selected="false" data-v27-tab="rapor">Stok Raporu</button>
-        <button type="button" class="v101-tab" role="tab" aria-selected="false" data-v27-tab="eski">Eski Stok</button>
       </div>
       <div id="v27Depo">
         <div class="v26-ozet" id="v27Ozet"></div>
@@ -2383,30 +2348,8 @@ table.v98-t{width:100%;border-collapse:collapse;font-size:13px}
       </div>
       <div id="v29Rapor"></div>
       <div id="v27Tasi">
-        <p class="v101-info">Ürünler listesindeki eski stok adetlerini yeni <b>Depo Stoğu</b>'na taşıyın: her eski ürün için katalogdaki karşılığını (kategori → model → … → yön) seçip <b>Aktar</b>'a basın. Eski kayıt değişmez, silinmez; aynı ürün yalnızca bir kez aktarılır.</p>
+        <p class="v101-info">Eski stok adetlerini yeni <b>Depo Stoğu</b>'na taşıyın: her eski ürün için katalogdaki karşılığını (kategori → model → … → yön) seçip <b>Aktar</b>'a basın. Eski kayıt değişmez, silinmez; aynı ürün yalnızca bir kez aktarılır.</p>
         <div id="v27TasiListe"></div>
-      </div>
-      <div class="summary-grid v27-eski">
-        <div class="summary-card"><span class="summary-label">Stokta Takip Edilen Ürün</span><span class="summary-value" id="stockStatTracked">0</span></div>
-        <div class="summary-card"><span class="summary-label">Toplam Rezerve Adet</span><span class="summary-value" id="stockStatReserved">0</span></div>
-      </div>
-
-      <div class="toolbar">
-        <div class="search-box">
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
-          <input type="text" id="stockSearchInput" placeholder="Ürün adı veya kategori ara…">
-        </div>
-      </div>
-      <div class="table-wrap" id="stockTableWrap">
-        <table class="orders-table">
-          <thead><tr><th>Ürün Adı</th><th>Kategori</th><th>Tedarikçi</th><th>Birim</th><th>Stok Adedi</th><th>Rezerve</th><th>Kullanılabilir</th></tr></thead>
-          <tbody id="stockTableBody"></tbody>
-        </table>
-      </div>
-      <div class="cards-wrap" id="stockCardsWrap"></div>
-      <div class="pagination hidden" id="stockPagination"></div>
-      <div class="empty-state hidden" id="stockEmptyState">
-        <p>Henüz ürün yok. Önce Ürünler sayfasından ürün ekle.</p>
       </div>
     </section>
 
@@ -2795,43 +2738,6 @@ table.v98-t{width:100%;border-collapse:collapse;font-size:13px}
   </div>
 </div>
 
-<!-- STOK GİRİŞİ MODALI -->
-<div class="modal-overlay hidden" id="stockInModal">
-  <div class="modal modal--form">
-    <div class="modal-head">
-      <h2>Stok Girişi</h2>
-      <button class="icon-btn" id="stockInModalClose" aria-label="Kapat">✕</button>
-    </div>
-    <form id="stockInForm" class="modal-body">
-      <div class="form-grid">
-        <label class="form-field form-field--wide">
-          <span>Ürün *</span>
-          <input type="text" id="si_product" list="dl_products" required>
-        </label>
-        <label class="form-field">
-          <span>Miktar *</span>
-          <input type="number" id="si_quantity" min="1" step="1" required>
-        </label>
-        <label class="form-field">
-          <span>Tarih</span>
-          <input type="date" id="si_date">
-        </label>
-        <label class="form-field">
-          <span>Tedarikçi</span>
-          <input type="text" id="si_supplier" list="dl_suppliers">
-        </label>
-        <label class="form-field form-field--wide">
-          <span>Not</span>
-          <input type="text" id="si_note" placeholder="Ör. Fatura no, parti bilgisi…">
-        </label>
-      </div>
-    </form>
-    <div class="modal-foot">
-      <button class="btn btn-ghost" id="stockInCancelBtn">İptal</button>
-      <button class="btn btn-primary" id="stockInSaveBtn">Stok Girişi Kaydet</button>
-    </div>
-  </div>
-</div>
 
 <!-- ONAY MODAL -->
 </div>
@@ -2945,7 +2851,6 @@ const ENTITY_CONFIG = {
       { id: "name", label: "Ürün Adı *", type: "text", required: true },
       { id: "category", label: "Kategori", type: "text", placeholder: "Ör. Çalışma Masası" },
       { id: "unit", label: "Birim", type: "text", placeholder: "Adet" },
-      { id: "stock", label: "Stok Adedi", type: "number" },
       { id: "description", label: "Açıklama", type: "textarea", wide: true }
     ]
   },
@@ -2995,7 +2900,7 @@ let allStockMovements = [];
 
 let pendingConfirmAction = null;
 let currentEntityType = null; // 'product' | 'customer' | 'supplier'
-let productSearch = "", customerSearch = "", supplierSearch = "", stockSearch = "";
+let productSearch = "", customerSearch = "", supplierSearch = "";
 let customerSort = "new", supplierSort = "new";
 let deliveryFormGroupKey = "";
 let deliveryFormSelectionKey = "";
@@ -3004,7 +2909,6 @@ const PAGE_SIZE_OPTIONS = [20, 50, 100];
 let pageState = {
   orders: { page: 1, size: 20 },
   products: { page: 1, size: 20 },
-  stock: { page: 1, size: 20 },
   customers: { page: 1, size: 20 },
   suppliers: { page: 1, size: 20 }
 };
@@ -3014,7 +2918,6 @@ let currentHistoryEntity = null; // { type, id }
 let orderFormDirty = false;
 let orderSaveInProgress = false;
 let entityFormDirty = false;
-let stockInFormDirty = false;
 
 /* =======================================================
    SUPABASE VERİ KATMANI (ortak veritabanı — 10 kullanıcı)
@@ -3593,7 +3496,6 @@ function scheduleRemoteRefresh() {
     }
     if (stores.has("customers") && currentView === "customers") renderCustomersView();
     if (stores.has("suppliers") && currentView === "suppliers") renderSuppliersView();
-    if (stores.has("stockMovements") && currentView === "stock") renderStockView();
   }, 150);
 }
 
@@ -4025,7 +3927,6 @@ async function startApp() {
   bindShipmentEvents();
   bindDeliveryFormEvents();
   bindEntityEvents();
-  bindStockEvents();
   bindSettingsEvents();
   checkDailyDigest();
 
@@ -4233,38 +4134,15 @@ async function updateOrderStatus(id, status) {
   if (order.status === "SSH") { if (status === "Teslim Edildi") v105SshKapat(id); else showToast("Bu sipariş SSH'de. Önce SSH'yi kapatın."); return; }
   if ((status === "Teslim Edildi" || status === "İptal") && !(await v32KisiSor(`Durum: ${status}`))) return;
   if (status === "Teslim Edildi" && !(await v32OdemeOnay(order))) return;
-  if (status === "Teslim Edildi" && !(await v106StokOnay([order]))) return;
   if (order.status === status || !allOrders.includes(order)) return;
 
   const oldStatus = order.status;
   const orderSnapshot = { ...order };
-  const product = allProducts.find((p) => normName(p.name) === normName(order.product));
-  const productSnapshot = product ? { ...product } : null;
-  let stockMovement = null;
 
   // Önce RAM'de güncelle: kullanıcı sonucu anında görür.
   order.status = status;
   if(status === "Teslim Edildi" && oldStatus !== "Teslim Edildi"){
     const p=getOrderPricing(order); order.description=withOrderMetadata(getOrderDescription(order),getShipmentType(order),p,getOrderConditions(order),todayISO());
-  }
-  const becameDelivered = status === "Teslim Edildi" && oldStatus !== "Teslim Edildi";
-  const leftDelivered = oldStatus === "Teslim Edildi" && status !== "Teslim Edildi";
-  if (product && typeof product.stock === "number") {
-    if (becameDelivered && !order.stockDeducted) {
-      const before = product.stock;
-      const qty = Number(order.quantity) || 0;
-      product.stock = before - qty;
-      order.stockDeducted = true;
-      order.stockDeductedQty = before - product.stock;
-      stockMovement = { productId: product.id, productName: product.name, delta: product.stock - before, resultingStock: product.stock, type: "delivery", note: `Sipariş ${orderNo(order)} teslim edildi`, supplier: "", date: order.deliveryDate || todayISO(), createdAt: new Date().toISOString() };
-    } else if (leftDelivered && order.stockDeducted) {
-      const back = typeof order.stockDeductedQty === "number" ? order.stockDeductedQty : (Number(order.quantity) || 0);
-      const before = product.stock;
-      product.stock = before + back;
-      order.stockDeducted = false;
-      order.stockDeductedQty = 0;
-      stockMovement = { productId: product.id, productName: product.name, delta: back, resultingStock: product.stock, type: "delivery", note: `Sipariş ${orderNo(order)} durumu geri alındı`, supplier: "", date: todayISO(), createdAt: new Date().toISOString() };
-    }
   }
 
   rebuildDerivedIndexes();
@@ -4276,26 +4154,12 @@ async function updateOrderStatus(id, status) {
   showToast(`Durum "${status}" olarak güncellendi.`);
 
   try {
-    let stockDone = null;
-    if (stockMovement && product && productSnapshot) {
-      const req = becameDelivered ? -(Number(order.quantity) || 0) : stockMovement.delta;
-      const r = await v93StockAdjust(product, req, productSnapshot.stock);
-      stockDone = { product, delta: r.after - r.before };
-      if (becameDelivered) order.stockDeductedQty = r.before - r.after;
-      stockMovement.delta = r.after - r.before; stockMovement.resultingStock = r.after;
-    }
-    try {
-      await Promise.all([dbPut("orders", order), stockMovement ? dbAddMany("stockMovements", [stockMovement]) : null]);
-    } catch (err) {
-      if (stockDone && stockDone.delta) { try { await v93StockAdjust(stockDone.product, -stockDone.delta, stockDone.product.stock); } catch (_) {} }
-      throw err;
-    }
+    await dbPut("orders", order);
     try { v32WaSor(order, status); } catch (_) {}
     if (status === "İptal") { try { v33IptalSor(order); } catch (_) {} }
   } catch (e) {
     // Ağ/DB hatasında yereli eski hale getir; veri tutarsız kalmasın.
     Object.assign(order, orderSnapshot);
-    if (product && productSnapshot) Object.assign(product, productSnapshot);
     rebuildDerivedIndexes();
     renderOrdersView();
     refreshVisibleStatusBadges(id);
@@ -5284,7 +5148,6 @@ async function saveOrderDraftBatch() {
   if(items.some(x=>allOrders.some(o=>normName(o.customer)===normName(x.customer)&&normName(o.product)===normName(x.product)&&String(o.deliveryDate||"")===String(x.deliveryDate||"")&&o.status!=="İptal"))) warningParts.push("bazı kalemlerde aynı müşteri + ürün + teslim tarihiyle mevcut sipariş var");
   const message = warningParts.length ? `Dikkat: ${warningParts.join(" ve ")}. Yine de ${items.length} sipariş kalemini kaydetmek istiyor musunuz?` : `${customer} için ${items.length} sipariş kalemi kaydedilecek. Onaylıyor musunuz?`;
   showConfirm(message, async ()=>{
-    if (!(await v106StokOnay(items.filter((x) => x.status === "Teslim Edildi")))) return;
     await performSaveOrderDraftBatch(items);
   });
 }
@@ -5317,7 +5180,6 @@ async function performSaveOrderDraftBatch(items) {
       };
       order.createdAt=new Date().toISOString();
       order.id=await dbAdd("orders",order);
-      await v93DeductNewDelivered(order);
       if(item.photoBlob) await uploadOrderPhoto(order.id,item.photoBlob);
     }
     revokeDraftPhotoUrls();
@@ -5456,7 +5318,6 @@ async function saveOrderFromForm(allowWarnings = false, allowConflict = false) {
   }
 
   if (orderSaveInProgress) return;
-  if (order.status === "Teslim Edildi" && !(oldOrder && oldOrder.status === "Teslim Edildi") && !(await v106StokOnay([{ ...order, stockDeducted: oldOrder ? oldOrder.stockDeducted : false }]))) return;
   if (orderSaveInProgress) return;
   orderSaveInProgress = true;
   const saveBtn = document.getElementById("orderSaveBtn");
@@ -5485,13 +5346,11 @@ async function saveOrderFromForm(allowWarnings = false, allowConflict = false) {
   try {
     if (idVal) {
       order.id = Number(idVal);
-      await applyStockForStatusChange(order, oldOrder ? oldOrder.status : null, order.status);
       await dbPut("orders", order);
       showToast("Sipariş güncellendi.");
     } else {
       order.createdAt = new Date().toISOString();
       order.id = await dbAdd("orders", order);
-      await v93DeductNewDelivered(order);
       showToast("Sipariş kaydedildi.");
     }
 
@@ -5751,11 +5610,8 @@ function confirmMarkDelivered(id) {
     if (!order || order.status === "Teslim Edildi") return;
     if (!(await v32KisiSor("Durum: Teslim Edildi"))) return;
     if (!(await v32OdemeOnay(order))) return;
-    if (!(await v106StokOnay([order]))) return;
-    const oldStatus = order.status;
     order.status = "Teslim Edildi";
     const p=getOrderPricing(order); order.description=withOrderMetadata(getOrderDescription(order),getShipmentType(order),p,getOrderConditions(order),todayISO());
-    await applyStockForStatusChange(order, oldStatus, "Teslim Edildi");
     await dbPut("orders", order);
     await reloadAll();
     closeAllModals();
@@ -5889,7 +5745,6 @@ function closeAllModals() {
   document.getElementById("orderGroupModal")?.classList.add("hidden");
   document.getElementById("entityModal").classList.add("hidden");
   document.getElementById("entityHistoryModal").classList.add("hidden");
-  document.getElementById("stockInModal").classList.add("hidden");
   document.getElementById("productTrashModal")?.classList.add("hidden");
   document.getElementById("orderTrashModal")?.classList.add("hidden");
   document.getElementById("confirmModal").classList.add("hidden");
@@ -6006,39 +5861,13 @@ function bindOrderEvents() {
       const orders = ids.map((id) => allOrders.find((o) => o.id === id)).filter(Boolean);
       if (!orders.length) return;
       if ((newStatus === "Teslim Edildi" || newStatus === "İptal") && !(await v32KisiSor(`Toplu durum: ${newStatus}`))) return;
-      if (newStatus === "Teslim Edildi" && !(await v106StokOnay(orders.filter((o) => o.status !== "Teslim Edildi" && o.status !== "SSH")))) return;
-
-      const productMap = new Map(allProducts.map((p) => [normName(p.name), p]));
-      const changedProducts = new Map();
-      const stockMovements = [];
-      const stockOps = [];
 
       let v105Atla = 0;
       for (const order of orders) {
         const oldStatus = order.status;
         if (oldStatus === newStatus) continue;
         if (oldStatus === "SSH" || newStatus === "SSH") { v105Atla++; continue; }
-        const product = productMap.get(normName(order.product));
 
-        if (newStatus === "Teslim Edildi" && oldStatus !== "Teslim Edildi" && product && typeof product.stock === "number" && !order.stockDeducted) {
-          const before = product.stock;
-          const qty = Number(order.quantity) || 0;
-          product.stock = before - qty;
-          order.stockDeducted = true;
-          order.stockDeductedQty = before - product.stock;
-          changedProducts.set(product.id, product);
-          stockOps.push({ order, product, req: -qty, before, out: true });
-          stockMovements.push({ productId: product.id, productName: product.name, delta: product.stock - before, resultingStock: product.stock, type: "delivery", note: `Sipariş ${orderNo(order)} teslim edildi`, supplier: "", date: order.deliveryDate || todayISO(), createdAt: new Date().toISOString() });
-        } else if (oldStatus === "Teslim Edildi" && newStatus !== "Teslim Edildi" && product && typeof product.stock === "number" && order.stockDeducted) {
-          const back = typeof order.stockDeductedQty === "number" ? order.stockDeductedQty : (Number(order.quantity) || 0);
-          const before = product.stock;
-          product.stock = before + back;
-          order.stockDeducted = false;
-          order.stockDeductedQty = 0;
-          changedProducts.set(product.id, product);
-          stockOps.push({ order, product, req: back, before, out: false });
-          stockMovements.push({ productId: product.id, productName: product.name, delta: back, resultingStock: product.stock, type: "delivery", note: `Sipariş ${orderNo(order)} durumu geri alındı`, supplier: "", date: todayISO(), createdAt: new Date().toISOString() });
-        }
         if(newStatus === "Teslim Edildi" && oldStatus !== "Teslim Edildi"){ const p=getOrderPricing(order); order.description=withOrderMetadata(getOrderDescription(order),getShipmentType(order),p,getOrderConditions(order),todayISO()); }
         order.status = newStatus;
       }
@@ -6049,16 +5878,7 @@ function bindOrderEvents() {
       showToast(`${orders.length} sipariş güncelleniyor…`);
 
       try {
-        for (let i = 0; i < stockOps.length; i++) {
-          const op = stockOps[i], mv = stockMovements[i];
-          const r = await v93StockAdjust(op.product, op.req, op.before);
-          if (op.out) op.order.stockDeductedQty = r.before - r.after;
-          if (mv) { mv.delta = r.after - r.before; mv.resultingStock = r.after; }
-        }
-        await Promise.all([
-          Promise.all(orders.filter((o) => o.status === newStatus).map((o) => dbPut("orders", o))),
-          stockMovements.length ? dbAddMany("stockMovements", stockMovements) : Promise.resolve()
-        ]);
+        await Promise.all(orders.filter((o) => o.status === newStatus).map((o) => dbPut("orders", o)));
         document.getElementById("bulkStatusSelect").value = "";
         showToast(`${orders.length - v105Atla} sipariş "${newStatus}" olarak güncellendi.${v105Atla ? ` ${v105Atla} SSH siparişi atlandı (SSH Aç / Kapat ile değişir).` : ""}`);
       } catch (e) {
@@ -6188,58 +6008,8 @@ async function v102KilitKontrol(type, entity) {
    ======================================================= */
 function normName(s) { return (s || "").trim().toLocaleUpperCase("tr-TR"); }
 
-/* =======================================================
-   STOK HAREKET KAYDI
-   ======================================================= */
-async function logStockMovement(product, delta, type, note, supplier, date) {
-  const movement = {
-    productId: product.id,
-    productName: product.name,
-    delta,
-    resultingStock: product.stock,
-    type, // 'delivery' | 'manual' | 'stock-in'
-    note: note || "",
-    supplier: supplier || "",
-    date: date || todayISO(),
-    createdAt: new Date().toISOString()
-  };
-  await dbAdd("stockMovements", movement);
-}
-function movementTypeLabel(type) {
-  return { delivery: "Sipariş Teslimatı", manual: "Elle Güncelleme", "stock-in": "Stok Girişi" }[type] || type;
-}
 
-/* =======================================================
-   STOK — sipariş "Teslim Edildi" olunca otomatik düş/geri ekle
-   ======================================================= */
-async function applyStockForStatusChange(order, oldStatus, newStatus) {
-  if (oldStatus === newStatus) return;
-  const becameDelivered = newStatus === "Teslim Edildi" && oldStatus !== "Teslim Edildi";
-  const leftDelivered = oldStatus === "Teslim Edildi" && newStatus !== "Teslim Edildi";
-  if (!becameDelivered && !leftDelivered) return;
-  const product = allProducts.find((p) => normName(p.name) === normName(order.product));
-  if (!product || typeof product.stock !== "number") return;
-  if (becameDelivered && !order.stockDeducted) {
-    const r = await v93StockAdjust(product, -(Number(order.quantity) || 0), product.stock);
-    await logStockMovement(product, r.after - r.before, "delivery", `Sipariş ${orderNo(order)} teslim edildi`, "", order.deliveryDate);
-    order.stockDeducted = true;
-    order.stockDeductedQty = r.before - r.after;
-  } else if (leftDelivered && order.stockDeducted) {
-    const back = typeof order.stockDeductedQty === "number" ? order.stockDeductedQty : (Number(order.quantity) || 0);
-    const r = await v93StockAdjust(product, back, product.stock);
-    await logStockMovement(product, r.after - r.before, "delivery", `Sipariş ${orderNo(order)} durumu geri alındı`, "", todayISO());
-    order.stockDeducted = false;
-    order.stockDeductedQty = 0;
-  }
-}
-
-let v99StokDenendi = false;
 function openEntityHistory(type, id) {
-  if (type === "product" && !stockLoaded && !v99StokDenendi) {
-    v99StokDenendi = true;
-    ensureStockLoaded().catch(() => showToast("Stok hareketleri yüklenemedi.")).finally(() => openEntityHistory(type, id));
-    return;
-  }
   const config = ENTITY_CONFIG[type];
   const list = { product: allProducts, customer: allCustomers, supplier: allSuppliers }[type];
   const entity = list.find((x) => x.id === id);
@@ -6268,32 +6038,10 @@ function openEntityHistory(type, id) {
     </div>
   `).join("") : `<div class="history-empty">Bu kayıtla ilişkili sipariş yok.</div>`;
 
-  const stockSectionHtml = type === "product" ? (() => {
-    const movements = allStockMovements.filter((m) => m.productId === entity.id).sort((a, b) => b.id - a.id);
-    const reserved = reservedQtyForProduct(entity.name);
-    const stockLine = typeof entity.stock === "number"
-      ? `<div class="detail-grid"><div class="detail-item"><span class="detail-label">Stok Adedi</span><span class="detail-value">${entity.stock}</span></div><div class="detail-item"><span class="detail-label">Rezerve</span><span class="detail-value">${reserved || 0}</span></div><div class="detail-item"><span class="detail-label">Kullanılabilir</span><span class="detail-value">${entity.stock - reserved}</span></div></div>`
-      : "";
-    const movementsHtml = movements.length ? movements.map((m) => `
-      <div class="history-item">
-        <div class="history-item-left">
-          <span>${escapeHtml(movementTypeLabel(m.type))} ${m.supplier ? "· " + escapeHtml(m.supplier) : ""}${m.note ? " · " + escapeHtml(m.note) : ""}</span>
-          <span>${formatDate(m.date)} · Sonuç: ${m.resultingStock ?? "-"}</span>
-        </div>
-        <span class="status-badge ${m.delta >= 0 ? "status-teslim" : "status-gecikti"}">${m.delta >= 0 ? "+" : ""}${m.delta}</span>
-      </div>
-    `).join("") : `<div class="history-empty">Henüz stok hareketi yok.</div>`;
-    return `
-      ${stockLine}
-      <h3 style="font-family:var(--font-display); font-size:14px; margin:18px 0 4px;">Stok Hareketleri (${movements.length})</h3>
-      <div class="history-list">${movementsHtml}</div>
-    `;
-  })() : "";
 
   document.getElementById("entityHistoryTitle").textContent = entity.name;
   document.getElementById("entityHistoryBody").innerHTML = `
     ${fieldsHtml ? `<div class="detail-grid">${fieldsHtml}</div>` : ""}
-    ${stockSectionHtml}
     <h3 style="font-family:var(--font-display); font-size:14px; margin:18px 0 4px;">İlgili Siparişler (${relatedOrders.length})</h3>
     <div class="history-list">${historyHtml}</div>
   `;
@@ -6354,16 +6102,6 @@ async function saveEntityFromForm() {
   const dup = sameList.find((x) => normName(x.name) === normName(obj.name) && String(x.id) !== String(idVal) && !(type === "product" && isDeletedProduct(x)));
   if (dup) { showToast(`"${dup.name}" adında bir ${labelMap[type].toLocaleLowerCase("tr-TR")} zaten var.`); return; }
 
-  let stockLog = null;
-  if (type === "product") {
-    const base = window.v93EntityBase;
-    const cur = idVal ? allProducts.find((p) => p.id === Number(idVal)) : null;
-    if (idVal && base && (obj.stock ?? null) === (base.stock ?? null)) delete obj.stock;   // stoka dokunulmadıysa başkasının değişikliğini ezme
-    else if (typeof obj.stock === "number") {
-      const was = cur && typeof cur.stock === "number" ? cur.stock : 0;
-      if (obj.stock !== was) stockLog = { delta: obj.stock - was, note: idVal ? "Ürün kartından stok düzeltmesi" : "Başlangıç stoku" };
-    }
-  }
   if (type === "customer" && idVal && v102Kilitli === Number(idVal)) ["name", "phone", "email", "taxNo", "address"].forEach((k) => delete obj[k]);   // bağlı kart: bu alanlar Teklif'ten yönetilir
   if (idVal) {
     obj.id = Number(idVal);
@@ -6373,13 +6111,11 @@ async function saveEntityFromForm() {
     obj.id = await dbAdd(config.store, obj);
     showToast(`${labelMap[type]} kaydedildi.`);
   }
-  if (stockLog) { try { await logStockMovement({ id: obj.id, name: obj.name, stock: obj.stock }, stockLog.delta, "manual", stockLog.note); } catch (_) {} }
 
   await reloadAll();
   entityFormDirty = false;
   closeAllModals();
   renderProductsView();
-  renderStockView();
   renderCustomersView();
   renderSuppliersView();
 }
@@ -6439,7 +6175,6 @@ function renderProductTrash() {
     await reloadAll();
     renderProductTrash();
     renderProductsView();
-    renderStockView();
     refreshDatalists(true);
     showToast("Ürün geri yüklendi.");
   }));
@@ -6453,7 +6188,6 @@ function renderProductTrash() {
       await reloadAll();
       renderProductTrash();
       renderProductsView();
-      renderStockView();
       refreshDatalists(true);
       showToast("Ürün kalıcı olarak silindi.");
     });
@@ -6478,7 +6212,6 @@ function confirmDeleteEntity(type, id) {
       await reloadAll();
       closeAllModals();
       renderProductsView();
-      renderStockView();
       refreshDatalists(true);
       showToast("Ürün çöp kutusuna taşındı.");
     });
@@ -6489,7 +6222,6 @@ function confirmDeleteEntity(type, id) {
     await reloadAll();
     closeAllModals();
     renderProductsView();
-    renderStockView();
     renderCustomersView();
     renderSuppliersView();
     showToast(`${labelMap[type].charAt(0).toUpperCase() + labelMap[type].slice(1)} silindi.`);
@@ -6531,7 +6263,6 @@ function bindEntityEvents() {
     pageState.suppliers.page = 1;
     renderSuppliersView();
   }));
-  document.getElementById("stockSearchInput").addEventListener("input", debounce((e) => { stockSearch = sanitizeSearchText(e.target.value, 100); e.target.value = stockSearch; pageState.stock.page = 1; renderStockView(); }, 140));
 }
 
 /* =======================================================
@@ -6563,7 +6294,6 @@ function renderProductsView() {
       <td>${escapeHtml(p.name)}</td>
       <td>${escapeHtml(p.category) || "-"}</td>
       <td>${escapeHtml(p.unit) || "-"}</td>
-      <td class="stock-cell-readonly">${typeof p.stock === "number" ? p.stock : "-"}</td>
       <td>${escapeHtml(p.description) || "-"}</td>
       <td class="col-actions"><button class="menu-trigger" data-id="${p.id}">⋯</button></td>
     </tr>
@@ -6574,7 +6304,7 @@ function renderProductsView() {
         <div class="order-card-customer">${escapeHtml(p.name)}</div>
         <button class="menu-trigger" data-id="${p.id}">⋯</button>
       </div>
-      <div class="order-card-product">${escapeHtml(p.category) || "-"}${typeof p.stock === "number" ? " · Stok: " + p.stock : ""}</div>
+      <div class="order-card-product">${escapeHtml(p.category) || "-"}</div>
     </div>
   `).join("");
 
@@ -6599,214 +6329,7 @@ function renderProductsView() {
 /* =======================================================
    STOK TAKİBİ — RENDER
    ======================================================= */
-// Ürünün en son stok girişindeki tedarikçi (hareket kayıtlarından)
-function lastSupplierForProduct(product) {
-  return supplierByProductId.get(product.id) || "";
-}
 
-function reservedQtyForProduct(name) {
-  return reservedByProduct.get(normName(name)) || 0;
-}
-
-function renderStockView() {
-  const q = v106Ara(stockSearch);
-  let list = activeProductsList().slice().sort((a, b) => (a.name || "").localeCompare(b.name || "", "tr"));
-  if (q) list = list.filter((p) => v106Ara(p.name).includes(q) || v106Ara(p.category).includes(q));
-
-  // Özet kartlar (tüm ürünler üzerinden, aramadan bağımsız)
-  let trackedCount = 0, totalReserved = 0;
-  activeProductsList().forEach((p) => {
-    if (typeof p.stock === "number") trackedCount++;
-    totalReserved += reservedQtyForProduct(p.name);
-  });
-  document.getElementById("stockStatTracked").textContent = trackedCount;
-  document.getElementById("stockStatReserved").textContent = totalReserved;
-
-  const empty = document.getElementById("stockEmptyState");
-  if (list.length === 0) {
-    empty.classList.remove("hidden");
-    document.getElementById("stockTableBody").innerHTML = "";
-    document.getElementById("stockCardsWrap").innerHTML = "";
-    document.getElementById("stockPagination").classList.add("hidden");
-    empty.querySelector("p").textContent = activeProductsList().length === 0
-      ? "Henüz ürün yok. Önce Ürünler sayfasından ürün ekle."
-      : "Aramanla eşleşen ürün bulunamadı.";
-    return;
-  }
-  empty.classList.add("hidden");
-
-  const pageInfo = paginate(list, "stock");
-  list = pageInfo.items;
-  renderPagination("stockPagination", pageInfo, "stock", renderStockView);
-
-  const stockControlHtml = (p) => {
-    const atZero = !(typeof p.stock === "number") || p.stock <= 0;
-    return `
-    <div class="stock-control">
-      <button class="stock-adj" data-id="${p.id}" data-delta="-1" ${atZero ? "disabled" : ""}>−</button>
-      <input type="number" class="stock-input${typeof p.stock === "number" && p.stock < 0 ? " v106-eksi" : ""}" data-id="${p.id}" value="${typeof p.stock === "number" ? p.stock : ""}" placeholder="-"${typeof p.stock === "number" && p.stock < 0 ? ` title="${-p.stock} adet teslim edildi ama stokta yoktu"` : ""}>
-      <button class="stock-adj" data-id="${p.id}" data-delta="1">+</button>
-    </div>
-  `;
-  };
-
-  document.getElementById("stockTableBody").innerHTML = list.map((p) => {
-    const reserved = reservedQtyForProduct(p.name);
-    const available = typeof p.stock === "number" ? p.stock - reserved : null;
-    return `
-    <tr data-id="${p.id}" class="stock-row">
-      <td>${escapeHtml(p.name)}</td>
-      <td>${escapeHtml(p.category) || "-"}</td>
-      <td>${escapeHtml(lastSupplierForProduct(p)) || "-"}</td>
-      <td>${escapeHtml(p.unit) || "-"}</td>
-      <td>${stockControlHtml(p)}</td>
-      <td>${reserved || "-"}</td>
-      <td class="stock-cell-readonly">${available === null ? "-" : available < 0 ? `<span class="v96-neg" title="Stok yetersiz: ${-available} eksik">${available}</span>` : available}</td>
-    </tr>
-  `;
-  }).join("");
-  document.getElementById("stockCardsWrap").innerHTML = list.map((p) => {
-    const reserved = reservedQtyForProduct(p.name);
-    const available = typeof p.stock === "number" ? p.stock - reserved : null;
-    return `
-    <div class="order-card" data-id="${p.id}">
-      <div class="order-card-top">
-        <div class="order-card-customer">${escapeHtml(p.name)}</div>
-      </div>
-      <div class="order-card-product">${escapeHtml(p.category) || "-"}${(() => { const s = lastSupplierForProduct(p); return s ? " · " + escapeHtml(s) : ""; })()}${reserved ? " · Rezerve: " + reserved : ""}${available !== null ? (available < 0 ? ` · <span class="v96-neg">Eksik: ${-available}</span>` : " · Kullanılabilir: " + available) : ""}</div>
-      <div style="margin-top:10px;">${stockControlHtml(p)}</div>
-    </div>
-  `;
-  }).join("");
-
-  // Satıra tıklayınca ürün düzenleme açılır — kategori ve birim orada doldurulur
-  document.querySelectorAll("#stockTableBody tr, #stockCardsWrap .order-card").forEach((el) => {
-    el.addEventListener("click", (e) => {
-      if (e.target.closest(".stock-control")) return;
-      openEntityModal("product", Number(el.dataset.id));
-    });
-  });
-
-  document.querySelectorAll(".stock-adj").forEach((btn) => {
-    btn.addEventListener("click", async () => {
-      const id = Number(btn.dataset.id);
-      const delta = Number(btn.dataset.delta);
-      const product = allProducts.find((p) => p.id === id);
-      if (!product) return;
-      const before = typeof product.stock === "number" ? product.stock : 0;
-      if (Math.max(0, before + delta) === before) return;   // 0'ın altına inmez
-      const r = await v93StockAdjust(product, delta, before);
-      if (r.after !== r.before) await logStockMovement(product, r.after - r.before, "manual", "Elle +/- ayarlama");
-      await reloadAll();
-      renderStockView();
-      renderProductsView();
-    });
-  });
-  document.querySelectorAll(".stock-input").forEach((input) => {
-    input.addEventListener("change", async () => {
-      const id = Number(input.dataset.id);
-      const product = allProducts.find((p) => p.id === id);
-      if (!product) return;
-      const oldVal = typeof product.stock === "number" ? product.stock : 0;
-      const raw = String(input.value || "").trim();
-      if (raw !== "" && (!/^\d+$/.test(raw) || Number(raw) > 100000000)) {
-        input.value = typeof product.stock === "number" ? product.stock : "";
-        showToast(/^-/.test(raw) ? "Stok eksi olamaz. Azaltmak için − butonunu veya yeni stok adedini kullanın." : "Stok adedi 0 veya daha büyük tam sayı olmalı.");
-        return;
-      }
-      if (raw === "" && typeof product.stock === "number") { input.value = product.stock; showToast("Stok adedi boş bırakılamaz."); return; }
-      const newVal = raw === "" ? null : Number(raw);
-      const delta = (newVal === null ? 0 : newVal) - oldVal;
-      product.stock = newVal;
-      await dbPut("products", { id: product.id, stock: newVal });
-      if (newVal !== null && delta !== 0) await logStockMovement(product, delta, "manual", "Elle stok düzeltmesi");
-      await reloadAll();
-      renderStockView();
-      renderProductsView();
-    });
-  });
-}
-
-/* =======================================================
-   STOK GİRİŞİ MODALI
-   ======================================================= */
-function openStockInModal() {
-  document.getElementById("stockInForm").reset();
-  document.getElementById("si_date").value = todayISO();
-  closeAllModals();
-  document.getElementById("stockInModal").classList.remove("hidden");
-  stockInFormDirty = false;
-}
-function attemptCloseStockInModal() {
-  if (stockInFormDirty) {
-    showConfirm("Kaydedilmemiş stok girişi var. Çıkarsan girdiğin bilgiler kaybolacak. Devam edilsin mi?", () => {
-      stockInFormDirty = false;
-      closeAllModals();
-    });
-  } else {
-    closeAllModals();
-  }
-}
-async function saveStockIn() {
-  const form = document.getElementById("stockInForm");
-  if (!form.reportValidity()) return;
-
-  const name = sanitizeText(document.getElementById("si_product").value);
-  const qty = sanitizeNumber(document.getElementById("si_quantity").value, { min: 1, max: 1000000 });
-  const date = sanitizeDate(document.getElementById("si_date").value) || todayISO();
-  const supplier = sanitizeText(document.getElementById("si_supplier").value);
-  const note = sanitizeText(document.getElementById("si_note").value, MAX_NOTE_LEN);
-  if (!name || qty <= 0) {
-    showToast("Ürün adı ve geçerli bir miktar gerekli.");
-    return;
-  }
-
-  let product = allProducts.find((p) => normName(p.name) === normName(name));
-  if (!product) {
-    const newId = await dbAdd("products", { name });
-    product = { id: newId, name };
-  }
-  await v93StockAdjust(product, qty, typeof product.stock === "number" ? product.stock : 0);
-  await logStockMovement(product, qty, "stock-in", note, supplier, date);
-
-  await reloadAll();
-  stockInFormDirty = false;
-  closeAllModals();
-  renderStockView();
-  renderProductsView();
-  showToast("Stok girişi kaydedildi.");
-}
-function exportStockToExcel() {
-  if (typeof XLSX === "undefined") {
-    showToast("Excel modülü yüklenemedi. İnternet bağlantını kontrol et.");
-    return;
-  }
-  const rows = allProducts.slice().sort((a, b) => (a.name || "").localeCompare(b.name || "", "tr")).map((p) => {
-    const reserved = reservedQtyForProduct(p.name);
-    const stock = typeof p.stock === "number" ? p.stock : "";
-    const available = typeof p.stock === "number" ? p.stock - reserved : "";
-    return {
-      "Ürün Adı": p.name, "Kategori": p.category || "", "Tedarikçi": lastSupplierForProduct(p) || "", "Birim": p.unit || "",
-      "Stok Adedi": stock, "Rezerve": reserved || 0, "Kullanılabilir": available
-    };
-  });
-  if (rows.length === 0) { showToast("Aktarılacak ürün bulunamadı."); return; }
-  const ws = XLSX.utils.json_to_sheet(rows);
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, "Stok");
-  XLSX.writeFile(wb, `stok-${todayISO()}.xlsx`);
-}
-function bindStockEvents() {
-  document.getElementById("newStockInBtn").addEventListener("click", openStockInModal);
-  document.getElementById("stockInModalClose").addEventListener("click", attemptCloseStockInModal);
-  document.getElementById("stockInCancelBtn").addEventListener("click", attemptCloseStockInModal);
-  document.getElementById("stockInSaveBtn").addEventListener("click", saveStockIn);
-  document.getElementById("stockInForm").addEventListener("submit", (e) => { e.preventDefault(); saveStockIn(); });
-  document.getElementById("stockInForm").addEventListener("input", () => { stockInFormDirty = true; });
-  document.getElementById("stockInForm").addEventListener("change", () => { stockInFormDirty = true; });
-  document.getElementById("stockExportBtn").addEventListener("click", exportStockToExcel);
-  document.getElementById("stockInModal").addEventListener("click", (e) => { if (e.target.id === "stockInModal") attemptCloseStockInModal(); });
-}
 
 /* =======================================================
    MÜŞTERİLER — RENDER
@@ -7679,11 +7202,8 @@ async function importOrdersFromExcel(file) {
       dbAddMany("orders", parsedOrders)
     ]);
     await reloadAll();
-    for (const o of allOrders.filter((x) => x.status === "Teslim Edildi" && !x.stockDeducted && parsedOrders.some((p) => v93Key(p) === v93Key(x)))) {
-      try { await v93DeductNewDelivered(o, false); } catch (e) { console.warn("Stok düşülemedi:", e); }
-    }
     closeAllModals();
-    renderOrdersView(); renderProductsView(); renderStockView(); renderCustomersView(); renderSuppliersView(); renderReportsView();
+    renderOrdersView(); renderProductsView(); renderCustomersView(); renderSuppliersView(); renderReportsView();
 
     const summary = document.getElementById("importSummary");
     summary.classList.remove("hidden");
@@ -7901,49 +7421,7 @@ document.addEventListener("DOMContentLoaded", () => {
 /* ===== v93 düzeltmeleri ===== */
 /* 2) Stok, veritabanında tek adımda değişir (iki bilgisayar aynı anda yazsa da ikisi sayılır).
    SQL çalıştırılmamışsa yalnızca stok alanını yazan eski yönteme düşer. */
-let v93RpcOk = null;
-let v106EksiYok = false;   // pronto-duzeltme.sql henüz çalıştırılmadıysa eski (0'da duran) yönteme döner
-async function v93StockAdjust(product, delta, localBefore, eksi = true) {
-  delta = Number(delta) || 0;
-  const base = Number.isFinite(Number(localBefore)) ? Number(localBefore) : (typeof product.stock === "number" ? product.stock : 0);
-  if (!delta) return { before: base, after: base };
-  if (v93RpcOk !== false) {
-    await throttleApi();
-    const arg = { p_product_id: product.id, p_delta: delta };
-    if (eksi && !v106EksiYok) arg.p_eksi = true;
-    let { data, error } = await supa.rpc("pronto_stock_adjust", arg);
-    if (error && arg.p_eksi && /PGRST202|p_eksi|Could not find the function/i.test(String((error.code || "") + " " + (error.message || "")))) {
-      v106EksiYok = true; delete arg.p_eksi;
-      ({ data, error } = await supa.rpc("pronto_stock_adjust", arg));
-    }
-    if (!error && data) {
-      v93RpcOk = true;
-      const before = Number(data.before_stock), after = Number(data.after_stock);
-      product.stock = after;
-      if (data.row) { try { liveSend("products", "UPDATE", [data.row]); upsertLocalStore("products", fromRow("products", data.row)); } catch (_) {} }
-      return { before, after };
-    }
-    const msg = String(error ? (error.code || "") + " " + (error.message || "") : "");
-    if (!/PGRST202|42883|pronto_stock_adjust|Could not find the function/i.test(msg)) dbFail("stok güncelleme", error);
-    v93RpcOk = false;
-  }
-  const after = (eksi && !v106EksiYok) ? base + delta : Math.max(0, base + delta);
-  product.stock = after;
-  await dbPut("products", { id: product.id, stock: after });
-  return { before: base, after };
-}
 function v93NoStock(p) { const { stock, ...rest } = p; return rest; }
-/* 5) "Teslim Edildi" olarak açılan siparişte stok düşer */
-async function v93DeductNewDelivered(order, eksi = true) {
-  if (!order || order.status !== "Teslim Edildi" || order.stockDeducted) return;
-  const product = allProducts.find((p) => normName(p.name) === normName(order.product));
-  if (!product || typeof product.stock !== "number") return;
-  const qty = Number(order.quantity) || 0; if (!qty) return;
-  const r = await v93StockAdjust(product, -qty, product.stock, eksi);
-  order.stockDeducted = true; order.stockDeductedQty = r.before - r.after;
-  await dbPut("orders", { id: order.id, stockDeducted: true, stockDeductedQty: order.stockDeductedQty });
-  await logStockMovement(product, r.after - r.before, "delivery", `Sipariş ${orderNo(order)} teslim edildi`, "", order.deliveryDate);
-}
 /* 11) Düzenleme çakışması */
 let v93EditBase = null;
 function v93OrderSig(o) { return JSON.stringify([o.customer || "", o.supplier || "", o.product || "", Number(o.quantity) || 0, o.orderDate || "", o.deliveryDate || "", o.colorCode || "", o.fabricCode || "", o.description || "", o.status || ""]); }
@@ -8894,20 +8372,6 @@ function v106Sor(metin) {
     showConfirm(metin, () => { if (bitti) return; bitti = true; temizle(); ok(true); });
   });
 }
-async function v106StokOnay(list) {
-  const ihtiyac = new Map();
-  for (const o of list || []) {
-    if (!o || o.stockDeducted) continue;
-    const p = allProducts.find((x) => normName(x.name) === normName(o.product));
-    if (!p || typeof p.stock !== "number") continue;
-    const q = Number(o.quantity) || 0; if (!q) continue;
-    const e = ihtiyac.get(p.id) || { p, q: 0 }; e.q += q; ihtiyac.set(p.id, e);
-  }
-  const eksik = Array.from(ihtiyac.values()).filter((e) => e.p.stock < e.q);
-  if (!eksik.length) return true;
-  const satir = eksik.map((e) => `• ${e.p.name}: stokta ${e.p.stock}, teslim edilecek ${e.q} → stok ${e.p.stock - e.q} olacak`).join("\n");
-  return v106Sor(`Stokta yeterli ürün yok:\n${satir}\n\nYine de teslim edilsin mi? Eksik adet Stok Takibi'nde eksi olarak görünür.`);
-}
 
 /* ---------- Telefon / tablet: cam alt bar ---------- */
 const V106_DAHA = [["products", "Ürünler"], ["purchase", "Satın Alma"], ["takvim", "Teslimat Takvimi"], ["stock", "Stok Takibi"], ["customers", "Müşteriler"], ["suppliers", "Tedarikçiler"], ["delivery-form", "Teslim Formu"], ["reports", "Raporlar"], ["settings", "Ayarlar"]];
@@ -9171,18 +8635,13 @@ function v97ModelEntity(type, entity, range) {
   };
 }
 function v97ModelProduct(p) {
-  const reserved = reservedQtyForProduct(p.name);
-  const avail = typeof p.stock === "number" ? p.stock - reserved : null;
-  const mv = allStockMovements.filter((m) => m.productId === p.id).sort((a, b) => b.id - a.id);
   const rel = activeOrdersList().filter((x) => normName(x.product) === normName(p.name)).sort(compareOrderDateDesc);
-  const meta = [["Kategori", v97Txt(p.category)], ["Birim", v97Txt(p.unit)], ["Stok Adedi", typeof p.stock === "number" ? String(p.stock) : "-"], ["Rezerve", String(reserved)], ["Kullanılabilir", avail === null ? "-" : String(avail)]];
+  const meta = [["Kategori", v97Txt(p.category)], ["Birim", v97Txt(p.unit)]];
   if (p.description) meta.push(["Açıklama", String(p.description).replace(PRODUCT_TRASH_MARKER_RE, "").trim() || "-", true]);
   return {
     kind: "urun", previewTitle: `${p.name} · İlgili Siparişler`, filename: `Ilgili-Siparisler-${v91PdfSafeName(p.name)}.pdf`,
-    title: p.name, sub: `Ürün geçmişi · İlgili siparişler ve stok hareketleri · ${formatDate(todayISO())}`, meta,
+    title: p.name, sub: `Ürün geçmişi · İlgili siparişler · ${formatDate(todayISO())}`, meta,
     sections: [
-      { heading: `Stok Hareketleri (${mv.length})`, table: { cols: [{ h: "Tarih", w: "auto" }, { h: "Hareket", w: "auto" }, { h: "Tedarikçi / Not", w: "*" }, { h: "Miktar", w: "auto", align: "r" }, { h: "Sonuç", w: "auto", align: "r" }],
-        rows: mv.map((m) => [formatDate(m.date), movementTypeLabel(m.type), v97Txt([m.supplier, m.note].filter(Boolean).join(" · ")), (m.delta >= 0 ? "+" : "") + m.delta, v97Txt(m.resultingStock)]), empty: "Henüz stok hareketi yok." } },
       { heading: `İlgili Siparişler (${rel.length})`, table: { cols: [{ h: "Sipariş No", w: "auto" }, { h: "Müşteri", w: "*" }, { h: "Sipariş Tarihi", w: "auto" }, { h: "Teslim", w: "auto" }, { h: "Durum", w: "auto" }],
         rows: rel.map((x) => [{ text: orderNo(x), bold: true }, v97Txt(x.customer), formatDate(x.orderDate), formatDate(x.deliveryDate), v97Txt(x.status)]), empty: "Bu ürünle ilişkili sipariş yok." } }
     ]
@@ -10572,8 +10031,6 @@ function v26Detay(id) {
 </script>
 <style id="v27-stok">
 /* v27: Depo stoğu */
-#view-stock:not(.v27-on-eski) .v27-eski,#view-stock:not(.v27-on-eski) #stockTableWrap,#view-stock:not(.v27-on-eski) #stockCardsWrap,
-#view-stock:not(.v27-on-eski) #stockPagination,#view-stock:not(.v27-on-eski) #stockEmptyState,#view-stock:not(.v27-on-eski)>.toolbar{display:none !important}
 #view-stock:not(.v27-on-depo) #v27Depo,#view-stock:not(.v27-on-tasi) #v27Tasi{display:none}
 .v27-kat{margin:0 0 16px}
 .v27-m{border:1px solid var(--color-border);border-radius:14px;background:var(--color-surface-solid);overflow:hidden;margin-bottom:10px}
@@ -10781,6 +10238,26 @@ async function v27EskiYukle() {
   v27Eski = new Map((data || []).map((e) => [Number(e.product_id), e]));
   return v27Eski;
 }
+/* Eski Stoğu Taşı sekmesi: taşınacak ürün kalmayınca gizlenir.
+   Eski stoğu olan ürün yoksa hiç istek atılmaz; varsa eşleşme listesi oturumda bir kez okunur. */
+let v27TasiOkundu = false;
+function v27TasiBekleyen() {
+  const P = (allProducts || []).filter((p) => p && Number(p.stock) > 0 && !/\[\[COPKUTUSU:/i.test(String(p.description || "")));
+  if (!P.length) return 0;
+  return v27Eski ? P.filter((p) => !v27Eski.has(p.id)).length : null;   // null: henüz bilinmiyor
+}
+async function v27TasiSekme() {
+  const btn = document.querySelector('#v27Tabs [data-v27-tab="tasi"]'); if (!btn) return;
+  let n = v27TasiBekleyen();
+  if (n === null) {
+    if (v27TasiOkundu || !supa) return;   // okunamadıysa sekme görünür kalır
+    v27TasiOkundu = true;
+    try { await v27EskiYukle(); } catch (_) { return; }
+    n = v27TasiBekleyen(); if (n === null) return;
+  }
+  btn.style.display = n ? "" : "none";
+  if (!n && v27Tab === "tasi") v27SekmeAc("depo");
+}
 async function v27TasiCiz() {
   const box = document.getElementById("v27TasiListe"); if (!box) return;
   box.innerHTML = `<div class="v26-bos">Yükleniyor…</div>`;
@@ -10790,6 +10267,7 @@ async function v27TasiCiz() {
   const P = (allProducts || []).filter((p) => p && Number(p.stock) > 0 && !/\[\[COPKUTUSU:/i.test(String(p.description || "")));
   const bek = P.filter((p) => !v27Eski.has(p.id)), ok = P.filter((p) => v27Eski.has(p.id));
   const say = document.getElementById("v27TasiSay"); if (say) say.textContent = bek.length ? `(${bek.length})` : "";
+  v27TasiSekme();
   if (!P.length) { box.innerHTML = `<div class="v26-bos">Eski listede stoğu olan ürün yok.</div>`; return; }
   box.innerHTML = `<div class="v27-t"><div class="v27-tr bas"><span>Eski ürün</span><span>Kategori</span><span>Stok</span><span></span></div>` +
     bek.map((p) => `<div class="v27-tr"><span><b>${escapeHtml(p.name)}</b></span><span>${escapeHtml(p.category || "—")}</span><span><b>${Number(p.stock)}</b> ${escapeHtml(p.unit || "")}</span><span><button type="button" class="btn btn-primary" data-v27ak="${p.id}">Eşleştir ve Aktar</button></span></div>`).join("") +
@@ -10823,17 +10301,17 @@ function v27AktarAc(pid) {
     } catch (e) { b.disabled = false; b.textContent = "Aktar"; h.textContent = "Aktarılamadı: " + v27Hata(e); }
   });
 }
-const V27_ALT = { rapor: "Stok değeri, alış / satış fiyatı ve kâr marjı, yavaş dönen ve en çok satan ürünler. (Yalnızca Sipariş Takibi'nde görünür.)", depo: "Ürün çeşidi bazında depo stoğu: satın almadan gelenler, sayımlar ve aktarımlar.", tasi: "Eski stok adetlerini yeni Depo Stoğu'na bir kez aktarın.", eski: "Eski stok listesi (değiştirilmeden duruyor). Kategori ve birim için satıra tıkla." };
+const V27_ALT = { rapor: "Stok değeri, alış / satış fiyatı ve kâr marjı, yavaş dönen ve en çok satan ürünler. (Yalnızca Sipariş Takibi'nde görünür.)", depo: "Ürün çeşidi bazında depo stoğu: satın almadan gelenler, sayımlar ve aktarımlar.", tasi: "Eski stok adetlerini yeni Depo Stoğu'na bir kez aktarın." };
 function v27SekmeAc(t) {
-  v27Tab = ["depo", "tasi", "eski", "rapor"].includes(t) ? t : "depo";
+  v27Tab = ["depo", "tasi", "rapor"].includes(t) ? t : "depo";
   const sec = document.getElementById("view-stock"); if (!sec) return;
-  ["depo", "tasi", "eski", "rapor"].forEach((k) => sec.classList.toggle("v27-on-" + k, v27Tab === k));
+  ["depo", "tasi", "rapor"].forEach((k) => sec.classList.toggle("v27-on-" + k, v27Tab === k));
   sec.querySelectorAll("[data-v27-tab]").forEach((b) => { const on = b.dataset.v27Tab === v27Tab; b.classList.toggle("active", on); b.setAttribute("aria-selected", on ? "true" : "false"); });
   const alt = document.getElementById("v27Alt"); if (alt) alt.textContent = V27_ALT[v27Tab];
   if (v27Tab === "depo") v27Ciz(true);
   if (v27Tab === "tasi") v27TasiCiz();
   if (v27Tab === "rapor") v29RaporCiz();
-  if (v27Tab === "eski" && currentView === "stock") ensureStockLoaded().then(() => { if (currentView === "stock" && v27Tab === "eski") renderStockView(); }).catch(() => showToast("Stok verileri yüklenemedi."));
+  v27TasiSekme();
 }
 (function v27Kur() {
   const sec = document.getElementById("view-stock"); if (!sec) return;
@@ -11388,7 +10866,7 @@ async function v33SipSil(liste) {
 async function v33UrnSil(liste) {
   const ids = liste.map((p) => p.id);
   for (let i = 0; i < ids.length; i += 100) await dbDeleteMany("products", ids.slice(i, i + 100));
-  renderProductTrash(); renderProductsView(); renderStockView(); refreshDatalists(true);
+  renderProductTrash(); renderProductsView(); refreshDatalists(true);
   return ids.length;
 }
 document.getElementById("v33SipBos")?.addEventListener("click", () => v33BosaltSor("siparis", deletedOrdersList(), v33SipSil));
