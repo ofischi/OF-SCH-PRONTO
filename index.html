@@ -8181,9 +8181,10 @@ async function v98Onay(id) {
   const v = row.veri || {}, c = v.cari || {}, kal = Array.isArray(v.kalemler) ? v.kalemler : [];
   // v101: öneri tek istekle (model → kategori varsayılanı → son seçilen → geçmiş siparişler)
   const p_kalemler = kal.slice(0, 300).map((k) => ({ uid: String(k.uid || "").slice(0, 60), kategori: String(k.kategori || "").slice(0, 200), model: String(k.model || "").slice(0, 200), urun: String(k.urun || "").slice(0, 200) }));
-  const [eslR, esk] = await Promise.all([
+  const [eslR, esk, oncekiR] = await Promise.all([
     supa.rpc("pronto_eslesme_getir", { p_kalemler }).then((r) => r, (e) => ({ error: e })),
-    row.tur === "guncelleme" ? supa.from("orders").select("id,teklif_kalem,status,product,quantity,color_code,supplier,description").eq("teklif_id", row.teklif_id) : Promise.resolve({ data: [] })
+    row.tur === "guncelleme" ? supa.from("orders").select("id,teklif_kalem,status,product,quantity,color_code,supplier,description").eq("teklif_id", row.teklif_id) : Promise.resolve({ data: [] }),
+    row.tur === "guncelleme" ? supa.rpc("pronto_teklif_kalan", { p_teklif_id: String(row.teklif_id) }).then((r) => r, () => ({ data: null })) : Promise.resolve({ data: null })
   ]);
   const eslVar = !eslR.error && !!eslR.data && typeof eslR.data === "object" && !Array.isArray(eslR.data);
   const esl = eslVar ? eslR.data : {};
@@ -8214,6 +8215,7 @@ async function v98Onay(id) {
           <label class="v98-l" style="margin-top:10px;display:block">Teslim tarihi</label><input type="date" class="v98-in" id="v98Teslim" value="${escapeHtml(v.teslim || "")}"></div>
       </div>
       ${cikanHtml}
+      ${v37NotHtml(v, row.tur === "guncelleme" ? (oncekiR && oncekiR.data) : null)}
       <div class="v98-tw"><table class="v98-t"><thead><tr><th>Foto</th><th>Ürün</th><th>Ölçü</th><th>Renk</th><th>Yön</th><th class="num">Adet</th><th>Açıklama</th><th>Tedarikçi *</th></tr></thead><tbody>${rows}</tbody></table></div>${supList}
       <div class="v98-s" style="margin-top:8px">${eslVar ? "Öneriler <b>Tedarikçiler → Ürün Eşleştirmeleri</b> listesinden gelir. Farklı bir tedarikçi seçerseniz “Bundan sonra varsayılan olsun” ile listeye kaydedebilirsiniz." : "Tedarikçi, ürün ve kategori için en son seçileni hatırlar."} Listede olmayan bir ad yazarsanız tedarikçi listesine eklenir.</div>
     </div>
@@ -11828,6 +11830,50 @@ function v36KatYonet() {
 (function v36Kur() {
   for (const id of ["v36KatBtn", "v36KatBtn2"]) { const b = document.getElementById(id); if (b) b.addEventListener("click", () => { if (!supa) return showToast("Kategoriler için internet bağlantısı gerekli."); v36KatYonet(); }); }
 })();
+</script>
+<style id="v37-css">
+.v37-n{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:0 0 12px}
+.v37-n .v98-card{min-width:0}
+.v37-n .t{white-space:pre-wrap;overflow-wrap:anywhere;font-size:14px;line-height:1.5;margin-top:4px}
+.v37-n .o{white-space:pre-wrap;overflow-wrap:anywhere;font-size:12.5px;color:var(--color-text-muted);margin-top:6px;text-decoration:line-through}
+.v37-tag{display:inline-block;margin-left:6px;padding:1px 8px;border-radius:999px;font-size:10.5px;font-weight:700;background:rgba(120,130,145,.18);color:var(--color-text-muted);vertical-align:middle}
+.v37-tag.d{background:rgba(232,160,32,.2);color:#8a5a00}
+@media (max-width:640px){.v37-n{grid-template-columns:1fr}}
+</style>
+<script id="v37-js">
+/* ===== v37: Siparişin genel notu (Teklif → Sipariş Takibi) ===== */
+const v37Tem = (x) => String(x == null ? "" : x).replace(/\r/g, "").replace(/[\u0000-\u0009\u000b-\u001f\u007f<>]/g, " ").slice(0, 1000).trim();
+function v37NotHtml(v, once) {
+  const g = v37Tem(v && v.genel_not), i = v37Tem(v && v.ic_not);
+  const og = once ? v37Tem(once.genel_not) : null, oi = once ? v37Tem(once.ic_not) : null;
+  const kart = (bas, etiket, yeni, eski) => {
+    const degisti = eski != null && eski !== yeni;
+    if (!yeni && !degisti) return "";
+    return `<div class="v98-card"><div class="v98-l">${bas}<span class="v37-tag">${etiket}</span>${degisti ? `<span class="v37-tag d">Değişti</span>` : ""}</div>
+      <div class="t">${yeni ? escapeHtml(yeni) : "<i>(silindi)</i>"}</div>${degisti && eski ? `<div class="o">${escapeHtml(eski)}</div>` : ""}</div>`;
+  };
+  const h = kart("Siparişin genel notu", "PDF'te görünür", g, og) + kart("İç not", "Müşteri görmez", i, oi);
+  return h ? `<div class="v37-n">${h}</div>` : "";
+}
+/* Sipariş detayı: teklife bağlı siparişte notlar (onaylanmış son hal) */
+const v37Bel = new Map();
+async function v37DetayNot(id) {
+  if (!supa) return;
+  const o = (allOrders || []).find((x) => x.id === id); if (!o || !o.teklifId) return;
+  let d = v37Bel.get(o.teklifId);
+  if (!d || Date.now() - d.t > 600000) {
+    const { data, error } = await supa.rpc("pronto_teklif_kalan", { p_teklif_id: String(o.teklifId) });
+    if (error || !data) return;
+    d = { t: Date.now(), g: v37Tem(data.genel_not), i: v37Tem(data.ic_not) }; v37Bel.set(o.teklifId, d);
+  }
+  if (currentDetailOrderId !== id || (!d.g && !d.i)) return;
+  const g = document.querySelector("#detailModalBody .detail-grid"); if (!g || document.getElementById("v37Not")) return;
+  const el = document.createElement("div"); el.className = "detail-item detail-item--wide"; el.id = "v37Not";
+  el.innerHTML = `<span class="detail-label">Siparişin genel notu</span>` + v37NotHtml({ genel_not: d.g, ic_not: d.i }, null);
+  const gec = document.getElementById("v32Gecmis"); if (gec) g.insertBefore(el, gec); else g.appendChild(el);
+}
+const _v37Odm = openDetailModal;
+openDetailModal = function (id) { _v37Odm.apply(this, arguments); try { v37DetayNot(id); } catch (_) {} };
 </script>
 </body>
 </html>
