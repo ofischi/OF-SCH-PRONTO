@@ -2241,9 +2241,10 @@ table.v98-t{width:100%;border-collapse:collapse;font-size:13px}
             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
             <input type="text" id="v25Ara" maxlength="100" placeholder="Kategori, model, renk, ölçü veya kod ara…" autocomplete="off">
           </div>
+          <button type="button" class="btn btn-secondary" id="v36KatBtn">Kategoriler</button>
           <button type="button" class="btn btn-primary" id="v25Yeni">+ Kataloğa Ürün Ekle</button>
         </div>
-        <p class="v101-info">Bu liste <b>PRONTO Teklif</b>'in ürün kataloğudur. Buradan eklenen ürün ve model fotoğrafı Teklif'te de hemen görünür. Fiyat ve mevcut ürünlerde değişiklik Teklif'ten yapılır.</p>
+        <p class="v101-info">Bu liste <b>PRONTO Teklif</b>'in ürün kataloğudur. Buradan eklenen ürün ve model fotoğrafı Teklif'te de hemen görünür. Kategori / model adı <b>Kategoriler</b>'den değişir; fiyat Teklif'ten.</p>
         <div id="v25Liste"></div>
       </div>
       <div class="toolbar">
@@ -2374,6 +2375,7 @@ table.v98-t{width:100%;border-collapse:collapse;font-size:13px}
             <input type="text" id="v27Ara" maxlength="100" placeholder="Kategori, model, renk, ölçü ara…" autocomplete="off">
           </div>
           <div class="v26-filtre" id="v27Filtre"></div>
+          <button type="button" class="btn btn-secondary" id="v36KatBtn2">Kategoriler</button>
           <button type="button" class="btn btn-secondary" id="v27Sayim">Sayım / Düzeltme</button>
           <button type="button" class="btn btn-primary" id="v29SayimModu">Sayım Modu</button>
         </div>
@@ -3465,7 +3467,7 @@ function subscribeToChanges() {
     .on("broadcast", { event: "gelen" }, ({ payload }) => { try { v98Canli(payload); } catch (_) {} })
     .on("broadcast", { event: "foto" }, ({ payload }) => { try { v99FotoGeldi(payload); } catch (_) {} })
     .on("broadcast", { event: "esl" }, () => { try { v101Geldi(); } catch (_) {} })
-    .on("broadcast", { event: "kat" }, () => { try { v25Geldi(); } catch (_) {} })
+    .on("broadcast", { event: "kat" }, ({ payload }) => { try { v25Geldi(payload); } catch (_) {} })
     .on("broadcast", { event: "sa" }, ({ payload }) => { try { v26Geldi(payload); } catch (_) {} })
     .on("broadcast", { event: "stok" }, ({ payload }) => { try { v27Geldi(payload); } catch (_) {} })
     .on("broadcast", { event: "reload" }, ({ payload }) => {
@@ -9952,7 +9954,7 @@ async function v25KatYukle(force) {
   v25KatP = (async () => {
     if (!v25Kat) {
       const c = await cacheGet(V25_KAT_C);
-      v25Kat = { rows: new Map(((c && c.rows) || []).map((r) => [r.id, r])), foto: (c && c.foto) || {}, son: (c && c.son) || null };
+      v25Kat = { rows: new Map(((c && c.rows) || []).map((r) => [r.id, r])), foto: (c && c.foto) || {}, son: (c && c.son) || null, gizli: (c && Array.isArray(c.gizli)) ? c.gizli : [] };
     }
     if (!v25Foto) { const f = await cacheGet(V25_FOTO_C); v25Foto = (f && f.map) || {}; }
     if (!supa) return v25Kat;
@@ -9966,8 +9968,9 @@ async function v25KatYukle(force) {
     for (const id of d.silinen || []) v25Kat.rows.delete(id);
     Object.assign(v25Kat.foto, d.fotolar || {});
     for (const k of d.silinen_foto || []) { delete v25Kat.foto[k]; delete v25Foto[k]; }
+    if (Array.isArray(d.gizli)) v25Kat.gizli = d.gizli.map(String).slice(0, 500);
     if (d.son) v25Kat.son = d.son;
-    cachePut(V25_KAT_C, { rows: Array.from(v25Kat.rows.values()), foto: v25Kat.foto, son: v25Kat.son });
+    cachePut(V25_KAT_C, { rows: Array.from(v25Kat.rows.values()), foto: v25Kat.foto, son: v25Kat.son, gizli: v25Kat.gizli || [] });
     return v25Kat;
   })().finally(() => { v25KatP = null; });
   return v25KatP;
@@ -10024,7 +10027,9 @@ function v25ThumbBagla(root) {
 /* katalog → kategori > model grupları */
 function v25Gruplar(q) {
   const kats = new Map();
+  const gz = v36Gizli();
   for (const r of v25Kat ? v25Kat.rows.values() : []) {
+    if (gz.has(v25Ky(r.kategori))) continue;
     if (q) { const t = v106Ara([r.kod, r.kategori, r.model, r.modul, r.olcu, r.renk, r.yon].join(" ")); if (!t.includes(q)) continue; }
     const kk = v25Ky(r.kategori), mk = v25Ky(r.model);
     let K = kats.get(kk); if (!K) kats.set(kk, (K = { ad: r.kategori, modeller: new Map() }));
@@ -10058,7 +10063,8 @@ async function v25Ciz(force) {
           (M.list.length > 40 ? `<span class="v25-v">+${M.list.length - 40}</span>` : "") + `</div></div></div>`; }).join("") + `</div></div>`);
   }
   const toplamM = gs.reduce((a, K) => a + K.modeller.length, 0);
-  box.innerHTML = parcalar.join("") + (toplamM > LIM ? `<div class="v98-s" style="text-align:center;padding:8px">${toplamM - LIM} model daha var — aramayı daraltın.</div>` : "");
+  const gzN = v36Gizli().size;
+  box.innerHTML = (gzN ? `<div class="v98-s" style="margin:0 0 10px">${gzN} kategori gizli — <b>Kategoriler</b>'den geri açılır.</div>` : "") + parcalar.join("") + (toplamM > LIM ? `<div class="v98-s" style="text-align:center;padding:8px">${toplamM - LIM} model daha var — aramayı daraltın.</div>` : "");
   v25ThumbBagla(box);
 }
 function v25SekmeAc(t) {
@@ -10084,7 +10090,7 @@ function v25Secici(host, opt) {
   const listeler = () => {
     const R = rows(), kk = v25Ky(v.kategori), mk = v25Ky(v.model);
     const kat = R.filter((r) => v25Ky(r.kategori) === kk), mod = kat.filter((r) => v25Ky(r.model) === mk);
-    const L = { kategori: uniq(R.map((r) => r.kategori)), model: uniq(kat.map((r) => r.model)), modul: uniq(mod.map((r) => r.modul)),
+    const gz = v36Gizli(), L = { kategori: uniq(R.filter((r) => !gz.has(v25Ky(r.kategori))).map((r) => r.kategori)), model: uniq(kat.map((r) => r.model)), modul: uniq(mod.map((r) => r.modul)),
       olcu: uniq((mod.length ? mod : kat).map((r) => r.olcu)), renk: uniq((mod.length ? mod : kat).map((r) => r.renk)), yon: uniq(["SOL", "SAĞ"].concat(R.map((r) => r.yon))) };
     for (const [k] of V25_ALAN) { const dl = host.querySelector(`#${id}-${k}`); if (dl) dl.innerHTML = L[k].slice(0, 300).map((x) => `<option value="${escapeHtml(x)}">`).join(""); }
   };
@@ -10172,7 +10178,7 @@ async function v25YeniAc() {
       const r = data || {}, u = r.urun || {};
       if (u.id) v25Kat.rows.set(u.id, u);
       if (r.foto === "eklendi" && r.foto_anahtar) { const at = new Date().toISOString(); v25Kat.foto[r.foto_anahtar] = at; v25Foto[r.foto_anahtar] = { at, v: foto }; cachePut(V25_FOTO_C, { map: v25Foto }); }
-      cachePut(V25_KAT_C, { rows: Array.from(v25Kat.rows.values()), foto: v25Kat.foto, son: v25Kat.son });
+      cachePut(V25_KAT_C, { rows: Array.from(v25Kat.rows.values()), foto: v25Kat.foto, son: v25Kat.son, gizli: v25Kat.gizli || [] });
       m.close();
       showToast(r.yeni ? `${u.kod || "Ürün"} PRONTO Teklif kataloğuna eklendi.` : `Bu ürün zaten katalogda (${u.kod || ""}).`);
       if (currentView === "products" && v25Tab === "kat") v25Ciz(false);
@@ -11462,32 +11468,28 @@ async function v34Adlar() {
   if (v34Liste && Date.now() - v34T < 600000) return v34Liste;
   let L = null;
   try { const { data, error } = await supa.rpc("pronto_kisi_liste"); if (!error && Array.isArray(data)) L = data; } catch (_) {}
-  if (!L) { try { const { data } = await supa.from("pronto_kisi").select("ad").order("ad").limit(60); L = (data || []).map((r) => r.ad); } catch (_) { L = []; } }
+  if (!L) L = [];
   v34Liste = [...new Set(L.map((x) => v32Temiz(x, 40)).filter(Boolean))]; v34T = Date.now();
   return v34Liste;
 }
 v32KisiSor = function (islem) {
   return new Promise(async (res) => {
     const liste = supa ? await v34Adlar() : [];
-    const cur = window.__prontoKisi || "";
+    const cur = window.__prontoKisi || "", curVar = liste.includes(cur);
+    // Personel listesi boşsa iş durmaz (eski kurulum / bağlantı yok)
+    if (!liste.length && islem) return res(true);
     let bitti = false, iv = 0;
     const sec = (ad) => { window.__prontoKisi = v32Temiz(ad, 40); v32S("pronto_kisi", window.__prontoKisi); v32ChipCiz(); };
     const m = v98Ov(`<div class="modal-head"><h2>Bu cihazı kim kullanıyor?</h2><button class="icon-btn" data-x aria-label="Kapat">✕</button></div><div class="modal-body">
       ${islem ? `<div class="v34-is">${escapeHtml(islem)}</div>` : ""}
       <p class="v98-s" style="margin:0 0 10px">${islem ? "Bu işlem seçtiğiniz adla kaydedilir. Adınıza dokunun." : "Yaptığınız değişiklikler bu adla kaydedilir (sipariş geçmişinde görünür). Ayarlar'dan değiştirilebilir."} Bu bir şifre değildir.</p>
-      ${liste.length ? `<div class="v32-kg">${liste.map((a) => `<button type="button" class="btn ${a === cur ? "btn-primary" : "btn-secondary"}" data-ad="${escapeHtml(a)}">${a === cur ? "✓ " : ""}${escapeHtml(a)}</button>`).join("")}</div>` : ""}
-      <label class="v98-l" style="margin-top:14px;display:block">${liste.length ? "Listede yoksa adınızı yazın" : "Adınızı yazın"}</label>
-      <input class="v98-in" id="v32Yeni" maxlength="40" placeholder="Ad Soyad" autocomplete="off"><p class="v98-s" id="v32H" style="color:#B02A37;margin:6px 0 0">${cur && islem ? `Son kullanan: <b>${escapeHtml(cur)}</b> — Enter ile devam.` : ""}</p></div>
-      <div class="modal-foot"><button class="btn btn-ghost" data-x>${islem ? "Vazgeç" : "Şimdi değil"}</button><button class="btn btn-primary" id="v32Devam">Devam</button></div>`);
+      ${liste.length ? `<div class="v32-kg">${liste.map((a) => `<button type="button" class="btn ${a === cur ? "btn-primary" : "btn-secondary"}" data-ad="${escapeHtml(a)}">${a === cur ? "✓ " : ""}${escapeHtml(a)}</button>`).join("")}</div>`
+        : `<div class="v98-warn">Personel listesi boş. İsimler <b>PRONTO Teklif → Personeller</b>'den eklenir.</div>`}
+      <p class="v98-s" id="v32H" style="margin:12px 0 0">${curVar && islem ? `Son kullanan: <b>${escapeHtml(cur)}</b> — Enter ile devam. ` : ""}Listede yoksanız: <b>PRONTO Teklif → Personeller</b>'den eklenir.</p></div>
+      <div class="modal-foot"><button class="btn btn-ghost" data-x>${islem ? "Vazgeç" : "Şimdi değil"}</button><button class="btn btn-primary" id="v32Devam" ${curVar ? "" : "disabled"}>Devam</button></div>`);
     m.ov.style.zIndex = "1300";
     const bit = (v) => { if (bitti) return; bitti = true; clearInterval(iv); document.removeEventListener("keydown", tus, true); try { if (m.ov.isConnected) m.close(); } catch (_) {} res(v); };
-    const devam = async () => {
-      const ad = v32Temiz(m.$("#v32Yeni").value, 40);
-      if (!ad) { if (cur && islem) return bit(true); m.$("#v32H").textContent = "Bir ad seçin ya da yazın."; return; }
-      let son = ad.replace(/i/g, "İ").replace(/ı/g, "I").toLocaleUpperCase("tr-TR");
-      try { const { data, error } = await supa.rpc("pronto_kisi_ekle", { p_ad: ad }); if (!error && data && data.ad) son = data.ad; } catch (_) {}
-      v34Liste = null; sec(son); if (!islem) showToast(`Bu cihazda çalışan: ${window.__prontoKisi}`); bit(true);
-    };
+    const devam = () => { if (curVar) { if (!islem) showToast(`Bu cihazda çalışan: ${cur}`); bit(true); } };
     const tus = (e) => { if (e.key === "Enter" && document.body.lastElementChild === m.ov) { e.preventDefault(); devam(); } };
     document.addEventListener("keydown", tus, true);
     m.ov.addEventListener("click", (e) => {
@@ -11495,7 +11497,6 @@ v32KisiSor = function (islem) {
       if (e.target.closest("#v32Devam")) devam();
     });
     iv = setInterval(() => { if (!m.ov.isConnected) bit(false); }, 250);
-    if (!islem || !cur) setTimeout(() => { try { m.$("#v32Yeni").focus(); } catch (_) {} }, 60);
   });
 };
 </script>
@@ -11689,6 +11690,144 @@ function v35PdfSec() {
 const _v35Rov = renderOrdersView;
 renderOrdersView = function () { const r = _v35Rov.apply(this, arguments); if (typeof currentView === "string" && currentView === "takvim") { clearTimeout(v35Ciz._t); v35Ciz._t = setTimeout(() => { try { v35Ciz(); } catch (_) {} }, 120); } return r; };
 if (typeof V106_IC === "object") V106_IC.takvim = '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/>';
+</script>
+<style id="v36-css">
+.v36-not{margin:0 0 12px;padding:10px 12px;border-radius:10px;background:var(--color-surface-solid);border:1px solid var(--color-border);font-size:13px;line-height:1.5}
+.v36-l{display:flex;flex-direction:column;gap:8px;margin-top:10px}
+.v36-r{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 12px;border:1px solid var(--color-border);border-radius:12px;background:var(--color-surface-solid)}
+.v36-r.gz{opacity:.7}
+.v36-a{flex:1 1 220px;min-width:0}.v36-a b{display:block;font-size:14px;overflow-wrap:anywhere}.v36-a span{font-size:12px;color:var(--color-text-muted)}
+.v36-b{display:flex;gap:6px;flex-wrap:wrap}.v36-b .btn{min-height:34px;padding:6px 10px;font-size:12.5px}
+.v36-p{display:inline-block;margin-left:6px;padding:1px 8px;border-radius:999px;font-size:11px;font-weight:700;background:#eceff3;color:#5b6472;vertical-align:middle}
+.v36-p.uy{background:#fff4d6;color:#7a5a00}
+.v36-on{margin-top:12px;padding:10px 12px;border-radius:10px;background:var(--color-surface-solid);border:1px solid var(--color-border);font-size:13px;line-height:1.5}
+.v36-on.bir{background:#fff4d6;color:#5c4400;border-color:#f1d27a}
+.v36-on ul{margin:6px 0 0;padding-left:18px}
+.v98-ov:has(.v36-l) .modal-body{overflow-x:hidden}
+@media (max-width:600px){.v36-b{width:100%}.v36-b .btn{flex:1 1 auto}}
+</style>
+<script id="v36-js">
+/* ===== v36: Katalog → Kategoriler (sunucu: pronto-katalog-ad.sql) =====
+   Ad değişikliği sunucuda tek işlem: katalog, öneriler, model fotoğrafları, depo stoğu, satın alma, tedarikçi eşleşmesi.
+   Geçmiş siparişler eski adla kalır. Önce önizleme; uygulamadan önce "Bu cihazı kim kullanıyor?". */
+function v36Gizli() { return new Set((v25Kat && Array.isArray(v25Kat.gizli)) ? v25Kat.gizli : []); }
+function v36Hata(er) {
+  const t = String((er && (er.message || er.details)) || er || "");
+  if (/pronto_katalog_(liste|ad|kat_durum)|schema cache|Could not find the function|PGRST202/i.test(t)) return "Kurulum gerekli: Supabase'de pronto-katalog-ad.sql dosyasını bir kez çalıştırın.";
+  return t || "Bilinmeyen hata";
+}
+async function v36Rpc(f, a) { if (!supa) throw new Error("İnternet bağlantısı gerekli"); const { data, error } = await supa.rpc(f, a); if (error) throw error; return data; }
+/* katalog + stok baştan okunur (anahtarlar değişmiş olabilir) */
+async function v36Tazele() {
+  try { v27 = { rows: new Map(), son: null }; cachePut(V27_C, { rows: [], son: null }); } catch (_) {}
+  try { if (typeof v26Yukle === "function") v26Yukle(true).catch(() => {}); } catch (_) {}
+  try { await v25KatYukle(true); } catch (_) {}
+  try { if (currentView === "products" && v25Tab === "kat") v25Ciz(false); if (currentView === "stock") v27Ciz(true); } catch (_) {}
+}
+const _v36Geldi = v25Geldi;
+v25Geldi = function (p) { if (p && p.stok) { try { v27 = null; cachePut(V27_C, { rows: [], son: null }); } catch (_) {} if (currentView === "stock") setTimeout(() => { try { v27Ciz(true); } catch (_) {} }, 1500); } return _v36Geldi.apply(this, arguments); };
+const v36Say = (n, ad) => (n ? `${n} ${ad}` : "");
+function v36Ozet(r) {
+  const p = [v36Say(r.urun, "katalog ürünü"), v36Say(r.oneri, "ölçü/renk öneri listesi"), v36Say(r.foto, "model fotoğrafı (kopyalanır)"), v36Say((r.stok || 0) + (r.stok_birlesen || 0), "depo stoğu çeşidi"),
+    v36Say(r.satin_alma, "satın alma kaydı"), v36Say(r.siparis_bag, "depodan karşılanan sipariş bağı"), v36Say(r.tedarikci, "tedarikçi eşleşmesi")].filter(Boolean);
+  return `<b>Değişecekler</b><ul>${p.map((x) => `<li>${escapeHtml(x)}</li>`).join("")}</ul>` +
+    (r.stok_birlesen ? `<p style="margin:8px 0 0">${Number(r.stok_birlesen)} stok çeşidi hedefte zaten var: <b>adetler toplanır</b>.</p>` : "") +
+    `<p class="v98-s" style="margin:8px 0 0">Geçmiş ${Number(r.gecmis_kalem) || 0} teklif kalemi ve mevcut siparişler eski adla kalır.</p>`;
+}
+function v36AdDegis(o) {
+  return new Promise((res) => {
+    let on = null, calisiyor = false;
+    const ne = o.tur === "model" ? "model" : "kategori";
+    const m = v98Ov(`<div class="modal-head"><h2>${o.tur === "model" ? "Model adını değiştir" : "Kategori adını değiştir"}</h2><button class="icon-btn" data-x aria-label="Kapat">✕</button></div><div class="modal-body">
+      ${o.tur === "model" ? `<p class="v98-s" style="margin:0 0 4px">Kategori: <b>${escapeHtml(o.katAd)}</b></p>` : ""}
+      <p class="v98-s" style="margin:0 0 10px">Şu anki ad: <b>${escapeHtml(o.ad)}</b></p>
+      <label class="v98-l">Yeni ad *</label><input class="v98-in" id="v36Yeni" maxlength="60" autocomplete="off" value="${escapeHtml(o.ad)}">
+      <p class="v98-s" style="margin:6px 0 0">Var olan bir ${ne} adını yazarsanız ikisi birleşir.</p>
+      <div class="v36-on" id="v36On">Yeni adı yazıp <b>Önizle</b>'ye basın; önce neyin değişeceği gösterilir, hiçbir şey hemen değişmez.</div></div>
+      <div class="modal-foot"><button class="btn btn-ghost" data-x>Vazgeç</button><button class="btn btn-primary" id="v36Onizle">Önizle</button><button class="btn btn-primary" id="v36Uygula" style="display:none">Adı değiştir</button></div>`);
+    m.ov.style.zIndex = "1200";
+    const inp = m.$("#v36Yeni"), kut = m.$("#v36On"), bOn = m.$("#v36Onizle"), bOk = m.$("#v36Uygula");
+    const yeniAd = () => v32Temiz(inp.value, 60);
+    const sifirla = () => { on = null; bOk.style.display = "none"; bOn.style.display = ""; };
+    inp.addEventListener("input", sifirla);
+    const onizle = async () => {
+      const y = yeniAd(); if (y.length < 2) return showToast("Yeni ad en az 2 harf olmalı"); if (y.includes("|")) return showToast("Ad içinde | işareti kullanılamaz");
+      if (calisiyor) return; calisiyor = true; bOn.disabled = true;
+      try {
+        on = await v36Rpc("pronto_katalog_ad", { p_tur: o.tur, p_kat: o.kat, p_model: o.model || null, p_yeni: y, p_onizle: true }); on._y = y;
+        kut.classList.toggle("bir", !!on.birlesme);
+        kut.innerHTML = (on.birlesme ? `<p style="margin:0 0 6px"><b>“${escapeHtml(on.yeni)}” zaten var: iki ${ne} BİRLEŞECEK.</b></p>` : `<p style="margin:0 0 6px">Yeni ad: <b>${escapeHtml(on.yeni)}</b></p>`) + v36Ozet(on);
+        bOk.textContent = on.birlesme ? "Birleştir" : "Adı değiştir"; bOk.style.display = ""; bOn.style.display = "none";
+      } catch (e) { showToast(v36Hata(e)); }
+      finally { calisiyor = false; bOn.disabled = false; }
+    };
+    const uygula = async () => {
+      if (!on || on._y !== yeniAd() || calisiyor) return;
+      if (!(await v32KisiSor(o.tur === "model" ? "Model adı değiştirme" : "Kategori adı değiştirme"))) return;
+      calisiyor = true; bOk.disabled = true;
+      try {
+        const r = await v36Rpc("pronto_katalog_ad", { p_tur: o.tur, p_kat: o.kat, p_model: o.model || null, p_yeni: on._y, p_onizle: false });
+        showToast(r && r.birlesme ? `Birleştirildi: ${r.yeni}` : `Ad değişti: ${r ? r.yeni : ""}`);
+        m.close(); await v36Tazele(); res(r);
+      } catch (e) { showToast(v36Hata(e)); calisiyor = false; bOk.disabled = false; }
+    };
+    inp.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); on && on._y === yeniAd() ? uygula() : onizle(); } });
+    bOn.addEventListener("click", onizle); bOk.addEventListener("click", uygula);
+    setTimeout(() => { try { inp.focus(); inp.select(); } catch (_) {} }, 60);
+  });
+}
+function v36Modeller(K) {
+  const m = v98Ov(`<div class="modal-head"><h2>${escapeHtml(K.ad)} · Modeller</h2><button class="icon-btn" data-x aria-label="Kapat">✕</button></div><div class="modal-body">
+    <p class="v36-not">Model adını değiştirin. Var olan bir model adını yazarsanız iki model birleşir. Geçmiş kayıtlar eski adla kalır.</p><div class="v36-l" id="v36Ml"><div class="v98-s">Yükleniyor…</div></div></div>`, true);
+  m.ov.style.zIndex = "1180";
+  const yukle = async () => {
+    let L; try { L = (await v36Rpc("pronto_katalog_liste", { p_kat: K.ad })) || []; } catch (e) { m.$("#v36Ml").innerHTML = `<div class="v98-warn">${escapeHtml(v36Hata(e))}</div>`; return; }
+    L.sort((a, b) => String(a.ad).localeCompare(String(b.ad), "tr"));
+    m.$("#v36Ml").innerHTML = L.length ? L.map((x) => `<div class="v36-r"><div class="v36-a"><b>${escapeHtml(x.ad)}${x.yazim > 1 ? `<span class="v36-p uy">${Number(x.yazim)} farklı yazım</span>` : ""}</b><span>${Number(x.urun) || 0} ürün${x.stok_cesit ? ` · depoda ${Number(x.stok_adet)} adet (${Number(x.stok_cesit)} çeşit)` : ""}</span></div>
+      <div class="v36-b"><button type="button" class="btn btn-secondary" data-m="${escapeHtml(x.ad)}">Adı değiştir</button></div></div>`).join("") : `<div class="v98-s">Bu kategoride model yok.</div>`;
+  };
+  m.ov.addEventListener("click", async (e) => { const b = e.target.closest("[data-m]"); if (!b) return; if (await v36AdDegis({ tur: "model", kat: K.ad, katAd: K.ad, model: b.dataset.m, ad: b.dataset.m })) yukle(); });
+  yukle();
+}
+function v36KatYonet() {
+  let L = [], q = "";
+  const m = v98Ov(`<div class="modal-head"><h2>Kategoriler</h2><button class="icon-btn" data-x aria-label="Kapat">✕</button></div><div class="modal-body">
+    <p class="v36-not"><b>Adı değiştir:</b> o kategorideki tüm ürünler, ölçü/renk önerileri, model fotoğrafları, depo stoğu ve satın almalar birlikte değişir (iki programda da). Var olan bir adı yazarsanız iki kategori <b>birleşir</b>.<br><b>Gizle:</b> ürünler silinmez, sadece seçim listelerinde görünmez. <b>Sil:</b> yalnızca boş kategori. Geçmiş siparişler eski adla kalır.</p>
+    <div class="search-box"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg><input type="text" id="v36Ara" maxlength="60" placeholder="Kategori ara" autocomplete="off"></div>
+    <div class="v36-l" id="v36Kl"><div class="v98-s">Yükleniyor…</div></div></div>`, true);
+  const ciz = () => {
+    const R = L.filter((x) => !q || v106Ara(x.ad).includes(q));
+    m.$("#v36Kl").innerHTML = R.length ? R.map((x) => { const bos = !x.urun && !x.stok_cesit, k = escapeHtml(x.anahtar);
+      return `<div class="v36-r${x.gizli ? " gz" : ""}"><div class="v36-a"><b>${escapeHtml(x.ad)}${x.gizli ? `<span class="v36-p">Gizli</span>` : ""}${x.yazim > 1 ? `<span class="v36-p uy">${Number(x.yazim)} farklı yazım — Adı değiştir ile tekleştirin</span>` : ""}</b>
+        <span>${Number(x.urun) || 0} ürün · ${Number(x.model) || 0} model${x.stok_cesit ? ` · depoda ${Number(x.stok_adet)} adet (${Number(x.stok_cesit)} çeşit)` : ""}${bos ? " · boş" : ""}</span></div>
+        <div class="v36-b"><button type="button" class="btn btn-secondary" data-ky="ad" data-k="${k}">Adı değiştir</button>${x.model ? `<button type="button" class="btn btn-secondary" data-ky="mod" data-k="${k}">Modeller</button>` : ""}
+        ${x.gizli ? `<button type="button" class="btn btn-secondary" data-ky="goster" data-k="${k}">Geri aç</button>` : `<button type="button" class="btn btn-secondary" data-ky="gizle" data-k="${k}">Gizle</button>`}
+        ${bos ? `<button type="button" class="btn btn-danger" data-ky="sil" data-k="${k}">Sil</button>` : ""}</div></div>`; }).join("")
+      : `<div class="v98-s">${L.length ? "Eşleşen kategori yok" : "Katalogda kategori yok"}</div>`;
+  };
+  const yukle = async () => {
+    try { L = (await v36Rpc("pronto_katalog_liste", {})) || []; } catch (e) { m.$("#v36Kl").innerHTML = `<div class="v98-warn">${escapeHtml(v36Hata(e))}</div>`; return; }
+    L.sort((a, b) => (!!a.gizli - !!b.gizli) || String(a.ad).localeCompare(String(b.ad), "tr")); ciz();
+  };
+  m.$("#v36Ara").addEventListener("input", debounce((e) => { q = v106Ara(sanitizeSearchText(e.target.value, 60)); ciz(); }, 150));
+  m.ov.addEventListener("click", async (e) => {
+    const b = e.target.closest("[data-ky]"); if (!b) return;
+    const K = L.find((x) => x.anahtar === b.dataset.k); if (!K) return;
+    const is = b.dataset.ky;
+    if (is === "ad") { if (await v36AdDegis({ tur: "kategori", kat: K.ad, ad: K.ad })) yukle(); return; }
+    if (is === "mod") return v36Modeller(K);
+    if (is === "sil" && !(await v106Sor(`"${K.ad}" kategorisinde ürün ve stok yok. Kalan ölçü/renk önerileri de temizlenecek.\n\nSilinsin mi?`))) return;
+    if (is === "gizle" && !(await v106Sor(`"${K.ad}" seçim listelerinde görünmeyecek (iki programda da). ${K.urun} ürün silinmez; istediğiniz zaman geri açabilirsiniz.\n\nGizlensin mi?`))) return;
+    if (!(await v32KisiSor(is === "sil" ? "Kategori silme" : is === "gizle" ? "Kategori gizleme" : "Kategoriyi geri açma"))) return;
+    b.disabled = true;
+    try { await v36Rpc("pronto_katalog_kat_durum", { p_kat: K.ad, p_islem: is }); showToast(is === "sil" ? "Kategori silindi" : is === "gizle" ? "Kategori gizlendi" : "Kategori geri açıldı"); await v25KatYukle(true).catch(() => {}); if (currentView === "products" && v25Tab === "kat") v25Ciz(false); yukle(); }
+    catch (er) { showToast(v36Hata(er)); b.disabled = false; }
+  });
+  yukle();
+}
+(function v36Kur() {
+  for (const id of ["v36KatBtn", "v36KatBtn2"]) { const b = document.getElementById(id); if (b) b.addEventListener("click", () => { if (!supa) return showToast("Kategoriler için internet bağlantısı gerekli."); v36KatYonet(); }); }
+})();
 </script>
 </body>
 </html>
