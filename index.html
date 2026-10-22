@@ -7661,7 +7661,7 @@ async function v98Onay(id) {
   const p_kalemler = kal.slice(0, 300).map((k) => ({ uid: String(k.uid || "").slice(0, 60), kategori: String(k.kategori || "").slice(0, 200), model: String(k.model || "").slice(0, 200), urun: String(k.urun || "").slice(0, 200) }));
   const [eslR, esk, oncekiR] = await Promise.all([
     supa.rpc("pronto_eslesme_getir", { p_kalemler }).then((r) => r, (e) => ({ error: e })),
-    row.tur === "guncelleme" ? supa.from("orders").select("id,teklif_kalem,status,product,quantity,color_code,supplier,description,delivery_date").eq("teklif_id", row.teklif_id) : Promise.resolve({ data: [] }),
+    row.tur === "guncelleme" ? v39Siparisler(row.teklif_id) : Promise.resolve({ data: [] }),
     row.tur === "guncelleme" ? v38Onceki(row.teklif_id) : Promise.resolve({ data: null })
   ]);
   const eslVar = !eslR.error && !!eslR.data && typeof eslR.data === "object" && !Array.isArray(eslR.data);
@@ -7681,11 +7681,11 @@ async function v98Onay(id) {
   const adres = [c.adres, c.ilce, c.sehir].filter(Boolean).join(", ");
   const supList = `<datalist id="v98Sup">${allSuppliers.map((s) => `<option value="${escapeHtml(s.name)}">`).join("")}</datalist>`;
   const once = row.tur === "guncelleme" ? v38OnceKalem(oncekiR && oncekiR.data) : null;   // v38: bir önceki onaylı kalemler (uid → kalem)
-  const farkOf = (k) => (once && once.has(String(k.uid)) ? v38KalemFark(once.get(String(k.uid)), k) : null);
+  const farkOf = (k) => { if (once && once.has(String(k.uid))) return v38KalemFark(once.get(String(k.uid)), k); const o = eski.get(k.uid); return o ? v39SiparisFark(o, k) : null; };
   const durumOf = (k) => { const o = eski.get(k.uid); if (!o) return row.tur === "guncelleme" ? ["Yeni", "status-teslim"] : ["", ""]; const f = farkOf(k); const ch = f ? f.length > 0 : (o.product !== k.urun || Number(o.quantity) !== Number(k.adet) || (o.color_code || "") !== (k.renk || "")); return ch ? ["Değişti", "status-uretimde"] : ["Aynı", "status-beklemede"]; };
   const rows = kal.map((k) => { const [dt, dc] = durumOf(k); const o = eski.get(k.uid); const e1 = esl[k.uid] || {}; const sup = o ? o.supplier : String(e1.tedarikci || ""); const kay = o ? "sip" : String(e1.kaynak || "");
     const f = o ? farkOf(k) : null, fa = new Set((f || []).map((x) => x.a)), dg = (a) => (fa.has(a) ? ' class="v38-d"' : "");
-    const eskiHtml = f ? v38FarkHtml(f) : (dt === "Değişti" ? `<div class="v98-s">şu an: ${escapeHtml(o.product)} × ${escapeHtml(o.quantity)}${o.color_code ? " · " + escapeHtml(o.color_code) : ""}</div>` : "");
+    const eskiHtml = f ? v38FarkHtml(f) : "";
     return `<tr data-uid="${escapeHtml(k.uid)}"><td class="v98-ph" data-foto="${escapeHtml(k.foto || "")}">${k.foto ? "…" : "—"}</td><td${dg("urun")}><b>${escapeHtml(k.urun)}</b>${dt ? ` <span class="status-badge ${dc}">${dt}</span>` : ""}${o ? `<div class="v98-s">${escapeHtml(orderNo(o))} · ${escapeHtml(o.status || "")}</div>` : ""}${eskiHtml}</td><td data-l="Ölçü"${dg("olcu")}>${escapeHtml(k.olcu || "—")}</td><td data-l="Renk"${dg("renk")}>${escapeHtml(k.renk || "—")}</td><td data-l="Yön"${dg("yon")}>${escapeHtml(k.yon || "—")}</td><td class="num" data-l="Adet"${dg("adet")}><b>${escapeHtml(k.adet)}</b></td><td class="v98-ac${fa.has("aciklama") ? " v38-d" : ""}" data-l="Açıklama">${escapeHtml(k.aciklama || "—")}</td><td data-l="Tedarikçi *" data-sug="${escapeHtml(sup)}" data-kay="${escapeHtml(kay)}" data-kat="${escapeHtml(k.kategori || "")}">${v101OnayHucre(sup, kay, e1.yedekler, eslVar)}</td></tr>`; }).join("");
   const cikanHtml = cikan.length ? `<div class="v98-warn"><b>Tekliften çıkarılan ${cikan.length} kalem</b> onaylanınca <b>İptal</b> yapılacak (silinmez): ${cikan.map((o) => escapeHtml(orderNo(o) + " " + o.product)).join(", ")}</div>` : "";
   const m = v98Ov(`<div class="modal-head"><h2>Teklif ${escapeHtml(row.teklif_no)} — ${v98TurTxt(row.tur)}</h2><button class="icon-btn" data-x aria-label="Kapat">✕</button></div>
@@ -7696,7 +7696,7 @@ async function v98Onay(id) {
         <div class="v98-card"><div class="v98-l">Teklif</div><div class="v98-s">Teklif tarihi: ${escapeHtml(v.tarih ? formatDate(v.tarih) : "-")} · Personel: ${escapeHtml(v.personel || "-")}${row.gonderen ? ` · Gönderen: <b>${escapeHtml(row.gonderen)}</b>` : ""}</div><div class="v98-s">Montaj: ${escapeHtml(v98Lbl(v.montaj))} · Nakliye: ${escapeHtml(v98Lbl(v.nakliye))} · Teslim yeri: ${escapeHtml(v98Lbl(v.teslimYeri))}</div>
           <label class="v98-l" style="margin-top:10px;display:block">Teslim tarihi</label><input type="date" class="v98-in" id="v98Teslim" value="${escapeHtml(v.teslim || "")}"></div>
       </div>
-      ${row.tur === "guncelleme" ? v38UstHtml(v, oncekiR && oncekiR.data, Array.from(eski.values())) : ""}
+      ${row.tur === "guncelleme" ? v39UstHtml(v, oncekiR, Array.from(eski.values())) : ""}
       ${cikanHtml}
       ${v37NotHtml(v, row.tur === "guncelleme" ? (oncekiR && oncekiR.data) : null)}
       <div class="v98-tw"><table class="v98-t"><thead><tr><th>Foto</th><th>Ürün</th><th>Ölçü</th><th>Renk</th><th>Yön</th><th class="num">Adet</th><th>Açıklama</th><th>Tedarikçi *</th></tr></thead><tbody>${rows}</tbody></table></div>${supList}
@@ -11383,13 +11383,17 @@ td.v38-d{background:rgba(230,178,42,.16)}
    Bir önceki ONAYLANMIŞ hal pronto_onay_onceki ile okunur; onay ekranındaki eski okumanın yerine geçer (istek sayısı aynı).
    SQL henüz kurulmadıysa eski okumaya (pronto_teklif_kalan) döner: o zaman yalnız notlar karşılaştırılır. */
 async function v38Onceki(teklifId) {
+  // Bir önceki onaylı hal. Okunamazsa sebebi "hata" ile döner (onay ekranında yazılır); notlar için eski okumaya düşülür.
   const p = { p_teklif_id: String(teklifId) };
+  let hata = "";
   try {
     const r = await supa.rpc("pronto_onay_onceki", p);
-    if (!r.error) return { data: r.data || null };
-    if (!/PGRST202|42883|pronto_onay_onceki|Could not find the function|schema cache/i.test(String((r.error.code || "") + " " + (r.error.message || "")))) return { data: null };
-  } catch (_) { return { data: null }; }
-  try { const r = await supa.rpc("pronto_teklif_kalan", p); return { data: r.error ? null : r.data }; } catch (_) { return { data: null }; }
+    if (!r.error && r.data && r.data.var === true && Array.isArray(r.data.kalemler)) return { data: r.data };
+    if (!r.error) return { data: r.data || null, hata: "Bu teklifin onaylanmış önceki hali bulunamadı." };
+    const m = String((r.error.code || "") + " " + (r.error.message || ""));
+    hata = /PGRST202|42883|Could not find the function|schema cache/i.test(m) ? "pronto-degisiklik.sql kurulu değil." : "Sunucu: " + String(r.error.message || r.error.code || "hata").slice(0, 160);
+  } catch (e) { hata = "Bağlantı hatası: " + String((e && e.message) || e).slice(0, 120); }
+  try { const r = await supa.rpc("pronto_teklif_kalan", p); return { data: r.error ? null : r.data, hata }; } catch (_) { return { data: null, hata }; }
 }
 const v38S = (x) => String(x == null ? "" : x).replace(/\s+/g, " ").trim();
 const v38Yon = (x) => (["", "yok", "—", "-"].includes(v38S(x).toLocaleLowerCase("tr-TR")) ? "" : v38S(x));
@@ -11513,5 +11517,49 @@ async function v38SaPdf(t, L, sup, fiyat, kdv) {
   });
 }
 </script>
+<script id="v39-degisiklik-js">
+/* ===== v39: "Ne değişti?" hiçbir durumda sessiz kalmaz =====
+   Önceki onaylı hal (pronto_onay_onceki) okunamazsa sebebi yazılır ve Teklif'ten geleni
+   Sipariş'teki mevcut siparişlerle karşılaştırır (ek istek yok; aynı okumada tarih ve şart sütunları gelir). */
+async function v39Siparisler(teklifId) {
+  const tam = "id,teklif_kalem,status,customer,product,quantity,color_code,supplier,description,delivery_date,order_date,montaj,nakliye,teslim_yeri";
+  const r = await supa.from("orders").select(tam).eq("teklif_id", teklifId);
+  if (!r.error) return r;
+  return supa.from("orders").select("id,teklif_kalem,status,product,quantity,color_code,supplier,description,delivery_date").eq("teklif_id", teklifId);
+}
+function v39SiparisFark(o, k) {
+  const out = [];
+  if (v38S(o.product) !== v38S(k.urun)) out.push({ a: "urun", ad: "Ürün", e: v38S(o.product), y: v38S(k.urun) });
+  if ((Number(o.quantity) || 0) !== (Number(k.adet) || 0)) out.push({ a: "adet", ad: "Adet", e: String(Number(o.quantity) || 0), y: String(Number(k.adet) || 0) });
+  if (v38S(o.color_code) !== v38S(k.renk)) out.push({ a: "renk", ad: "Renk", e: v38S(o.color_code), y: v38S(k.renk) });
+  return out;
+}
+function v39UstHtml(v, r, siparisler) {
+  const d = r && r.data;
+  if (d && d.var === true && Array.isArray(d.kalemler)) return v38UstHtml(v, d, siparisler);
+  // yedek: Sipariş'teki açık siparişlerin şu anki hali → Teklif'ten gelen
+  const acik = (siparisler || []).filter((o) => o && !["İptal"].includes(o.status));
+  const tek = (alan) => { const s = Array.from(new Set(acik.map((o) => v38S(o[alan]).slice(0, alan.endsWith("date") ? 10 : 40)).filter((x) => x !== ""))); return s; };
+  const c = (v && v.cari) || {};
+  const satirlar = [];
+  const ekle = (ad, eskiler, yeni, fmt) => {
+    const y = v38S(yeni); if (!eskiler.length) return;
+    const farkli = eskiler.filter((e) => e !== (y || ""));
+    if (!farkli.length) return;
+    satirlar.push([ad, eskiler.map(fmt).join(" / "), y ? fmt(y) : "—"]);
+  };
+  const tf = (x) => formatDate(String(x).slice(0, 10)), lf = (x) => v98Lbl(x);
+  ekle("Sipariş tarihi", tek("order_date"), v38S(v.tarih).slice(0, 10), tf);
+  ekle("Teslim tarihi", tek("delivery_date"), v38S(v.teslim).slice(0, 10), tf);
+  ekle("Müşteri", Array.from(new Set(acik.map((o) => v38S(o.customer)).filter(Boolean))), c.unvan, (x) => x);
+  if (acik.some((o) => "montaj" in o)) {
+    ekle("Montaj", tek("montaj"), v.montaj, lf); ekle("Nakliye", tek("nakliye"), v.nakliye, lf); ekle("Teslim yeri", tek("teslim_yeri"), v.teslimYeri, lf);
+  }
+  const satir = satirlar.map(([ad, e, y]) => `<div class="v38-sat"><span>${escapeHtml(ad)}</span><span class="v38-ey"><span class="v38-e">${escapeHtml(e || "—")}</span> → <span class="v38-y">${escapeHtml(y || "—")}</span></span></div>`).join("");
+  const neden = r && r.hata ? `<div class="v39-not">Önceki onaylı hal okunamadı: ${escapeHtml(r.hata)} Karşılaştırma, Sipariş'teki mevcut siparişlerle yapıldı (ölçü / yön / açıklama farkı bu durumda görünmez).</div>` : "";
+  return `<div class="v38-deg"><div class="v98-l">Değişenler <span class="v37-tag">Sipariş'te şu an → Teklif'ten gelen</span></div>${satir || `<div class="v38-ok">Tarihlerde, müşteride ve şartlarda fark yok. Kalem farkları aşağıda sarı ile işaretli.</div>`}${neden}</div>`;
+}
+</script>
+<style id="v39-css">.v39-not{margin-top:8px;font-size:12.5px;color:var(--color-text-muted);line-height:1.45}</style>
 </body>
 </html>
