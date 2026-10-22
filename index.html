@@ -2637,7 +2637,7 @@ table.v98-t{width:100%;border-collapse:collapse;font-size:13px}
 <div class="modal-overlay hidden pdf-ov" id="pdfModal">
   <div class="modal">
     <div class="pdf-h"><div class="meta"><span class="mark">OFİSCHİ</span><strong id="pdfModalTitle">PDF</strong></div><div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
-      <button class="btn btn-ghost" type="button" data-pdf-zoom="-1">−</button><span id="pdfZoomLabel" class="muted-text" style="min-width:52px;text-align:center">85%</span><button class="btn btn-ghost" type="button" data-pdf-zoom="1">+</button><button class="btn btn-ghost" type="button" id="pdfSettingsBtn">⚙ Ayarlar</button><button class="btn btn-secondary" type="button" id="pdfDownloadBtn">PDF</button><button class="btn btn-ghost" type="button" id="pdfPrintBtn">Yazdır</button><button class="btn btn-ghost" type="button" id="pdfShareBtn">Paylaş</button><button class="icon-btn" type="button" id="pdfCloseBtn">✕</button>
+      <div class="v38-yon" role="group" aria-label="Sayfa yönü"><button type="button" data-v38-yon="portrait" class="on" aria-pressed="true">Dikey</button><button type="button" data-v38-yon="landscape" aria-pressed="false">Yatay</button></div><button class="btn btn-ghost" type="button" data-pdf-zoom="-1">−</button><span id="pdfZoomLabel" class="muted-text" style="min-width:52px;text-align:center">85%</span><button class="btn btn-ghost" type="button" data-pdf-zoom="1">+</button><button class="btn btn-ghost" type="button" id="pdfSettingsBtn">⚙ Ayarlar</button><button class="btn btn-secondary" type="button" id="pdfDownloadBtn">PDF</button><button class="btn btn-ghost" type="button" id="pdfPrintBtn">Yazdır</button><button class="btn btn-ghost" type="button" id="pdfShareBtn">Paylaş</button><button class="icon-btn" type="button" id="pdfCloseBtn">✕</button>
     </div></div>
     <div class="pdf-stage" id="pdfStage"><div class="pdf-zoom" id="pdfZoom"></div></div>
   </div>
@@ -5377,7 +5377,7 @@ async function saveOrderFromForm(allowWarnings = false, allowConflict = false) {
    ======================================================= */
 
 const V90_PDF_KEY="pronto_v90_pdf_settings";const V90_PDF_DEF={lang:"tr",size:"A4",orient:"portrait",foto:"m",logoPos:"center",logoSize:"m"};
-function v90PdfSettings(){try{return {...V90_PDF_DEF,...JSON.parse(localStorage.getItem(V90_PDF_KEY)||"{}")} }catch(_){return {...V90_PDF_DEF}}}function saveV90PdfSettings(o){localStorage.setItem(V90_PDF_KEY,JSON.stringify(o))}function v90PdfEsc(v){return escapeHtml(v==null?"":String(v))}function v90PdfLogo(){return document.querySelector(".mobile-logo")?.src||""}function v90PdfPhotoSize(o){return ({s:56,m:88,l:130}[o.foto]||88)}function v90PdfLogoSize(o){return ({s:34,m:52,l:76}[o.logoSize]||52)}
+function v90PdfSettings(){let r;try{r={...V90_PDF_DEF,...JSON.parse(localStorage.getItem(V90_PDF_KEY)||"{}")}}catch(_){r={...V90_PDF_DEF}}r.orient="portrait";return r}function saveV90PdfSettings(o){localStorage.setItem(V90_PDF_KEY,JSON.stringify(o))}function v90PdfEsc(v){return escapeHtml(v==null?"":String(v))}function v90PdfLogo(){return document.querySelector(".mobile-logo")?.src||""}function v90PdfPhotoSize(o){return ({s:56,m:88,l:130}[o.foto]||88)}function v90PdfLogoSize(o){return ({s:34,m:52,l:76}[o.logoSize]||52)}
 function v90PdfDoc(order,o,photoUrl=""){const p=pricingTotals(order),customer=allCustomers.find(c=>normName(c.name)===normName(order.customer))||{},logo=v90PdfLogo(),L=o.lang==="en"?{photo:"Photo",product:"Product",color:"Color / Fabric",qty:"Qty",unit:"Unit Price",total:"Total",orderDate:"Order Date",delivery:"Delivery Date",status:"Status",desc:"Description",subtotal:"Subtotal",vat:"VAT",grand:"Grand Total"}:{photo:"Fotoğraf",product:"Ürün",color:"Renk / Kumaş",qty:"Adet",unit:"Birim Fiyat",total:"Toplam",orderDate:"Sipariş Tarihi",delivery:"Teslim Tarihi",status:"Durum",desc:"Açıklama",subtotal:"Ara Toplam",vat:"KDV",grand:"Genel Toplam"},logoPos=o.logoPos==="right"?"justify-content:flex-end":o.logoPos==="left"?"":"justify-content:center",ps=v90PdfPhotoSize(o),photo=photoUrl?`<img src="${v90PdfEsc(photoUrl)}" crossorigin="anonymous" style="width:${ps}px;height:${ps}px;object-fit:contain;border-radius:3px">`:`<div class="nofoto" style="width:${ps}px;height:${ps}px">Fotoğraf Yok</div>`;return `<div class="pdoc ${o.size} ${o.orient==="landscape"?"land":""}"><div class="pd-head"><div style="flex:1"><div class="pd-logo" style="${logoPos}">${logo?`<img src="${v90PdfEsc(logo)}" style="height:${v90PdfLogoSize(o)}px;width:auto;max-width:190px">`:`<div class="fn">OFİSCHİ</div>`}</div></div><div class="pd-right"><div class="pd-no">${v90PdfEsc(orderNo(order))}</div><table class="pd-kv"><tr><td>${L.orderDate}</td><td>${v90PdfEsc(formatDate(order.orderDate))}</td></tr><tr><td>${L.delivery}</td><td>${v90PdfEsc(formatDate(order.deliveryDate))}</td></tr><tr><td>${L.status}</td><td>${v90PdfEsc(order.status||"-")}</td></tr></table></div></div><table class="pd-t"><thead><tr><th style="width:76px">${L.photo}</th><th>${L.product}</th><th>${L.color}</th><th class="r">${L.qty}</th></tr></thead><tbody><tr><td class="pcell">${photo}</td><td><div class="nm">${v90PdfEsc(order.product||"-")}</div><div class="ds">${v90PdfEsc(order.supplier||"-")}</div></td><td>${v90PdfEsc([order.colorCode,order.fabricCode].filter(Boolean).join(" / ")||"-")}</td><td class="r">${v90PdfEsc(order.quantity??"-")}</td></tr></tbody></table><div class="pd-sum"><div class="pd-pay"><b>${L.desc}</b><div style="margin-top:5px;white-space:pre-wrap;max-width:110mm">${v90PdfEsc(getOrderDescription(order)||"-")}</div></div></div><div class="pd-foot"><span>OFİSCHİ BÜRO MOBİLYALARI</span></div></div>`}
 async function v90BuildPdfBlob(order,o,photoUrl=""){await ensurePdfLibs();if(!window.html2canvas||!window.jspdf?.jsPDF)throw new Error("PDF motoru yüklenemedi. İnternet bağlantısını kontrol edin.");const host=document.createElement("div");host.style.cssText="position:fixed;left:-100000px;top:0;width:max-content;background:#fff;z-index:-1";host.innerHTML=v90PdfDoc(order,o,photoUrl);document.body.appendChild(host);try{return await v93RenderPdf(host.firstElementChild,o)}finally{host.remove()}}
 function v90PdfFileName(o){return `Siparis-${String(orderNo(o)||o.id).replace(/[^0-9A-Za-zÇĞİÖŞÜçğıöşü_-]+/g,"-")}.pdf`}function v90DownloadBlob(b,n){const u=URL.createObjectURL(b),a=document.createElement("a");a.href=u;a.download=n;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),1500)}async function v90DownloadPdf(o,s,p){v90DownloadBlob(await v90BuildPdfBlob(o,s,p),v90PdfFileName(o));showToast("PDF indirildi.")}async function v90SharePdf(o,s,p){const b=await v90BuildPdfBlob(o,s,p);if(window.prontoDesktop?.saveFile){v93DesktopShare(b,v90PdfFileName(o),o.customer);return}const f=new File([b],v90PdfFileName(o),{type:"application/pdf"});if(navigator.share&&(!navigator.canShare||navigator.canShare({files:[f]}))){await navigator.share({title:orderNo(o),files:[f]});return}v90DownloadBlob(b,v90PdfFileName(o));showToast("Bu cihazda doğrudan paylaşım desteklenmiyor; PDF indirildi.")}function v90PrintPdf(o,s,p){const r=document.getElementById("pdfPrintRoot");r.innerHTML=v90PdfDoc(o,s,p);const c=()=>{r.innerHTML="";window.removeEventListener("afterprint",c)};window.addEventListener("afterprint",c);setTimeout(()=>window.print(),80)}
@@ -5434,7 +5434,7 @@ function v91OpenElementPdf(el,title,filename,orient="portrait",kind){
   const m=document.getElementById("pdfModal"),host=document.getElementById("pdfZoom");
   if(!m||!host) return showToast("PDF penceresi bulunamadı.");
   const state={el,title:String(title||"PDF"),filename:`${v91PdfSafeName(filename||title||"PDF")}.pdf`,o:kind?v95Get(kind):v90PdfSettings(),zoom:null,orient};
-  if(!kind) state.o.orient=orient;
+  state.o.orient="portrait";   /* v38: her PDF dikey açılır */
   v91GenericPdfState=state;
   const redraw=()=>{
     host.innerHTML="";
@@ -5451,7 +5451,7 @@ function v91OpenElementPdf(el,title,filename,orient="portrait",kind){
   m.setAttribute("aria-hidden","false");
   document.body.classList.add("pronto-modal-lock");
   document.getElementById("pdfModalTitle").textContent=state.title;
-  redraw();
+  state.redraw = redraw; redraw(); try { v38YonCiz(); } catch (_) {}
   document.getElementById("pdfCloseBtn").onclick=()=>{m.classList.add("hidden");m.setAttribute("aria-hidden","true");host.innerHTML="";v91GenericPdfState=null;document.body.classList.remove("pronto-modal-lock");};
   document.getElementById("pdfSettingsBtn").onclick=()=>v90PdfSettingsModal(state.o,no=>{state.o={...no};redraw()},kind?v95ModalOpt(kind):undefined);
   document.getElementById("pdfDownloadBtn").onclick=()=>v94Output("download",v94Spec(state));
@@ -5501,7 +5501,7 @@ async function v91OpenOrderGroupPdf(group){
     const zl=document.getElementById("pdfZoomLabel");if(zl)zl.textContent=Math.round(state.zoom*100)+"%";
   };
   modal.classList.remove("hidden");modal.setAttribute("aria-hidden","false");document.body.classList.add("pronto-modal-lock");
-  document.getElementById("pdfModalTitle").textContent=title;redraw();
+  document.getElementById("pdfModalTitle").textContent=title;state.redraw=redraw;redraw();try{v38YonCiz()}catch(_){}
   document.getElementById("pdfCloseBtn").onclick=()=>{modal.classList.add("hidden");modal.setAttribute("aria-hidden","true");host.innerHTML="";v91GenericPdfState=null;document.body.classList.remove("pronto-modal-lock");};
   document.getElementById("pdfSettingsBtn").onclick=()=>v90PdfSettingsModal(state.o,no=>{state.o={...no};redraw();},v95ModalOpt("grup"));
   document.getElementById("pdfDownloadBtn").onclick=()=>v94Output("download",v94Spec(state));
@@ -7661,8 +7661,8 @@ async function v98Onay(id) {
   const p_kalemler = kal.slice(0, 300).map((k) => ({ uid: String(k.uid || "").slice(0, 60), kategori: String(k.kategori || "").slice(0, 200), model: String(k.model || "").slice(0, 200), urun: String(k.urun || "").slice(0, 200) }));
   const [eslR, esk, oncekiR] = await Promise.all([
     supa.rpc("pronto_eslesme_getir", { p_kalemler }).then((r) => r, (e) => ({ error: e })),
-    row.tur === "guncelleme" ? supa.from("orders").select("id,teklif_kalem,status,product,quantity,color_code,supplier,description").eq("teklif_id", row.teklif_id) : Promise.resolve({ data: [] }),
-    row.tur === "guncelleme" ? supa.rpc("pronto_teklif_kalan", { p_teklif_id: String(row.teklif_id) }).then((r) => r, () => ({ data: null })) : Promise.resolve({ data: null })
+    row.tur === "guncelleme" ? supa.from("orders").select("id,teklif_kalem,status,product,quantity,color_code,supplier,description,delivery_date").eq("teklif_id", row.teklif_id) : Promise.resolve({ data: [] }),
+    row.tur === "guncelleme" ? v38Onceki(row.teklif_id) : Promise.resolve({ data: null })
   ]);
   const eslVar = !eslR.error && !!eslR.data && typeof eslR.data === "object" && !Array.isArray(eslR.data);
   const esl = eslVar ? eslR.data : {};
@@ -7680,9 +7680,13 @@ async function v98Onay(id) {
     allCustomers.filter((x) => !bulunan || x.id !== bulunan.id).slice().sort((a, b) => String(a.name).localeCompare(String(b.name), "tr")).map((x) => `<option value="${x.id}">${escapeHtml(x.name)}</option>`).join("");
   const adres = [c.adres, c.ilce, c.sehir].filter(Boolean).join(", ");
   const supList = `<datalist id="v98Sup">${allSuppliers.map((s) => `<option value="${escapeHtml(s.name)}">`).join("")}</datalist>`;
-  const durumOf = (k) => { const o = eski.get(k.uid); if (!o) return row.tur === "guncelleme" ? ["Yeni", "status-teslim"] : ["", ""]; const ch = o.product !== k.urun || Number(o.quantity) !== Number(k.adet) || (o.color_code || "") !== (k.renk || ""); return ch ? ["Değişti", "status-uretimde"] : ["Aynı", "status-beklemede"]; };
+  const once = row.tur === "guncelleme" ? v38OnceKalem(oncekiR && oncekiR.data) : null;   // v38: bir önceki onaylı kalemler (uid → kalem)
+  const farkOf = (k) => (once && once.has(String(k.uid)) ? v38KalemFark(once.get(String(k.uid)), k) : null);
+  const durumOf = (k) => { const o = eski.get(k.uid); if (!o) return row.tur === "guncelleme" ? ["Yeni", "status-teslim"] : ["", ""]; const f = farkOf(k); const ch = f ? f.length > 0 : (o.product !== k.urun || Number(o.quantity) !== Number(k.adet) || (o.color_code || "") !== (k.renk || "")); return ch ? ["Değişti", "status-uretimde"] : ["Aynı", "status-beklemede"]; };
   const rows = kal.map((k) => { const [dt, dc] = durumOf(k); const o = eski.get(k.uid); const e1 = esl[k.uid] || {}; const sup = o ? o.supplier : String(e1.tedarikci || ""); const kay = o ? "sip" : String(e1.kaynak || "");
-    return `<tr data-uid="${escapeHtml(k.uid)}"><td class="v98-ph" data-foto="${escapeHtml(k.foto || "")}">${k.foto ? "…" : "—"}</td><td><b>${escapeHtml(k.urun)}</b>${dt ? ` <span class="status-badge ${dc}">${dt}</span>` : ""}${o ? `<div class="v98-s">${escapeHtml(orderNo(o))} · ${escapeHtml(o.status || "")}${dt === "Değişti" ? ` · şu an: ${escapeHtml(o.product)} × ${escapeHtml(o.quantity)}${o.color_code ? " · " + escapeHtml(o.color_code) : ""}` : ""}</div>` : ""}</td><td data-l="Ölçü">${escapeHtml(k.olcu || "—")}</td><td data-l="Renk">${escapeHtml(k.renk || "—")}</td><td data-l="Yön">${escapeHtml(k.yon || "—")}</td><td class="num" data-l="Adet"><b>${escapeHtml(k.adet)}</b></td><td class="v98-ac" data-l="Açıklama">${escapeHtml(k.aciklama || "—")}</td><td data-l="Tedarikçi *" data-sug="${escapeHtml(sup)}" data-kay="${escapeHtml(kay)}" data-kat="${escapeHtml(k.kategori || "")}">${v101OnayHucre(sup, kay, e1.yedekler, eslVar)}</td></tr>`; }).join("");
+    const f = o ? farkOf(k) : null, fa = new Set((f || []).map((x) => x.a)), dg = (a) => (fa.has(a) ? ' class="v38-d"' : "");
+    const eskiHtml = f ? v38FarkHtml(f) : (dt === "Değişti" ? `<div class="v98-s">şu an: ${escapeHtml(o.product)} × ${escapeHtml(o.quantity)}${o.color_code ? " · " + escapeHtml(o.color_code) : ""}</div>` : "");
+    return `<tr data-uid="${escapeHtml(k.uid)}"><td class="v98-ph" data-foto="${escapeHtml(k.foto || "")}">${k.foto ? "…" : "—"}</td><td${dg("urun")}><b>${escapeHtml(k.urun)}</b>${dt ? ` <span class="status-badge ${dc}">${dt}</span>` : ""}${o ? `<div class="v98-s">${escapeHtml(orderNo(o))} · ${escapeHtml(o.status || "")}</div>` : ""}${eskiHtml}</td><td data-l="Ölçü"${dg("olcu")}>${escapeHtml(k.olcu || "—")}</td><td data-l="Renk"${dg("renk")}>${escapeHtml(k.renk || "—")}</td><td data-l="Yön"${dg("yon")}>${escapeHtml(k.yon || "—")}</td><td class="num" data-l="Adet"${dg("adet")}><b>${escapeHtml(k.adet)}</b></td><td class="v98-ac${fa.has("aciklama") ? " v38-d" : ""}" data-l="Açıklama">${escapeHtml(k.aciklama || "—")}</td><td data-l="Tedarikçi *" data-sug="${escapeHtml(sup)}" data-kay="${escapeHtml(kay)}" data-kat="${escapeHtml(k.kategori || "")}">${v101OnayHucre(sup, kay, e1.yedekler, eslVar)}</td></tr>`; }).join("");
   const cikanHtml = cikan.length ? `<div class="v98-warn"><b>Tekliften çıkarılan ${cikan.length} kalem</b> onaylanınca <b>İptal</b> yapılacak (silinmez): ${cikan.map((o) => escapeHtml(orderNo(o) + " " + o.product)).join(", ")}</div>` : "";
   const m = v98Ov(`<div class="modal-head"><h2>Teklif ${escapeHtml(row.teklif_no)} — ${v98TurTxt(row.tur)}</h2><button class="icon-btn" data-x aria-label="Kapat">✕</button></div>
     <div class="modal-body">
@@ -7692,6 +7696,7 @@ async function v98Onay(id) {
         <div class="v98-card"><div class="v98-l">Teklif</div><div class="v98-s">Teklif tarihi: ${escapeHtml(v.tarih ? formatDate(v.tarih) : "-")} · Personel: ${escapeHtml(v.personel || "-")}${row.gonderen ? ` · Gönderen: <b>${escapeHtml(row.gonderen)}</b>` : ""}</div><div class="v98-s">Montaj: ${escapeHtml(v98Lbl(v.montaj))} · Nakliye: ${escapeHtml(v98Lbl(v.nakliye))} · Teslim yeri: ${escapeHtml(v98Lbl(v.teslimYeri))}</div>
           <label class="v98-l" style="margin-top:10px;display:block">Teslim tarihi</label><input type="date" class="v98-in" id="v98Teslim" value="${escapeHtml(v.teslim || "")}"></div>
       </div>
+      ${row.tur === "guncelleme" ? v38UstHtml(v, oncekiR && oncekiR.data, Array.from(eski.values())) : ""}
       ${cikanHtml}
       ${v37NotHtml(v, row.tur === "guncelleme" ? (oncekiR && oncekiR.data) : null)}
       <div class="v98-tw"><table class="v98-t"><thead><tr><th>Foto</th><th>Ürün</th><th>Ölçü</th><th>Renk</th><th>Yön</th><th class="num">Adet</th><th>Açıklama</th><th>Tedarikçi *</th></tr></thead><tbody>${rows}</tbody></table></div>${supList}
@@ -7699,6 +7704,7 @@ async function v98Onay(id) {
     </div>
     <div class="modal-foot"><button class="btn btn-ghost v98-red" data-red>Reddet</button><span style="flex:1"></span><button class="btn btn-ghost" data-x>Sonra</button><button class="btn btn-primary" data-ok>Onayla</button></div>`, true);
   m.ov.dataset.gelen = String(id);
+  try { v38TeslimBagla(m.ov); } catch (_) {}
   v101OnayBagla(m.ov);
   try { v28OnayStok(m, kal, eski); } catch (e) { console.warn("Stok işaretleri:", e); }
   // fotoğraflar (sadece bu ekranda, tek istek)
@@ -8563,7 +8569,7 @@ function v107OzetCiz() {
 /* ===== v97: B (Sade) şablonu — tek içerik modeli, iki çıktı:
    1) önizleme / yazdır / masaüstü program: HTML → Chrome motoru (gerçek, yazısı seçilebilen PDF)
    2) tarayıcı / telefon PDF ve Paylaş: pdfmake ile doğrudan gerçek PDF (resim değil) ===== */
-const V97_ORIENT = { tek: "portrait", grup: "landscape", musteri: "landscape", tedarikci: "landscape", urun: "portrait", sevkiyat: "landscape", teslim: "portrait" };
+const V97_ORIENT = {};   /* v38: bütün PDF'ler dikey açılır; yatay yalnız o PDF için seçilir (hatırlanmaz) */
 const V97_LOGO_H = { s: 34, m: 52, l: 76 };
 const V97_PHOTO = { s: 56, m: 88, l: 130 };
 function v97Def(kind) { return { lang: "tr", size: "A4", orient: V97_ORIENT[kind] || "portrait", foto: "m", logoPos: "left", logoSize: "l" }; }
@@ -8575,12 +8581,12 @@ function v97Clean(kind, o) {
   if (["s", "m", "l"].includes(o.foto)) r.foto = o.foto;
   if (["left", "center", "right"].includes(o.logoPos)) r.logoPos = o.logoPos;
   if (["s", "m", "l"].includes(o.logoSize)) r.logoSize = o.logoSize;
-  if (kind !== "tek") { r.lang = "tr"; r.foto = "m"; }
+  if (kind !== "tek") { r.lang = "tr"; if (kind !== "satinalma") r.foto = "m"; }
   return r;
 }
-function v97Get(kind) { try { return v97Clean(kind, JSON.parse(localStorage.getItem("pronto_v97_pdf_" + kind) || "{}")); } catch (_) { return v97Def(kind); } }
+function v97Get(kind) { let r; try { r = v97Clean(kind, JSON.parse(localStorage.getItem("pronto_v97_pdf_" + kind) || "{}")); } catch (_) { r = v97Def(kind); } r.orient = "portrait"; return r; }
 function v97Save(kind, o) { try { localStorage.setItem("pronto_v97_pdf_" + kind, JSON.stringify(v97Clean(kind, o))); } catch (_) {} }
-function v97Keys(kind) { return kind === "tek" ? ["lang", "size", "orient", "foto", "logoPos", "logoSize"] : ["size", "orient", "logoPos", "logoSize"]; }
+function v97Keys(kind) { return kind === "tek" ? ["lang", "size", "orient", "foto", "logoPos", "logoSize"] : kind === "satinalma" ? ["size", "orient", "foto", "logoPos", "logoSize"] : ["size", "orient", "logoPos", "logoSize"]; }
 function v97LogoSrc() { return v90PdfLogo() || ""; }
 function v97Txt(v) { return v == null || v === "" ? "-" : String(v); }
 let V97_LANG = "tr";
@@ -8700,7 +8706,7 @@ const V97_CSS = `.v97p{--ink:#222;--mut:#8b9098;--line:#e8e8e8;background:#fff;c
 .v97p .t .e{color:var(--mut)}
 .v97p .ph{border:1px solid #eee;display:flex;align-items:center;justify-content:center;color:#bbb;font-size:8px;text-align:center}
 .v97p .ph img{width:100%;height:100%;object-fit:contain}
-.v97p .tot{margin:6mm 0 0 auto;width:60mm;border-top:1px solid var(--ink);padding-top:5px;display:flex;justify-content:space-between;font-size:11.5px}
+.v97p .tot{margin:6mm 0 0 auto;width:60mm;border-top:1px solid var(--ink);padding-top:5px;display:flex;justify-content:space-between;font-size:11.5px}.tot+.tot{margin-top:1.2mm;border-top-color:var(--line);padding-top:3px}
 .v97p .note{margin-top:8mm}.v97p .note span{display:block;font-size:8px;color:var(--mut);text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px}
 .v97p .note div{white-space:pre-wrap;font-size:10.5px}
 .v97p .signs{display:grid;grid-template-columns:1fr 1fr;gap:20mm;margin-top:24mm}
@@ -8815,7 +8821,7 @@ async function v97Pdf(m, o) {
     }
     if (s.note) content.push({ margin: [0, 18, 0, 0], unbreakable: true, stack: [{ text: v97Upper(s.note.title), fontSize: 6, color: MUT, characterSpacing: 0.3, margin: [0, 0, 0, 3] }, { text: s.note.text, fontSize: 8 }] });
   }
-  for (const [k, v] of m.totals || []) content.push({ columns: [{ width: "*", text: "" }, { width: 170, table: { widths: ["*", "auto"], body: [[{ text: k, fontSize: 8.6 }, { text: v, fontSize: 8.6, bold: true }]] }, layout: { hLineWidth: (i) => (i === 0 ? 0.8 : 0), hLineColor: () => INK, vLineWidth: () => 0, paddingLeft: () => 0, paddingRight: () => 0, paddingTop: () => 5, paddingBottom: () => 2 } }], margin: [0, 16, 0, 0] });
+  (m.totals || []).forEach(([k, v], ti) => content.push({ columns: [{ width: "*", text: "" }, { width: 170, table: { widths: ["*", "auto"], body: [[{ text: k, fontSize: 8.6 }, { text: v, fontSize: 8.6, bold: true }]] }, layout: { hLineWidth: (i) => (i === 0 ? (ti ? 0.5 : 0.8) : 0), hLineColor: () => (ti ? LINE : INK), vLineWidth: () => 0, paddingLeft: () => 0, paddingRight: () => 0, paddingTop: () => 5, paddingBottom: () => 2 } }], margin: [0, ti ? 3 : 16, 0, 0] }));
   if (m.signs) content.push({ margin: [0, 60, 0, 0], unbreakable: true, columns: m.signs.map((s) => ({ width: "*", stack: [{ canvas: [{ type: "line", x1: 0, y1: 0, x2: 200, y2: 0, lineWidth: 0.6, lineColor: "#999999" }] }, s.name ? { text: s.name, fontSize: 8, alignment: "center", margin: [0, 6, 0, 0] } : { text: "", margin: [0, 6, 0, 0] }, { text: v97Upper(s.title), fontSize: 7, alignment: "center", margin: [0, 2, 0, 0] }, { text: "Ad Soyad / İmza", fontSize: 6.5, color: MUT, alignment: "center" }] })), columnGap: 60 });
   const dd = {
     info: { title: m.previewTitle || m.title || "PRONTO", author: "OFİSCHİ BÜRO MOBİLYALARI", creator: "PRONTO", producer: "PRONTO" },
@@ -8837,7 +8843,7 @@ function v97Open(kind, build) {
   const redraw = () => { state.model = build(state.o); host.innerHTML = v97Html(state.model, state.o); state.zoom = v93ApplyZoom(host, state.zoom); const zl = document.getElementById("pdfZoomLabel"); if (zl) zl.textContent = Math.round(state.zoom * 100) + "%"; };
   const spec = () => { const md = build(state.o); return { o: { ...state.o }, name: md.filename, contact: md.contact, customer: md.customer, title: md.previewTitle, html: v97Html(md, state.o), fill: v97Fill, blob: () => v97Pdf(md, state.o) }; };
   m.classList.remove("hidden"); m.setAttribute("aria-hidden", "false"); document.body.classList.add("pronto-modal-lock");
-  redraw();
+  state.redraw = redraw; redraw(); try { v38YonCiz(); } catch (_) {}
   document.getElementById("pdfModalTitle").textContent = state.model.previewTitle || "PDF";
   document.getElementById("pdfCloseBtn").onclick = () => { m.classList.add("hidden"); m.setAttribute("aria-hidden", "true"); host.innerHTML = ""; v91GenericPdfState = null; if (!document.querySelector(".modal-overlay:not(.hidden):not(#pdfModal)")) document.body.classList.remove("pronto-modal-lock"); };
   document.getElementById("pdfSettingsBtn").onclick = () => v90PdfSettingsModal(state.o, (no) => { state.o = v97Clean(kind, no); redraw(); }, { keys: v97Keys(kind), save: (x) => v97Save(kind, x), def: v97Def(kind) });
@@ -8942,10 +8948,10 @@ document.addEventListener("keydown", (e) => {
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", bind); else bind();
 })();
 /* ===== v95: PDF türüne göre ayarlar ===== */
-const V95_ORIENT={grup:"landscape",musteri:"landscape",tedarikci:"landscape",sevkiyat:"landscape",teslim:"portrait",urun:"portrait"};
+const V95_ORIENT={};   /* v38: hepsi dikey */
 function v95Def(kind){return {size:"A4",orient:V95_ORIENT[kind]||"portrait",logoPos:"left",logoSize:"m"};}
 function v95Clean(kind,o){const d=v95Def(kind),r={...d};if(o&&(o.size==="A4"||o.size==="A3"))r.size=o.size;if(o&&(o.orient==="portrait"||o.orient==="landscape"))r.orient=o.orient;if(o&&["left","center","right"].includes(o.logoPos))r.logoPos=o.logoPos;if(o&&["s","m","l"].includes(o.logoSize))r.logoSize=o.logoSize;return r;}
-function v95Get(kind){try{return v95Clean(kind,JSON.parse(localStorage.getItem("pronto_v95_pdf_"+kind)||"{}"));}catch(_){return v95Def(kind);}}
+function v95Get(kind){let r;try{r=v95Clean(kind,JSON.parse(localStorage.getItem("pronto_v95_pdf_"+kind)||"{}"));}catch(_){r=v95Def(kind);}r.orient="portrait";return r;}
 function v95Save(kind,o){try{localStorage.setItem("pronto_v95_pdf_"+kind,JSON.stringify(v95Clean(kind,o)));}catch(_){}}
 function v95Keys(kind){return kind==="urun"?["size","orient"]:["size","orient","logoPos","logoSize"];}
 function v95ModalOpt(kind){return {keys:v95Keys(kind),save:(o)=>v95Save(kind,o),def:v95Def(kind)};}
@@ -10459,25 +10465,26 @@ async function v29FormAc() {
     <div class="modal-body"><div class="v26-g">
         <label class="tam"><span>Tedarikçi</span><select id="v29T">${T.map((t, i) => `<option value="${i}">${escapeHtml(t.ad)} — ${t.list.length} kalem</option>`).join("")}</select></label>
         <label class="tam" style="flex-direction:row;align-items:center;gap:8px"><input type="checkbox" id="v29Fiyat" style="width:18px;height:18px;min-height:0"> <span>Alış fiyatlarını forma yaz</span></label>
+        <label class="tam" id="v38KdvL" hidden><span>KDV oranı (%) — alış fiyatları KDV hariç kabul edilir</span><input id="v38Kdv" type="number" inputmode="decimal" min="0" max="100" step="0.01" value="${escapeHtml(String(v38KdvGet()))}"></label>
       </div><div class="v29-f-l" id="v29L"></div><div class="v25-hata" id="v29H"></div></div>
     <div class="modal-foot"><button class="btn btn-ghost" type="button" data-x>Kapat</button><button class="btn btn-secondary" type="button" id="v29Wa">WhatsApp</button><button class="btn btn-primary" type="button" id="v29Pdf">PDF</button></div>`);
   m.ov.querySelector(".modal").classList.add("v25-modal");
   const sec = () => T[Number(m.$("#v29T").value)] || T[0];
   const ciz = () => { const t = sec(); m.$("#v29L").innerHTML = t.list.sort((a, b) => String(a.teslim_tarihi || "9").localeCompare(String(b.teslim_tarihi || "9"))).map((r) => `<label><input type="checkbox" data-r="${r.id}" checked><span><b>${escapeHtml(r.no)}</b> · ${escapeHtml(r.kategori)} / ${escapeHtml(r.model)}${v26VarAd(r) ? " · " + escapeHtml(v26VarAd(r)) : ""}<br><span class="v26-us">Kalan ${r.adet - r.gelen} adet${r.teslim_tarihi ? " · teslim " + escapeHtml(formatDate(r.teslim_tarihi)) : ""}</span></span></label>`).join(""); };
   ciz(); m.$("#v29T").addEventListener("change", ciz);
+  m.$("#v29Fiyat").addEventListener("change", () => { m.$("#v38KdvL").hidden = !m.$("#v29Fiyat").checked; });
   const secililer = () => { const ids = new Set(Array.from(m.ov.querySelectorAll("[data-r]:checked")).map((c) => Number(c.dataset.r))); return sec().list.filter((r) => ids.has(r.id)); };
   m.$("#v29Pdf").addEventListener("click", () => {
     const L = secililer(); if (!L.length) { m.$("#v29H").textContent = "En az bir kalem seçin."; return; }
     const fiyat = m.$("#v29Fiyat").checked, t = sec(), sup = allSuppliers.find((x) => v25Ky(x.name) === v25Ky(t.ad)) || {};
-    const satir = L.map((r, i) => `<tr><td>${i + 1}</td><td>${escapeHtml(r.no)}</td><td><b>${escapeHtml(r.kategori)} / ${escapeHtml(r.model)}</b>${r.modul ? "<br>" + escapeHtml(r.modul) : ""}</td><td>${escapeHtml(r.olcu || "—")}</td><td>${escapeHtml(r.renk || "—")}</td><td>${escapeHtml(r.yon || "—")}</td><td style="text-align:right"><b>${r.adet - r.gelen}</b></td><td>${r.teslim_tarihi ? escapeHtml(formatDate(r.teslim_tarihi)) : "—"}</td>${fiyat ? `<td style="text-align:right">${r.alis_fiyat != null ? escapeHtml(v29Para(r.alis_fiyat, r.doviz)) : "—"}</td>` : ""}<td>${escapeHtml(r.aciklama || "")}</td></tr>`).join("");
-    const top = L.reduce((a, r) => a + (r.adet - r.gelen), 0);
-    const html = v92PdfShell(`<div class="v92-pdf-head"><div>${v92PdfLogoHtml()}<h1 class="v92-pdf-title">SATIN ALMA SİPARİŞ FORMU</h1><div class="v92-pdf-sub">Tarih: ${escapeHtml(formatDate(todayISO()))} · ${L.length} kalem · toplam ${top} adet</div></div>
-      <div style="font-size:11px;text-align:right;line-height:1.5"><b>Tedarikçi</b><br>${escapeHtml(t.ad)}${sup.phone ? "<br>" + escapeHtml(sup.phone) : ""}${sup.email ? "<br>" + escapeHtml(sup.email) : ""}${sup.address ? "<br>" + escapeHtml(sup.address) : ""}</div></div>
-      <table class="v92-pdf-table"><thead><tr><th>#</th><th>No</th><th>Ürün</th><th>Ölçü</th><th>Renk</th><th>Yön</th><th style="text-align:right">Adet</th><th>Teslim</th>${fiyat ? `<th style="text-align:right">Birim fiyat</th>` : ""}<th>Not</th></tr></thead><tbody>${satir}</tbody></table>
-      <div style="margin-top:14mm;display:flex;justify-content:space-between;font-size:11px"><div>Siparişi veren: ____________________</div><div>Teslim alan / onay: ____________________</div></div>`, true);
-    const host = document.createElement("div"); host.innerHTML = html;
+    let kdv = null;
+    if (fiyat) {
+      const ham = String(m.$("#v38Kdv").value || "").replace(",", ".").trim();
+      if (!/^\d{1,3}(\.\d{1,2})?$/.test(ham) || Number(ham) > 100) { m.$("#v29H").textContent = "KDV oranı 0 ile 100 arasında olmalı."; m.$("#v38Kdv").focus(); return; }
+      kdv = Number(ham); v38KdvSet(kdv);
+    }
     m.close();
-    v91OpenElementPdf(host.firstElementChild, "Satın Alma Formu — " + t.ad, "Satin-Alma-" + t.ad, "landscape");
+    v38SaPdf(t, L, sup, fiyat, kdv);
   });
   m.$("#v29Wa").addEventListener("click", () => {
     const L = secililer(); if (!L.length) { m.$("#v29H").textContent = "En az bir kalem seçin."; return; }
@@ -11352,6 +11359,159 @@ async function v37DetayNot(id) {
 }
 const _v37Odm = openDetailModal;
 openDetailModal = function (id) { _v37Odm.apply(this, arguments); try { v37DetayNot(id); } catch (_) {} };
+</script>
+<style id="v38-css">
+/* v38: Teklif güncellemesinde değişenler */
+.v38-deg{border:1.5px solid rgba(230,178,42,.6);background:rgba(230,178,42,.08);border-radius:12px;padding:10px 14px;margin:0 0 12px}
+.v38-deg .v98-l{margin-bottom:6px}
+.v38-sat{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:baseline;padding:4px 0;font-size:14px;border-top:1px dashed rgba(0,0,0,.08)}
+.v38-sat:first-of-type{border-top:0}
+.v38-sat>span:first-child{min-width:120px;color:var(--color-text-muted);font-weight:600;font-size:13px}
+.v38-e{color:#A93226;text-decoration:line-through}
+.v38-ey{white-space:nowrap}
+@media(max-width:640px){.v38-sat>span:first-child{min-width:0;flex:1 1 100%}}
+.v38-y{color:#17683A;font-weight:700}
+.v38-ok{color:var(--color-text-muted);font-size:13px}
+.v38-u{margin-top:8px;padding:8px 12px;border-radius:10px;background:rgba(217,48,37,.08);border:1px solid rgba(217,48,37,.35);font-size:13px;line-height:1.5}
+.v38-f{font-size:12.5px;margin-top:3px;line-height:1.4}
+.v38-f>span{color:var(--color-text-muted);font-weight:600}
+td.v38-d{background:rgba(230,178,42,.16)}
+[data-theme="dark"] .v38-e{color:#F0958B}[data-theme="dark"] .v38-y{color:#7FD6A6}
+</style>
+<script id="v38-degisiklik-js">
+/* ===== v38: Teklif güncellemesinde "ne değişti?" (sunucu: pronto-degisiklik.sql) =====
+   Bir önceki ONAYLANMIŞ hal pronto_onay_onceki ile okunur; onay ekranındaki eski okumanın yerine geçer (istek sayısı aynı).
+   SQL henüz kurulmadıysa eski okumaya (pronto_teklif_kalan) döner: o zaman yalnız notlar karşılaştırılır. */
+async function v38Onceki(teklifId) {
+  const p = { p_teklif_id: String(teklifId) };
+  try {
+    const r = await supa.rpc("pronto_onay_onceki", p);
+    if (!r.error) return { data: r.data || null };
+    if (!/PGRST202|42883|pronto_onay_onceki|Could not find the function|schema cache/i.test(String((r.error.code || "") + " " + (r.error.message || "")))) return { data: null };
+  } catch (_) { return { data: null }; }
+  try { const r = await supa.rpc("pronto_teklif_kalan", p); return { data: r.error ? null : r.data }; } catch (_) { return { data: null }; }
+}
+const v38S = (x) => String(x == null ? "" : x).replace(/\s+/g, " ").trim();
+const v38Yon = (x) => (["", "yok", "—", "-"].includes(v38S(x).toLocaleLowerCase("tr-TR")) ? "" : v38S(x));
+function v38OnceKalem(d) {
+  if (!d || !Array.isArray(d.kalemler)) return null;
+  return new Map(d.kalemler.map((k) => [String(k.uid), k]));
+}
+const V38_KALEM = [["urun", "Ürün"], ["olcu", "Ölçü"], ["renk", "Renk"], ["yon", "Yön"], ["adet", "Adet"], ["aciklama", "Açıklama"]];
+function v38KalemFark(a, b) {
+  const out = [];
+  for (const [k, ad] of V38_KALEM) {
+    const x = k === "yon" ? v38Yon(a[k]) : k === "adet" ? String(Number(a[k]) || 0) : v38S(a[k]);
+    const y = k === "yon" ? v38Yon(b[k]) : k === "adet" ? String(Number(b[k]) || 0) : v38S(b[k]);
+    if (x !== y) out.push({ a: k, ad, e: x, y });
+  }
+  return out;
+}
+function v38FarkHtml(f) {
+  return f.map((x) => `<div class="v38-f"><span>${escapeHtml(x.ad)}:</span> <span class="v38-e">${escapeHtml(x.e || "—")}</span> → <span class="v38-y">${escapeHtml(x.y || "—")}</span></div>`).join("");
+}
+const v38Tarih = (x) => (v38S(x) ? formatDate(v38S(x).slice(0, 10)) : "");
+function v38UstHtml(v, d, siparisler) {
+  if (!d || d.var !== true || !Array.isArray(d.kalemler)) return "";   // yalnız pronto_onay_onceki cevabı (SQL kurulmadıysa kutu çıkmaz)
+  const c = (v && v.cari) || {};
+  const alanlar = [
+    ["Sipariş tarihi", v38Tarih(d.tarih), v38Tarih(v.tarih)],
+    ["Teslim tarihi", v38Tarih(d.teslim), v38Tarih(v.teslim)],
+    ["Müşteri", v38S(d.musteri), v38S(c.unvan)],
+    ["Montaj", v38S(d.montaj) ? v98Lbl(d.montaj) : "", v38S(v.montaj) ? v98Lbl(v.montaj) : ""],
+    ["Nakliye", v38S(d.nakliye) ? v98Lbl(d.nakliye) : "", v38S(v.nakliye) ? v98Lbl(v.nakliye) : ""],
+    ["Teslim yeri", v38S(d.teslimYeri) ? v98Lbl(d.teslimYeri) : "", v38S(v.teslimYeri) ? v98Lbl(v.teslimYeri) : ""]
+  ].filter(([, e, y]) => e !== y);
+  // Sipariş'te teslim tarihi elle değiştirilmiş açık siparişler (onaylanınca Teklif'teki tarih yazılır)
+  const onceTes = v38S(d.teslim).slice(0, 10);
+  const elle = (siparisler || []).filter((o) => o && o.delivery_date && onceTes && !["Teslim Edildi", "İptal", "SSH"].includes(o.status) && String(o.delivery_date).slice(0, 10) !== onceTes);
+  const satir = alanlar.map(([ad, e, y]) => `<div class="v38-sat"><span>${escapeHtml(ad)}</span><span class="v38-ey"><span class="v38-e">${escapeHtml(e || "—")}</span> → <span class="v38-y">${escapeHtml(y || "—")}</span></span></div>`).join("");
+  const uyari = elle.length ? `<div class="v38-u">⚠ ${elle.slice(0, 6).map((o) => `<b>${escapeHtml(orderNo(o))}</b>: Sipariş'te teslim tarihi elle <b>${escapeHtml(formatDate(String(o.delivery_date).slice(0, 10)))}</b> yapılmış`).join("; ")}${elle.length > 6 ? ` (+${elle.length - 6} sipariş)` : ""}. Onaylarsan aşağıdaki teslim tarihi (<b class="v38-tt">${escapeHtml(v38Tarih(v.teslim) || "—")}</b>) yazılır.</div>` : "";
+  return `<div class="v38-deg"><div class="v98-l">Teklif'te değişenler</div>${satir || `<div class="v38-ok">Üst bilgilerde (tarihler, müşteri, şartlar) değişiklik yok. Kalem değişiklikleri aşağıda sarı ile işaretli.</div>`}${uyari}</div>`;
+}
+function v38TeslimBagla(ov) {
+  const inp = ov.querySelector("#v98Teslim"); if (!inp) return;
+  inp.addEventListener("input", () => { ov.querySelectorAll(".v38-tt").forEach((b) => { b.textContent = inp.value ? formatDate(inp.value) : "—"; }); });
+}
+</script>
+<style id="v38-yon-css">
+.v38-yon{display:inline-flex;border:1px solid var(--color-border);border-radius:10px;overflow:hidden;background:var(--color-surface-solid);margin-right:4px}
+.v38-yon button{border:0;background:none;padding:8px 14px;font:inherit;font-size:13px;font-weight:700;color:var(--color-text-muted);cursor:pointer;min-height:36px}
+.v38-yon button.on{background:var(--color-text);color:var(--color-surface-solid)}
+@media(max-width:600px){.pdf-h>div:last-child{flex-wrap:wrap !important;row-gap:8px}.pdf-h>div:last-child .v38-yon{flex:1 1 100%;order:-1;margin-right:0}.v38-yon button{flex:1;padding:8px 10px}}
+</style>
+<script id="v38-yon-js">
+/* v38: PDF önizlemesinde tek tık Dikey / Yatay (yalnız açık PDF için; hatırlanmaz) */
+function v38YonCiz() {
+  const s = v91GenericPdfState, y = s && s.o && s.o.orient === "landscape" ? "landscape" : "portrait";
+  document.querySelectorAll("[data-v38-yon]").forEach((b) => { const on = b.dataset.v38Yon === y; b.classList.toggle("on", on); b.setAttribute("aria-pressed", on ? "true" : "false"); });
+}
+document.addEventListener("click", (e) => {
+  const b = e.target.closest("[data-v38-yon]"); if (!b) return;
+  const s = v91GenericPdfState; if (!s || !s.o || typeof s.redraw !== "function") return;
+  s.o = { ...s.o, orient: b.dataset.v38Yon === "landscape" ? "landscape" : "portrait" };
+  s.zoom = null; s.redraw(); v38YonCiz();
+});
+</script>
+<script id="v38-satin-alma-pdf-js">
+/* ===== v38: Satın alma (Tedarikçi Formu) PDF'i — sipariş kartıyla aynı şablon (v97), fotoğraflı, KDV hariç / dahil toplam, imzasız =====
+   Fotoğraflar: katalogdaki model fotoğrafı; Satın Alma listesinin önbelleğinden, eksikler tek toplu istekle (pronto_katalog_foto). */
+const V38_KDV_KEY = "pronto_v38_sa_kdv";
+function v38KdvGet() { try { const v = Number(localStorage.getItem(V38_KDV_KEY)); return Number.isFinite(v) && v >= 0 && v <= 100 && localStorage.getItem(V38_KDV_KEY) !== null ? v : 10; } catch (_) { return 10; } }
+function v38KdvSet(v) { try { localStorage.setItem(V38_KDV_KEY, String(v)); } catch (_) {} }
+const v38R2 = (n) => Math.round((Number(n) + Number.EPSILON) * 100) / 100;
+const v38Para = (n, d) => v26Para(n, d).replace(/ /g, "\u00a0");   // "4.200,00 ₺" tek parça kalsın
+function v38FotoAl(key) {
+  return new Promise((res) => {
+    if (!key || typeof v25FotoIste !== "function") return res("");
+    let bitti = false; const son = (v) => { if (bitti) return; bitti = true; res(v && v25ImgOk(v) ? v : ""); };
+    setTimeout(() => son(""), 6000);   // fotoğrafı olmayan / okunamayan kalem beklemez
+    try { v25FotoIste(key, son); } catch (_) { son(""); }
+  });
+}
+async function v38SaPdf(t, L, sup, fiyat, kdv) {
+  showToast("PDF hazırlanıyor…");
+  try { if (typeof v25KatYukle === "function") await v25KatYukle(false); } catch (_) {}
+  const anah = L.map((r) => { try { return v25FotoBul(r.kategori, r.model, r.modul) || ""; } catch (_) { return ""; } });
+  const fot = {}; await Promise.all(Array.from(new Set(anah.filter(Boolean))).map(async (k) => { fot[k] = await v38FotoAl(k); }));
+  const kalan = (r) => Math.max(0, (Number(r.adet) || 0) - (Number(r.gelen) || 0));
+  const top = L.reduce((a, r) => a + kalan(r), 0);
+  // toplamlar (döviz başına); fiyatı olmayan kalem toplama girmez
+  const dov = new Map(), fiyatsiz = [];
+  if (fiyat) for (const r of L) {
+    if (r.alis_fiyat == null || r.alis_fiyat === "" || !isFinite(Number(r.alis_fiyat))) { fiyatsiz.push(r.no); continue; }
+    const d = r.doviz || "TRY"; dov.set(d, v38R2((dov.get(d) || 0) + Number(r.alis_fiyat) * kalan(r)));
+  }
+  const totals = [];
+  const coklu = dov.size > 1;
+  for (const [d, ara] of dov) {
+    const k = v38R2(ara * (Number(kdv) || 0) / 100), ek = coklu ? ` · ${d}` : "";
+    totals.push([`Toplam (KDV hariç)${ek}`, v38Para(ara, d)], [`KDV %${String(kdv).replace(".", ",")}${ek}`, v38Para(k, d)], [`Toplam (KDV dahil)${ek}`, v38Para(v38R2(ara + k), d)]);
+  }
+  const notlar = L.filter((r) => v38S(r.aciklama)).map((r) => `${r.no}: ${v38S(r.aciklama)}`);
+  if (fiyatsiz.length) notlar.push(`Fiyatı girilmemiş kalem toplama dahil değil: ${fiyatsiz.join(", ")}`);
+  const iletisim = [sup.phone, sup.email].filter(Boolean).join(" · ");
+  v97Open("satinalma", (o) => {
+    const ps = V97_PHOTO[o.foto] || 88;
+    const cols = [{ h: "Fotoğraf", w: ps + 10 }, { h: "Ürün", w: "*" }, { h: "Ölçü", w: "auto" }, { h: "Renk", w: "*" }, { h: "Yön", w: "auto" }, { h: "Adet", w: "auto", align: "r" }, { h: "Teslim", w: "auto" }]
+      .concat(fiyat ? [{ h: "Birim Fiyat", w: "auto", align: "r" }, { h: "Tutar", w: "auto", align: "r" }] : []);
+    const rows = L.map((r, i) => {
+      const fiyatVar = r.alis_fiyat != null && r.alis_fiyat !== "" && isFinite(Number(r.alis_fiyat));
+      return [{ img: fot[anah[i]] || "", size: ps, alt: "Fotoğraf Yok" },
+        { text: `${r.no} · ${r.kategori} / ${r.model}${r.modul ? " · " + r.modul : ""}`, bold: true },
+        v38S(r.olcu) || "-", v38S(r.renk) || "-", v38Yon(r.yon) || "-", { text: String(kalan(r)), bold: true },
+        r.teslim_tarihi ? formatDate(r.teslim_tarihi) : "-"]
+        .concat(fiyat ? [fiyatVar ? v38Para(r.alis_fiyat, r.doviz) : "-", fiyatVar ? v38Para(v38R2(Number(r.alis_fiyat) * kalan(r)), r.doviz) : "-"] : []);
+    });
+    return {
+      kind: "satinalma", docNo: "SATIN ALMA FORMU", previewTitle: "Satın Alma Formu — " + t.ad,
+      filename: `Satin-Alma-${v91PdfSafeName(t.ad)}.pdf`, contact: { type: "supplier", name: t.ad },
+      kv: [["Form Tarihi", formatDate(todayISO())], ["Tedarikçi", t.ad]].concat(iletisim ? [["İletişim", iletisim]] : []).concat([["Kalem", String(L.length)], ["Toplam Adet", String(top)]]),
+      sections: [{ table: { cols, rows } }].concat(notlar.length ? [{ note: { title: "Not", text: notlar.join(" · ") } }] : []),
+      totals
+    };
+  });
+}
 </script>
 </body>
 </html>
