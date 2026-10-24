@@ -1,0 +1,57 @@
+name: Siteyi yayinla ve bildir
+
+on:
+  push:
+    branches: [main]
+    paths: ['index.html', 'manifest.webmanifest', '*.png', '.github/workflows/deploy-pages.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.d.outputs.page_url }}
+    env:
+      SB_URL: ${{ secrets.SUPABASE_URL }}
+      SB_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Yayin klasoru + surum damgasi
+        run: |
+          mkdir _site
+          cp index.html _site/
+          for f in manifest.webmanifest apple-touch-icon.png ikon-64.png ikon-192.png ikon-512.png ikon-maskable-512.png; do if [ -f "$f" ]; then cp "$f" _site/; fi; done
+          V=$(sha256sum index.html | cut -c1-7)
+          echo "V=$V" >> "$GITHUB_ENV"
+          sed -i "s/const V41_SURUM = '__SURUM__'/const V41_SURUM = '$V'/" _site/index.html
+          grep -q "const V41_SURUM = '$V'" _site/index.html
+          printf '{"v":"%s"}\n' "$V" > _site/surum.json
+          touch _site/.nojekyll
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - id: d
+        uses: actions/deploy-pages@v4
+
+      - name: Acik programlara bildirim
+        if: ${{ env.SB_URL != '' && env.SB_KEY != '' }}
+        run: |
+          H=(-H "apikey: $SB_KEY" -H "Content-Type: application/json")
+          [[ "$SB_KEY" == eyJ* ]] && H+=(-H "Authorization: Bearer $SB_KEY")
+          MSG=$(jq -nc --arg v "$V" '{messages:[{topic:"pronto-siparis",event:"surum",private:true,payload:{v:$v}}]}')
+          sleep 20
+          curl -sSf "${H[@]}" "$SB_URL/realtime/v1/api/broadcast" -d "$MSG"
+          echo "Bildirim gonderildi: $V"
