@@ -3405,7 +3405,7 @@ function subscribeToChanges() {
   });
 }
 /* ===== v40: canlı kanal bekçisi (kopunca yeniden bağlan, geri dönünce kontrol) =====
-   Trafik: yalnız kanal koptuğunda oturum tazeleme + yeniden katılım; geri dönüşte en fazla 1 küçük okuma. Düzenli yoklama yok. */
+   Trafik: yalnız kanal koptuğunda oturum tazeleme + yeniden katılım + kaçanların alınması. Bağlantı sağlamken hiç istek yok. Düzenli yoklama yok. */
 let v40Zam = null, v40Deneme = 0, v40Canli = false, v40Gizli = 0, v40Son = Date.now();
 function v40Durum(ok) {
   v40Canli = !!ok;
@@ -3436,7 +3436,7 @@ function v40Dondu(zorla) {
   if (!supa || !deltaMode || !liveJoinedOnce) return;
   if (!zorla && !(v40Gizli && Date.now() - v40Gizli > 60000)) return;
   v40Gizli = 0;
-  if (!v40Canli || !liveChannel) v40Yeniden(true); else v98Yukle().catch(() => {});
+  if (!v40Canli || !liveChannel) v40Yeniden(true);   /* bağlantı sağlamsa okuma yok (değişiklikler zaten canlı geliyor); koptuysa yeniden bağlanınca kaçanlar alınır */
 }
 document.addEventListener("visibilitychange", () => { if (document.hidden) v40Gizli = Date.now(); else v40Dondu(); });
 window.addEventListener("focus", () => v40Dondu());
