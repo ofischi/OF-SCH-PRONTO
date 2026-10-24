@@ -2220,7 +2220,7 @@ table.v98-t{width:100%;border-collapse:collapse;font-size:13px}
     <section class="view hidden" id="view-products">
       <div class="page-header">
         <div><h1>Ürünler</h1><p class="subtitle">Sipariş formlarında seçilebilecek ürün listesi.</p></div>
-        <div class="header-actions v25-l"><button class="btn btn-ghost" id="productTrashBtn">🗑 Çöp Kutusu</button><button class="btn btn-primary" id="newProductBtn">+ Yeni Ürün</button></div>
+        <div class="header-actions v25-l"><button class="btn btn-ghost" id="productTrashBtn">🗑 Çöp Kutusu</button></div>
       </div>
       <div class="v101-tabs" role="tablist" id="v25Tabs">
         <button type="button" class="v101-tab active" role="tab" aria-selected="true" data-v25-tab="list">Ürünler</button>
@@ -2233,9 +2233,8 @@ table.v98-t{width:100%;border-collapse:collapse;font-size:13px}
             <input type="text" id="v25Ara" maxlength="100" placeholder="Kategori, model, renk, ölçü veya kod ara…" autocomplete="off">
           </div>
           <button type="button" class="btn btn-secondary" id="v36KatBtn">Kategoriler</button>
-          <button type="button" class="btn btn-primary" id="v25Yeni">+ Kataloğa Ürün Ekle</button>
         </div>
-        <p class="v101-info">Bu liste <b>PRONTO Teklif</b>'in ürün kataloğudur. Buradan eklenen ürün ve model fotoğrafı Teklif'te de hemen görünür. Kategori / model adı <b>Kategoriler</b>'den değişir; fiyat Teklif'ten.</p>
+        <p class="v101-info">Bu liste <b>PRONTO Teklif</b>'in ürün kataloğudur. Yeni ürün Teklif'ten eklenir, burada hemen görünür; buradan eklenen model fotoğrafı Teklif'te de hemen görünür. Kategori / model adı <b>Kategoriler</b>'den değişir; fiyat Teklif'ten.</p>
         <div id="v25Liste"></div>
       </div>
       <div class="toolbar">
@@ -2253,8 +2252,7 @@ table.v98-t{width:100%;border-collapse:collapse;font-size:13px}
       <div class="cards-wrap" id="productsCardsWrap"></div>
       <div class="pagination hidden" id="productsPagination"></div>
       <div class="empty-state hidden" id="productsEmptyState">
-        <p>Henüz ürün eklenmedi.</p>
-        <button class="btn btn-primary" id="productsEmptyBtn">+ İlk Ürünü Ekle</button>
+        <p>Henüz ürün yok. Yeni ürünler PRONTO Teklif kataloğundan eklenir.</p>
       </div>
     </section>
 
@@ -6350,12 +6348,10 @@ function confirmDeleteEntity(type, id) {
 }
 
 function bindEntityEvents() {
-  document.getElementById("newProductBtn").addEventListener("click", () => openEntityModal("product", null));
   document.getElementById("productTrashBtn")?.addEventListener("click", openProductTrash);
   document.getElementById("productTrashClose")?.addEventListener("click", closeAllModals);
   document.getElementById("productTrashCloseBtn")?.addEventListener("click", closeAllModals);
   document.getElementById("productTrashModal")?.addEventListener("click", (e) => { if (e.target.id === "productTrashModal") closeAllModals(); });
-  document.getElementById("productsEmptyBtn").addEventListener("click", () => openEntityModal("product", null));
   document.getElementById("newCustomerBtn").addEventListener("click", () => openEntityModal("customer", null));
   document.getElementById("customersEmptyBtn").addEventListener("click", () => openEntityModal("customer", null));
   document.getElementById("newSupplierBtn").addEventListener("click", () => openEntityModal("supplier", null));
@@ -6400,8 +6396,7 @@ function renderProductsView() {
     document.getElementById("productsTableBody").innerHTML = "";
     document.getElementById("productsCardsWrap").innerHTML = "";
     document.getElementById("productsPagination").classList.add("hidden");
-    empty.querySelector("p").textContent = activeProductsList().length === 0 ? "Henüz ürün eklenmedi." : "Aramanla eşleşen ürün bulunamadı.";
-    document.getElementById("productsEmptyBtn").style.display = activeProductsList().length === 0 ? "inline-flex" : "none";
+    empty.querySelector("p").textContent = activeProductsList().length === 0 ? "Henüz ürün yok. Yeni ürünler PRONTO Teklif kataloğundan eklenir." : "Aramanla eşleşen ürün bulunamadı.";
     return;
   }
   empty.classList.add("hidden");
