@@ -1,5 +1,11 @@
 name: Siteyi yayinla ve bildir
 
+# index.html (veya simgeler) değişince Sipariş Takibi sitesini yayınlar,
+# sayfaya sürüm damgası basar, surum.json yazar ve açık programlara
+# canlı kanaldan tek "surum" mesajı gönderir (Teklif'teki "Şimdi Güncelle" gibi).
+# Kütüphaneler (Supabase, PDF, Excel) sabit sürümle npm'den doğrulanarak indirilir ve sitenin
+# kendi lib/ klasöründen sunulur; dış CDN'e bağımlılık yoktur. İndirilemezse yayın durur, eski site kalır.
+# Windows .exe iş akışına (pronto-windows-release.yml) dokunmaz.
 on:
   push:
     branches: [main]
@@ -39,6 +45,27 @@ jobs:
           printf '{"v":"%s"}\n' "$V" > _site/surum.json
           touch _site/.nojekyll
 
+      - name: Kutuphaneler (sabit surum, npm butunluk kontrolu)
+        run: |
+          set -euo pipefail
+          mkdir -p _site/lib
+          K=$(mktemp -d); H="$PWD"
+          # al <paket@surum veya resmi tgz adresi> <paket icindeki dosya> <yayin adi>
+          # npm pack, indirilen paketi kayit defterindeki butunluk ozetiyle (sha512) dogrular; surumler sabittir.
+          al() {
+            ( cd "$K" && rm -rf package ./*.tgz && f=$(npm pack --silent "$1" | tail -n1) && tar xzf "$f" )
+            cp "$K/package/$2" "$H/_site/lib/$3"
+            echo "$3 <- $1  sha256:$(sha256sum "$H/_site/lib/$3" | cut -c1-16)"
+          }
+          al @supabase/supabase-js@2.117.2 dist/umd/supabase.min.js supabase.min.js
+          al html2canvas@1.4.1 dist/html2canvas.min.js html2canvas.min.js
+          al jspdf@2.5.2 dist/jspdf.umd.min.js jspdf.umd.min.js
+          al pdfmake@0.2.10 build/pdfmake.min.js pdfmake.min.js
+          al pdfmake@0.2.10 build/vfs_fonts.js vfs_fonts.js
+          al https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz dist/xlsx.full.min.js xlsx.full.min.js
+          grep -q '0\.20\.3' _site/lib/xlsx.full.min.js
+          ls -la _site/lib
+
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
@@ -52,6 +79,7 @@ jobs:
           H=(-H "apikey: $SB_KEY" -H "Content-Type: application/json")
           [[ "$SB_KEY" == eyJ* ]] && H+=(-H "Authorization: Bearer $SB_KEY")
           MSG=$(jq -nc --arg v "$V" '{messages:[{topic:"pronto-siparis",event:"surum",private:true,payload:{v:$v}}]}')
+          # yayın CDN'e yayılsın diye kısa bekleme; sonra tek mesaj
           sleep 20
           curl -sSf "${H[@]}" "$SB_URL/realtime/v1/api/broadcast" -d "$MSG"
           echo "Bildirim gonderildi: $V"
