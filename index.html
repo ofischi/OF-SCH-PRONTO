@@ -1452,6 +1452,14 @@ table.pd-t{width:100%;border-collapse:collapse;font-size:9pt}.pd-t thead{display
 .pd-sum{display:flex;justify-content:space-between;gap:10mm;margin-top:7mm;break-inside:avoid;page-break-inside:avoid}.pd-pay{font-size:9pt;min-width:0}.pd-tot{min-width:70mm;font-size:9.5pt}.pd-tot div{display:flex;justify-content:space-between;gap:10mm;padding:2.5px 0}.pd-tot div span:first-child{color:#4a4f5a}.pd-tot .g{border-top:1.5px solid #1a1d24;margin-top:3px;padding-top:5px;font-weight:700}.pd-tot .g span:first-child{color:#1a1d24}.pd-foot{position:absolute;left:12mm;right:12mm;bottom:9mm;border-top:1px solid #d5d8dd;padding-top:3mm;font-size:8pt;color:#4a4f5a;display:flex;justify-content:space-between;gap:10px}.pd-foot .pg{white-space:nowrap}
 #pdfPrintRoot{display:none}
 @media print{html,body{height:auto!important;overflow:visible!important;background:#fff!important}body>*:not(#pdfPrintRoot){display:none!important}#pdfPrintRoot{display:block!important}#pdfPrintRoot .pdoc{box-shadow:none;width:auto;min-height:0;padding:0;margin:0}#pdfPrintRoot .pd-foot{position:static;margin-top:8mm;left:auto;right:auto;bottom:auto}}
+
+/* v40: canlı bağlantı göstergesi + onay ekranı şeridi */
+.v40-canli{display:flex;align-items:center;gap:7px;margin:8px 14px 12px;font-size:12px;color:#6b707c}
+.v40-canli i{width:8px;height:8px;border-radius:50%;background:#2fb36b;flex:0 0 8px}
+.v40-canli.wait i{background:#e0a816;animation:v40n 1.2s ease-in-out infinite}
+@keyframes v40n{50%{opacity:.35}}
+.v40-serit{display:flex;align-items:center;gap:10px;margin:0 0 10px;padding:9px 12px;border-radius:10px;background:#fff6dd;border:1px solid #f1d68a;color:#6b4e00;font-size:13px}
+.v40-serit span{flex:1}
 </style>
 
 <style id="pronto-global-full-width">
@@ -2948,6 +2956,7 @@ function initSupabase() {
   try {
     supa = window.supabase.createClient(PRONTO_CONFIG.url, PRONTO_CONFIG.anonKey, {
       auth: { persistSession: true, autoRefreshToken: true },
+      ...(typeof Worker === "function" ? { realtime: { worker: true } } : {}),   /* v40: canlı kanal nabzı arka planda yavaşlamasın */
       global: { fetch: (u, o) => (window.__v32F ? window.__v32F(u, o) : fetch(u, o)) }
     });
   } catch (e) {
@@ -3357,7 +3366,7 @@ async function ensureStockLoaded(force = false) { if (stockLoaded && !force) ret
 
 function subscribeToChanges() {
   if (!deltaMode) return subscribeLegacyChanges();
-  liveChannel = supa.channel("pronto-siparis", { config: { private: true, broadcast: { self: false } } })
+  const ch = liveChannel = supa.channel("pronto-siparis", { config: { private: true, broadcast: { self: false } } })
     .on("broadcast", { event: "chg" }, ({ payload }) => {
       for (const c of (payload && payload.changes) || []) {
         if (!c || !TABLES[c.store] || !c.row || c.row.id == null) continue;
@@ -3379,18 +3388,62 @@ function subscribeToChanges() {
       reloadStore(store).then(() => { refreshDatalists(true); if (currentView === "orders") renderOrdersView(); }).catch(() => {});
     });
   Promise.resolve(supa.realtime.setAuth ? supa.realtime.setAuth() : null).catch(() => {}).finally(() => {
-    liveChannel.subscribe((status) => {
+    ch.subscribe((status) => {
+      if (ch !== liveChannel) return;   /* v40: kaldırılmış eski kanalın haberleri yok sayılır */
       if (status === "SUBSCRIBED") {
+        v40Durum(true); v40Deneme = 0;
         if (liveJoinedOnce) catchUpAfterReconnect();   // koptuğu sürede kaçanlar
         liveJoinedOnce = true;
       } else if ((status === "CHANNEL_ERROR" || status === "TIMED_OUT") && !liveJoinedOnce) {
         console.warn("Özel kanal açılamadı, eski yönteme geçiliyor.");
         supa.removeChannel(liveChannel); liveChannel = null;
         subscribeLegacyChanges();
+      } else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
+        v40Durum(false); v40Yeniden();   /* v40: ilk bağlantıdan sonra koparsa kendiliğinden yeniden bağlan */
       }
     });
   });
 }
+/* ===== v40: canlı kanal bekçisi (kopunca yeniden bağlan, geri dönünce kontrol) =====
+   Trafik: yalnız kanal koptuğunda oturum tazeleme + yeniden katılım; geri dönüşte en fazla 1 küçük okuma. Düzenli yoklama yok. */
+let v40Zam = null, v40Deneme = 0, v40Canli = false, v40Gizli = 0, v40Son = Date.now();
+function v40Durum(ok) {
+  v40Canli = !!ok;
+  let el = document.getElementById("v40Canli");
+  if (!el) { const sb = document.getElementById("sidebar"); if (!sb) return; el = document.createElement("div"); el.id = "v40Canli"; el.className = "v40-canli"; sb.appendChild(el); }
+  el.className = "v40-canli " + (ok ? "on" : "wait");
+  el.innerHTML = `<i></i><span>${ok ? "Canlı" : "Yeniden bağlanıyor…"}</span>`;
+  el.title = ok ? "Diğer bilgisayarlardaki değişiklikler anında gelir" : "Bağlantı koptu; kendiliğinden yeniden bağlanıyor";
+}
+function v40Yeniden(hemen) {
+  if (v40Zam || !supa || !deltaMode) return;
+  const bekle = hemen ? 0 : [5000, 15000, 30000, 60000][Math.min(v40Deneme, 3)];
+  v40Zam = setTimeout(async () => {
+    v40Zam = null; v40Deneme++;
+    if (!navigator.onLine) { v40Yeniden(); return; }
+    try {
+      const { data } = await supa.auth.getSession(); let ses = data && data.session;
+      if (!ses || (ses.expires_at && ses.expires_at * 1000 < Date.now() + 60000)) { const r = await supa.auth.refreshSession(); ses = (r && r.data && r.data.session) || ses; }
+      if (ses && ses.access_token && supa.realtime && supa.realtime.setAuth) await supa.realtime.setAuth(ses.access_token);
+    } catch (_) {}
+    const eski = liveChannel; liveChannel = null;
+    try { if (eski) await supa.removeChannel(eski); } catch (_) {}
+    subscribeToChanges();
+    setTimeout(() => { if (!v40Canli) v40Yeniden(); }, 20000);
+  }, bekle);
+}
+function v40Dondu(zorla) {
+  if (!supa || !deltaMode || !liveJoinedOnce) return;
+  if (!zorla && !(v40Gizli && Date.now() - v40Gizli > 60000)) return;
+  v40Gizli = 0;
+  if (!v40Canli || !liveChannel) v40Yeniden(true); else v98Yukle().catch(() => {});
+}
+document.addEventListener("visibilitychange", () => { if (document.hidden) v40Gizli = Date.now(); else v40Dondu(); });
+window.addEventListener("focus", () => v40Dondu());
+window.addEventListener("online", () => v40Dondu(true));
+/* uyku dedektörü: bilgisayar uyuyup uyanınca saat sıçrar (ağ isteği yok) */
+setInterval(() => { const n = Date.now(); if (n - v40Son > 90000) v40Dondu(true); v40Son = n; }, 30000);
+
 function subscribeLegacyChanges() {
   supa.channel("pronto-degisiklikler")
     .on("postgres_changes", { event: "*", schema: "public" }, (payload) => {
@@ -3411,7 +3464,7 @@ function updateOpenOrderGroupRow(orderId) {
   const tr = groupBody.querySelector(`tbody tr[data-id="${id}"]`);
   if (!tr) return;
   const order = allOrders.find((o) => o.id === id);
-  if (!order) { tr.remove(); return; }
+  if (!order || isDeletedOrder(order)) { tr.remove(); return; }   /* v40: çöpe atılan satır da kalkar */
   const cells = tr.children;
   if (cells.length < 11) return;
   cells[2].textContent = formatDate(order.orderDate);
@@ -3446,7 +3499,7 @@ function applyRemoteOrderChange(c) {
   }
   const incoming = fromRow("orders", c.row);
   if (previous && incoming.teklifId === undefined && previous.teklifId !== undefined) incoming.teklifId = previous.teklifId;
-  const structural = remoteOrderNeedsListRender(incoming, previous) || (!!previous && (previous.status !== incoming.status || previous.sshAnaId !== incoming.sshAnaId));
+  const structural = remoteOrderNeedsListRender(incoming, previous) || (!!previous && (previous.status !== incoming.status || previous.sshAnaId !== incoming.sshAnaId || isDeletedOrder(previous) !== isDeletedOrder(incoming)));   /* v40: çöpe at / geri yükle de listeyi etkiler */
   // Küçük alan değişikliklerinde derived indexleri ve ana listeyi tekrar tarama.
   // Sadece ilgili sipariş nesnesini güncelle.
   const idx = allOrders.findIndex((o) => o.id === id);
@@ -3486,8 +3539,14 @@ function scheduleRemoteRefresh() {
       // Örn. açıklama, renk veya kumaş kodunda tek harf değiştiğinde tüm liste taranmaz/çizilmez.
       if (ordersNeedListRender && currentView === "orders") renderOrdersView();
       if (currentDetailOrderId != null && !document.getElementById("detailModal")?.classList.contains("hidden") && changes.some(c => c.store === "orders" && Number(c.row?.id) === Number(currentDetailOrderId))) {
-        openDetailModal(Number(currentDetailOrderId));
+        const acikSip = allOrders.find((o) => o.id === Number(currentDetailOrderId));
+        if (!acikSip || isDeletedOrder(acikSip)) {   /* v40: başka bilgisayarda silindi / çöpe taşındı → pencere kapanır */
+          const no = "PR-" + String(currentDetailOrderId).padStart(5, "0");
+          closeDetailModal();
+          showToast(`${no} başka bir bilgisayarda ${acikSip ? "çöp kutusuna taşındı" : "silindi"}.`);
+        } else openDetailModal(Number(currentDetailOrderId));
       }
+      try { renderOrderTrashButton(); if (!document.getElementById("orderTrashModal")?.classList.contains("hidden")) renderOrderTrash(); } catch (_) {}
       if (currentView === "reports" && ordersNeedListRender) renderReportsView();
     }
     if (stores.has("products")) {
@@ -7633,6 +7692,13 @@ function v98Duyur(g) {
     try { window.prontoDesktop?.notify?.({ title: `PRONTO — ${l.length} sipariş onay bekliyor`, body }); } catch (_) {}
   }, 2100);
 }
+function v40Serit(ov, p) {
+  const md = ov.querySelector(".modal"); if (!md) return;
+  let sr = md.querySelector(".v40-serit");
+  if (!sr) { sr = document.createElement("div"); sr.className = "v40-serit"; md.insertBefore(sr, md.firstChild); }
+  sr.innerHTML = `<span>⟳ <b>Teklif ${escapeHtml(p.teklif_no || "")}'te yeni değişiklik var.</b> Ekrandaki bilgiler eski.</span><button type="button" class="btn btn-secondary">Yenile</button>`;
+  sr.querySelector("button").onclick = () => { ov.remove(); if (!document.querySelector(".modal-overlay:not(.hidden)")) document.body.classList.remove("pronto-modal-lock"); v98Onay(Number(p.id)); };
+}
 function v98Canli(p) {
   if (!p || p.id == null) return;
   const i = v98Gelen.findIndex((g) => g.id === p.id);
@@ -7641,6 +7707,10 @@ function v98Canli(p) {
     const g = { id: p.id, teklif_no: p.teklif_no, tur: p.tur, durum: p.durum, musteri: p.musteri || "", kalem: p.kalem || 0, created_at: i >= 0 ? v98Gelen[i].created_at : new Date().toISOString() };
     if (i >= 0) v98Gelen[i] = g; else { v98Gelen.push(g); v98Gelen.sort((a, b) => Number(a.id) - Number(b.id)); }
     if (yeni) v98Duyur(g);
+    else {   /* v40: bekleyen kayıt Teklif'te tekrar değişti */
+      const acik = document.querySelector(`.v98-ov[data-gelen="${p.id}"]`);
+      if (acik) v40Serit(acik, p); else showToast(`Teklif ${p.teklif_no} güncellendi (onay bekliyor).`);
+    }
   } else {
     if (i >= 0) v98Gelen.splice(i, 1);
     const acik = document.querySelector(`.v98-ov[data-gelen="${p.id}"]`);
