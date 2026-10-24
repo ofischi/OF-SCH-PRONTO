@@ -1460,6 +1460,16 @@ table.pd-t{width:100%;border-collapse:collapse;font-size:9pt}.pd-t thead{display
 @keyframes v40n{50%{opacity:.35}}
 .v40-serit{display:flex;align-items:center;gap:10px;margin:0 0 10px;padding:9px 12px;border-radius:10px;background:#fff6dd;border:1px solid #f1d68a;color:#6b4e00;font-size:13px}
 .v40-serit span{flex:1}
+/* v41: yeni sürüm bandı */
+.v41-bant { position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%); z-index: 3000; display: flex; align-items: center; gap: 10px; max-width: calc(100vw - 32px); padding: 9px 10px 9px 14px; border-radius: 12px; background: var(--color-surface-solid, #fff); color: var(--color-text, #1c1c1e); border: 1px solid var(--color-border, rgba(0,0,0,.1)); box-shadow: 0 10px 30px rgba(0,0,0,.18); font-size: 13px; animation: v41In .3s ease-out; }
+.v41-bant .v41-i { font-size: 16px; color: var(--color-accent-dark, #c08f14); }
+.v41-bant .v41-t { flex: 1; min-width: 0; }
+.v41-bant .v41-b { border: 0; border-radius: 8px; padding: 7px 12px; background: var(--color-accent, #e6b22a); color: var(--color-accent-ink, #4a3703); font: inherit; font-weight: 600; cursor: pointer; white-space: nowrap; }
+.v41-bant .v41-b:disabled { opacity: .7; cursor: wait; }
+.v41-bant .v41-x { border: 0; background: transparent; color: inherit; opacity: .55; font-size: 14px; cursor: pointer; padding: 4px 6px; }
+.v41-bant .v41-x:hover { opacity: 1; }
+@keyframes v41In { from { opacity: 0; transform: translate(-50%, 12px); } to { opacity: 1; transform: translate(-50%, 0); } }
+@media (max-width: 560px) { .v41-bant { bottom: 10px; font-size: 12px; } .v41-bant .v41-t { white-space: normal; } }
 </style>
 
 <style id="pronto-global-full-width">
@@ -3383,6 +3393,7 @@ function subscribeToChanges() {
     .on("broadcast", { event: "kat" }, ({ payload }) => { try { v25Geldi(payload); } catch (_) {} })
     .on("broadcast", { event: "sa" }, ({ payload }) => { try { v26Geldi(payload); } catch (_) {} })
     .on("broadcast", { event: "stok" }, ({ payload }) => { try { v27Geldi(payload); } catch (_) {} })
+    .on("broadcast", { event: "surum" }, ({ payload }) => { try { v41Surum(payload && payload.v); } catch (_) {} })
     .on("broadcast", { event: "reload" }, ({ payload }) => {
       const store = payload && payload.store;
       if (!TABLES[store] || (store === "stockMovements" && !stockLoaded)) return;
@@ -3443,6 +3454,7 @@ function v40BayatIsaretle() {
   try { if (typeof v27 !== "undefined" && v27 && currentView === "stock") v27Yukle().then(() => { if (v27Tab === "depo") v27Ciz(false); }).catch(() => {}); } catch (_) {}
 }
 function v40Dondu(zorla) {
+  try { if (zorla || (v40Gizli && Date.now() - v40Gizli > 60000)) v41Kontrol(); } catch (_) {}
   if (!supa || !deltaMode || !liveJoinedOnce) return;
   if (!zorla && !(v40Gizli && Date.now() - v40Gizli > 60000)) return;
   v40Gizli = 0;
@@ -3453,6 +3465,46 @@ window.addEventListener("focus", () => v40Dondu());
 window.addEventListener("online", () => v40Dondu(true));
 /* uyku dedektörü: bilgisayar uyuyup uyanınca saat sıçrar (ağ isteği yok) */
 setInterval(() => { const n = Date.now(); if (n - v40Son > 90000) v40Dondu(true); v40Son = n; }, 30000);
+
+/* ===== v41: yeni sürüm haberi (Teklif'teki "Şimdi Güncelle" gibi) =====
+   A) GitHub'a yükleyince yayın iş akışı canlı kanala tek "surum" mesajı gönderir (Supabase'e okuma yok).
+   B) Haber kaçarsa: geri dönünce / uyanınca / internet gelince ./surum.json'a bakılır (GitHub'a gider, Supabase'e hiç gitmez). */
+const V41_SURUM = '__SURUM__';
+let v41Gizlendi = "", v41SonBakis = 0;
+function v41Surum(v) {
+  v = String(v || "").trim().toLowerCase();
+  if (!/^[0-9a-f]{7,12}$/.test(v) || V41_SURUM === "__SURUM__" || v === V41_SURUM || v === v41Gizlendi) return;
+  v41Bant(v);
+}
+function v41Kontrol() {
+  if (V41_SURUM === "__SURUM__" || !/^https?:$/.test(location.protocol) || !navigator.onLine) return;
+  if (Date.now() - v41SonBakis < 60000) return;   /* üst üste tetiklenirse tek bakış */
+  v41SonBakis = Date.now();
+  fetch("./surum.json?t=" + Date.now(), { cache: "no-store" }).then((r) => (r.ok ? r.json() : null)).then((j) => { if (j && j.v) v41Surum(j.v); }).catch(() => {});
+}
+function v41Bant(v) {
+  let el = document.getElementById("v41Bant");
+  if (!el) {
+    el = document.createElement("div"); el.id = "v41Bant"; el.className = "v41-bant"; el.setAttribute("role", "status");
+    el.innerHTML = '<span class="v41-i">↻</span><span class="v41-t"><b>Yeni sürüm hazır.</b> Güncellemek için yenileyin.</span><button type="button" class="v41-b" data-v41="ok">Şimdi Güncelle</button><button type="button" class="v41-x" data-v41="x" title="Kapat" aria-label="Kapat">✕</button>';
+    el.addEventListener("click", (e) => {
+      const b = e.target.closest("[data-v41]"); if (!b) return;
+      if (b.dataset.v41 === "x") { v41Gizlendi = el.dataset.v || ""; el.remove(); return; }
+      v41Guncelle(b);
+    });
+    document.body.appendChild(el);
+  }
+  el.dataset.v = v;
+}
+function v41FormAcik() {
+  return [...document.querySelectorAll(".modal-overlay:not(.hidden)")].some((m) => m.querySelector("form, input:not([type=hidden]):not([readonly]), textarea, select"));
+}
+async function v41Guncelle(btn) {
+  if (v41FormAcik() && !confirm("Açık bir pencere var; kaydedilmemiş bilgiler kaybolabilir. Yine de güncellensin mi?")) return;
+  if (btn) { btn.disabled = true; btn.textContent = "Güncelleniyor…"; }
+  try { await fetch("./", { cache: "reload" }); } catch (_) {}
+  location.reload();
+}
 
 function subscribeLegacyChanges() {
   supa.channel("pronto-degisiklikler")
