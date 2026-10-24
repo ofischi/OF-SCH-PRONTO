@@ -3358,6 +3358,7 @@ async function catchUpAfterReconnect() {
     refreshDatalists(true);
     if (currentView === "orders") renderOrdersView();
     v98Yukle().catch(() => {});
+    v40BayatIsaretle();   /* kopukken kaçmış olabilecek diğer bölümler */
   } catch (e) { console.warn("Yeniden bağlanma eşitlemesi:", e); }
 }
 
@@ -3431,6 +3432,15 @@ function v40Yeniden(hemen) {
     subscribeToChanges();
     setTimeout(() => { if (!v40Canli) v40Yeniden(); }, 20000);
   }, bekle);
+}
+/* v40: yeniden bağlanınca satın alma / depo stoğu / katalog / eşleştirmeler "eski" sayılır:
+   ekran açıksa değişenler hemen okunur, değilse ekran açılınca (yalnız değişenler). Bağlantı sağlamken istek yok. */
+let v40SaBayat = false;
+function v40BayatIsaretle() {
+  try { v25Geldi(); } catch (_) {}
+  try { v101Geldi(); } catch (_) {}
+  try { if (typeof v26 !== "undefined" && v26) { v40SaBayat = true; if (currentView === "purchase") v26Yukle(true).then(() => v26Ciz(false)).catch(() => {}); } } catch (_) {}
+  try { if (typeof v27 !== "undefined" && v27 && currentView === "stock") v27Yukle().then(() => { if (v27Tab === "depo") v27Ciz(false); }).catch(() => {}); } catch (_) {}
 }
 function v40Dondu(zorla) {
   if (!supa || !deltaMode || !liveJoinedOnce) return;
@@ -9829,7 +9839,8 @@ function v26Hata(er) {
   return t || "Bilinmeyen hata";
 }
 async function v26Yukle(force) {
-  if (v26 && !force) return v26;
+  if (v26 && !force && !v40SaBayat) return v26;
+  v40SaBayat = false;
   if (v26P) return v26P;
   v26P = (async () => {
     if (!v26) { const c = await cacheGet(V26_C); v26 = { rows: new Map(((c && c.rows) || []).map((r) => [r.id, r])), son: (c && c.son) || null }; }
