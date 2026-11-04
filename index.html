@@ -231,7 +231,6 @@ input, select, textarea { font-family: inherit; }
 .nav-item.active svg { color: var(--color-accent-dark); }
 .nav-item svg { flex-shrink: 0; color: #9C9C98; }
 .nav-item--settings { margin-top: auto; }
-.sidebar-foot { color: #9C9C98; font-size: 11px; padding: 8px 6px 0; }
 
 .sidebar-overlay {
   display: none;
@@ -329,13 +328,6 @@ input, select, textarea { font-family: inherit; }
 
 .orders-table td.col-actions { white-space: nowrap; cursor: default; }
 .order-no { font-weight: 700; font-variant-numeric: tabular-nums; }
-.row-actions { display: flex; gap: 5px; }
-.row-actions button {
-  border: 1px solid var(--color-border); background: var(--color-surface);
-  border-radius: 6px; padding: 4px 8px; font-size: 12px; font-weight: 600; color: var(--color-text);
-}
-.row-actions button:hover { background: var(--color-bg); }
-.row-actions button.danger { color: var(--color-danger); }
 
 .status-badge {
   display: inline-block; padding: 3px 10px; border-radius: 999px;
@@ -373,8 +365,7 @@ input, select, textarea { font-family: inherit; }
 .order-group-table th:nth-child(8),.order-group-table td:nth-child(8){width:52px;}
 .order-group-table th:nth-child(9),.order-group-table td:nth-child(9){width:88px;}
 .order-group-table th:nth-child(10),.order-group-table td:nth-child(10){width:92px;}
-.order-group-table th:nth-child(11),.order-group-table td:nth-child(11){width:44px;}
-.order-group-select,.group-order-select,#groupSelectAll{position:relative;z-index:5;pointer-events:auto;}
+.order-group-table th:nth-child(11),.order-group-table td:nth-child(11){width:44px;}.group-order-select,#groupSelectAll{position:relative;z-index:5;pointer-events:auto;}
 .order-group-modal .modal-body{overscroll-behavior:contain;}
 @media(max-width:900px){.order-group-table{table-layout:auto}.order-group-table-wrap{overflow-x:auto}.order-group-table{min-width:980px}.order-group-actions .group-action-spacer{display:none}}
 .order-group-modal .modal-body{padding:16px;overflow-x:hidden;overflow-y:auto;}
@@ -421,11 +412,6 @@ input, select, textarea { font-family: inherit; }
 .order-card-qty { font-weight: 600; font-size: 14px; }
 .order-card-meta { display: flex; flex-direction: column; gap: 4px; margin: 12px 0; font-size: 13.5px; color: var(--color-text-muted); }
 .order-card-status { margin: 10px 0 12px; }
-.order-card-actions { display: flex; gap: 8px; }
-.order-card-actions button {
-  flex: 1; padding: 10px; border-radius: 9px; border: 1px solid var(--color-border);
-  background: var(--color-bg); font-weight: 600; font-size: 13.5px; color: var(--color-text);
-}
 
 /* ===================== EMPTY STATE ===================== */
 .empty-state {
@@ -514,20 +500,12 @@ input, select, textarea { font-family: inherit; }
  .order-entry-left{border-bottom:1px solid var(--color-border);padding-right:4px;}
  .order-entry-right{border-left:0;padding-left:2px;}
 }
-
-.shipment-condition-wrap{grid-column:1 / -1;margin-top:2px;padding:12px 14px;border:1px solid var(--color-border);border-radius:12px;background:var(--color-surface-soft);}
-.shipment-condition-title{display:block;margin-bottom:10px;font-size:13px;font-weight:700;color:var(--color-text-muted);}
-.shipment-condition-list{display:flex;flex-wrap:wrap;gap:9px;}
-.shipment-condition-btn{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--color-border);background:var(--color-surface);color:var(--color-text);border-radius:999px;padding:8px 12px;font-size:12px;font-weight:700;cursor:pointer;}
-.shipment-condition-btn .condition-dot{width:15px;height:15px;border-radius:50%;border:2px solid #aaa;display:inline-block;background:transparent;box-sizing:border-box;}
-.shipment-condition-btn.active{border-color:var(--color-accent);background:rgba(230,178,42,.12);}
-.shipment-condition-btn.active .condition-dot{border-color:var(--color-accent);background:var(--color-accent);box-shadow:inset 0 0 0 3px var(--color-surface);}
 .price-summary-box{grid-column:1 / -1;display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding:14px;border:1px solid var(--color-border);border-radius:12px;background:var(--color-surface-soft);}
 .price-summary-item{display:flex;flex-direction:column;gap:4px;}
 .price-summary-item span{font-size:11px;color:var(--color-text-muted);font-weight:700;}
 .price-summary-item strong{font-size:14px;color:var(--color-text);}
 .price-rate-note{grid-column:1 / -1;font-size:11px;color:var(--color-text-muted);margin-top:-3px;}
-@media(max-width:900px){.modal--order-form{width:100%;height:94vh;max-height:94vh;}.order-entry-layout{grid-template-columns:1fr;gap:12px;}.order-entry-right{border-left:0;border-top:1px solid var(--color-border);padding-left:0;padding-top:14px;}.order-entry-left,.order-entry-right{max-height:38vh;}.price-summary-box{grid-template-columns:1fr 1fr;}.shipment-condition-list{gap:7px;}}
+@media(max-width:900px){.modal--order-form{width:100%;height:94vh;max-height:94vh;}.order-entry-layout{grid-template-columns:1fr;gap:12px;}.order-entry-right{border-left:0;border-top:1px solid var(--color-border);padding-left:0;padding-top:14px;}.order-entry-left,.order-entry-right{max-height:38vh;}.price-summary-box{grid-template-columns:1fr 1fr;}}
 @media(max-width:700px){.modal--order-form{width:100%;}.order-cart-item{grid-template-columns:62px minmax(0,1fr);}.order-cart-thumb{width:62px;height:62px;}}
 
 .form-field input:focus, .form-field select:focus, .form-field textarea:focus {
@@ -595,13 +573,11 @@ input, select, textarea { font-family: inherit; }
 
 @media (max-width: 380px) {
   .summary-grid { grid-template-columns: 1fr 1fr; }
-  .row-actions button { padding: 6px 8px; }
 }
 
 /* ===================== SEVKİYAT ===================== */
 /* Sevkiyat da diğer ana sekmelerle aynı ortak view-enter animasyonunu kullanır. */
 .shipment-toolbar { align-items: stretch; }
-.shipment-archive-actions { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
 .shipment-archive-btn { font-size:12px; padding:7px 10px; }
 .shipment-select { min-width: 190px; }
 #shipmentGroups { display: flex; flex-direction: column; gap: 16px; }
@@ -647,47 +623,7 @@ input, select, textarea { font-family: inherit; }
 @media (prefers-reduced-motion: reduce) {
   .view.view-enter { animation: none !important; }
 }
-/* ===================== TESLİM FORMU ===================== */
-#view-delivery-form .delivery-form-sheet {
-  background: var(--color-surface-solid);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius);
-  padding: 24px;
-}
-#view-delivery-form .delivery-form-head {
-  display:flex; justify-content:space-between; gap:18px; align-items:flex-start;
-  padding-bottom:16px; border-bottom:2px solid var(--color-text);
-}
-#view-delivery-form .delivery-form-title {
-  margin:0; font-family:var(--font-display); font-size:22px; font-weight:800;
-}
-#view-delivery-form .delivery-form-meta {
-  display:grid; grid-template-columns:1fr 1fr; gap:10px 24px; margin:18px 0;
-}
-#view-delivery-form .delivery-form-meta-item span {
-  display:block; color:var(--color-text-muted); font-size:11px; margin-bottom:3px;
-}
-#view-delivery-form .delivery-form-meta-item strong {
-  display:block; font-size:14px;
-}
-#view-delivery-form .delivery-form-table {
-  width:100%; border-collapse:collapse; margin-top:8px; font-size:13px;
-}
-#view-delivery-form .delivery-form-table th,
-#view-delivery-form .delivery-form-table td {
-  border:1px solid var(--color-border); padding:9px 10px; text-align:left;
-}
-#view-delivery-form .delivery-form-table th { background:var(--color-row-alt); font-weight:800; }
-#view-delivery-form .delivery-form-signatures {
-  display:grid; grid-template-columns:1fr 1fr; gap:48px; margin-top:48px;
-}
-#view-delivery-form .delivery-form-signature {
-  border-top:1px solid var(--color-text); padding-top:8px; min-height:55px;
-}
-@media (max-width:700px) {
-  #view-delivery-form .delivery-form-meta,
-  #view-delivery-form .delivery-form-signatures { grid-template-columns:1fr; gap:18px; }
-}
+
 
 
 
@@ -790,12 +726,6 @@ input, select, textarea { font-family: inherit; }
   box-sizing: border-box;
 }
 
-#view-delivery-form .delivery-form-sheet {
-  width: 100%;
-  max-width: none;
-  box-sizing: border-box;
-}
-
 @media (max-width: 900px) {
   #view-delivery-form .shipment-table {
     min-width: 0;
@@ -878,8 +808,6 @@ input, select, textarea { font-family: inherit; }
 .settings-form { display: flex; flex-direction: column; gap: 12px; }
 .settings-form .form-field input { max-width: 320px; }
 .settings-actions { display: flex; gap: 10px; flex-wrap: wrap; }
-.settings-card--danger { border-color: #F0CFC9; }
-.settings-card--danger h3 { color: var(--color-danger); }
 
 /* ===================== RESPONSIVE ADDITIONS ===================== */
 @media screen and (max-width:1024px) {
@@ -1134,8 +1062,6 @@ body::after {
 .btn-secondary,
 .pill,
 .page-btn,
-.row-actions button,
-.order-card-actions button,
 .page-size-select {
   background: var(--glass-bg);
   border-color: var(--glass-edge);
@@ -1446,13 +1372,8 @@ body::after {
 @media screen and (max-width:1024px){.pdf-ov .modal{width:95vw;height:95dvh}}
 .pdf-h{display:flex;align-items:center;gap:12px;padding:10px 14px;border-bottom:1px solid var(--color-border,#ddd);flex-wrap:wrap}
 .pdf-h .meta{flex:1;min-width:160px;display:flex;align-items:center;gap:10px}.pdf-h .meta .mark{font-weight:800;letter-spacing:.08em}.pdf-stage{flex:1;overflow:auto;padding:24px;background:rgba(0,0,0,.05);touch-action:pan-x pan-y}.pdf-zoom{transform-origin:top center;margin:0 auto;width:max-content}
-.pdoc{--pf:#1a1d24;background:#fff;color:var(--pf);width:210mm;min-height:297mm;padding:14mm 12mm 26mm;font:10pt/1.4 Arial,Helvetica,sans-serif;box-shadow:0 10px 40px rgba(0,0,0,.35);position:relative}
-.pdoc.A3{width:297mm;min-height:420mm}.pdoc.land{width:297mm;min-height:210mm}.pdoc.A3.land{width:420mm;min-height:297mm}
-.pd-head{display:flex;justify-content:space-between;gap:16px;margin-bottom:8mm}.pd-logo{display:flex;margin-bottom:5mm}.pd-logo.center{justify-content:center}.pd-logo.right{justify-content:flex-end}.pd-logo img{object-fit:contain}.pd-logo .fn{font-size:16pt;font-weight:800}.pd-cust{font-size:9.5pt;line-height:1.5}.pd-cust b{font-size:11pt;display:block;margin-bottom:2px}.pd-right{text-align:right;min-width:62mm}.pd-no{font-size:15pt;font-weight:800;letter-spacing:-.01em}.pd-kv{margin:6px 0 0 auto;border-collapse:collapse;font-size:9.5pt}.pd-kv td{padding:1px 0 1px 12px}.pd-kv td:first-child{color:#6b707c}
-table.pd-t{width:100%;border-collapse:collapse;font-size:9pt}.pd-t thead{display:table-header-group}.pd-t th{background:#eceef1;color:#1a1d24;text-align:left;padding:6px 7px;font-weight:700;border-bottom:1px solid #d5d8dd}.pd-t th.r,.pd-t td.r{text-align:right}.pd-t tbody{break-inside:avoid;page-break-inside:avoid}.pd-t td{padding:7px;vertical-align:top;border-bottom:1px solid #e6e8eb}.pd-t td.pcell{line-height:0}.pd-t td.pcell img{display:block;object-fit:contain;border-radius:3px}.pd-t .nofoto{display:grid;line-height:1.2;place-items:center;background:#f0f1f3;color:#8a8f99;font-size:7.5pt;border-radius:3px}.pd-t .nm{font-weight:700}.pd-t .ds{padding-top:0;color:#4a4f5a;white-space:pre-wrap;overflow-wrap:anywhere}
-.pd-sum{display:flex;justify-content:space-between;gap:10mm;margin-top:7mm;break-inside:avoid;page-break-inside:avoid}.pd-pay{font-size:9pt;min-width:0}.pd-tot{min-width:70mm;font-size:9.5pt}.pd-tot div{display:flex;justify-content:space-between;gap:10mm;padding:2.5px 0}.pd-tot div span:first-child{color:#4a4f5a}.pd-tot .g{border-top:1.5px solid #1a1d24;margin-top:3px;padding-top:5px;font-weight:700}.pd-tot .g span:first-child{color:#1a1d24}.pd-foot{position:absolute;left:12mm;right:12mm;bottom:9mm;border-top:1px solid #d5d8dd;padding-top:3mm;font-size:8pt;color:#4a4f5a;display:flex;justify-content:space-between;gap:10px}.pd-foot .pg{white-space:nowrap}
 #pdfPrintRoot{display:none}
-@media print{html,body{height:auto!important;overflow:visible!important;background:#fff!important}body>*:not(#pdfPrintRoot){display:none!important}#pdfPrintRoot{display:block!important}#pdfPrintRoot .pdoc{box-shadow:none;width:auto;min-height:0;padding:0;margin:0}#pdfPrintRoot .pd-foot{position:static;margin-top:8mm;left:auto;right:auto;bottom:auto}}
+@media print{html,body{height:auto!important;overflow:visible!important;background:#fff!important}body>*:not(#pdfPrintRoot){display:none!important}#pdfPrintRoot{display:block!important}}
 
 /* v40: canlı bağlantı göstergesi + onay ekranı şeridi */
 .v40-canli{display:flex;align-items:center;gap:7px;margin:8px 14px 12px;font-size:12px;color:#6b707c}
@@ -1566,31 +1487,15 @@ table.pd-t{width:100%;border-collapse:collapse;font-size:9pt}.pd-t thead{display
 .order-group-modal .order-group-table .menu-trigger{padding:3px 6px;min-width:0;}
 
 /* Diğer modal tabloları: gereksiz boşlukları azalt, içerik sütunlarına alan bırak. */
-.modal .orders-table,.modal .shipment-table,.modal .delivery-form-table{width:100%;table-layout:fixed;min-width:0;}
-.modal .orders-table th,.modal .orders-table td,.modal .shipment-table th,.modal .shipment-table td,.modal .delivery-form-table th,.modal .delivery-form-table td{box-sizing:border-box;}
+.modal .orders-table,.modal .shipment-table{width:100%;table-layout:fixed;min-width:0;}
+.modal .orders-table th,.modal .orders-table td,.modal .shipment-table th,.modal .shipment-table td{box-sizing:border-box;}
 .modal .orders-table th:first-child,.modal .orders-table td:first-child{width:4%;}
 .modal .orders-table th:last-child,.modal .orders-table td:last-child{width:5%;}
 </style>
 
 <style id="v24-group-preview-content-css">
-.pronto-v24-preview-body{flex:1 1 auto;min-height:0;overflow:auto;padding:24px;background:#e9e8e5;box-sizing:border-box}
 .pronto-v24-preview-page{width:min(1120px,calc(100vw - 48px));min-height:794px;margin:0 auto;padding:38px 42px;box-sizing:border-box;background:#fff;color:#1c1c1e;font-family:Arial,Helvetica,sans-serif;box-shadow:0 14px 42px rgba(0,0,0,.18);border-radius:3px}
-.pronto-v24-preview-head{display:flex;justify-content:space-between;align-items:flex-start;gap:24px;padding-bottom:20px;margin-bottom:22px;border-bottom:3px solid #E6B22A}
-.pronto-v24-preview-logo{display:block;max-width:160px;max-height:52px;width:auto;height:auto;object-fit:contain;object-position:left center;margin-bottom:14px}
-.pronto-v24-preview-h1{font-size:25px;line-height:1.12;font-weight:800;margin:0 0 6px;color:#1c1c1e}
-.pronto-v24-preview-sub{font-size:12px;color:#6B6B70;margin:0}
-.pronto-v24-preview-kpis{display:grid;grid-template-columns:repeat(2,minmax(115px,1fr));gap:8px;min-width:240px}
-.pronto-v24-preview-kpi{border:1px solid #dedbd2;background:#faf9f6;border-radius:8px;padding:10px 12px}
-.pronto-v24-preview-kpi span{display:block;font-size:9px;text-transform:uppercase;letter-spacing:.06em;color:#6B6B70;font-weight:700;margin-bottom:4px}
-.pronto-v24-preview-kpi strong{display:block;font-size:13px;color:#1c1c1e}
-.pronto-v24-preview-table{width:100%;border-collapse:collapse;table-layout:fixed;font-size:10px}
-.pronto-v24-preview-table th{background:#202226;color:#fff;border:1px solid #202226;padding:9px 8px;text-align:left;font-weight:800}
-.pronto-v24-preview-table td{border:1px solid #d9d7d1;padding:8px;vertical-align:top;line-height:1.3;word-break:break-word}
-.pronto-v24-preview-table tbody tr:nth-child(even){background:#fafafa}
-.pronto-v24-preview-table .num{text-align:right;white-space:nowrap}
-.pronto-v24-status{display:inline-block;padding:3px 7px;border-radius:999px;background:#FBEECB;color:#6B4E0A;font-weight:800;font-size:9px;white-space:nowrap}
-.pronto-v24-preview-foot{margin-top:22px;padding-top:10px;border-top:1px solid #cfcac0;color:#777;font-size:9px;display:flex;justify-content:space-between;gap:12px}
-@media(max-width:820px){.pronto-v24-preview-body{padding:10px}.pronto-v24-preview-page{width:794px;margin:0 auto;padding:28px}}
+@media(max-width:820px){.pronto-v24-preview-page{width:794px;margin:0 auto;padding:28px}}
 </style>
 
 <style id="v93-duzeltmeler">
@@ -1667,8 +1572,6 @@ table.pd-t{width:100%;border-collapse:collapse;font-size:9pt}.pd-t thead{display
 #view-delivery-form .shipment-table th:nth-child(8),#view-delivery-form .shipment-table td:nth-child(8){width:12%}
 .shipment-type{white-space:nowrap}
 .shipment-table td:nth-child(2){white-space:nowrap}
-/* 13) Eksi stok */
-.v96-neg{color:#C0392B;font-weight:800}
 /* 12) Odak ve gizli öğeler */
 .search-box:focus-within{border-color:var(--color-accent) !important;box-shadow:0 0 0 3px rgba(230,178,42,.22) !important}
 .upcoming-panel:not(.is-open) .upcoming-list{visibility:hidden}
@@ -2826,24 +2729,10 @@ const PRONTO_CONFIG = Object.freeze({
 // 3 yanlış parola denemesi = 1 saat giriş kilidi.
 const LOGIN_MAX_ATTEMPTS = 3;
 const LOGIN_LOCKOUT_MS = 60 * 60 * 1000;
-const API_THROTTLE_MS = 10;
 const AUTH_THROTTLE_MS = 1200;
-let apiNextAllowedAt = 0;
-let apiThrottleQueue = Promise.resolve();
 function throttleApi() { return Promise.resolve(); } /* Supabase kendi sınırını uygular */
 
 // Excel kütüphanesi yalnızca gerçekten ihtiyaç olduğunda yüklenir.
-/* PDF kütüphaneleri yalnızca PDF alınırken bir kez yüklenir (açılışı hızlandırır) */
-let pdfLibsPromise = null;
-function ensurePdfLibs() {
-  if (window.html2canvas && window.jspdf?.jsPDF) return Promise.resolve();
-  const load = (src) => new Promise((ok, no) => { const el = document.createElement("script"); el.src = src; el.onload = ok; el.onerror = () => no(new Error("PDF motoru yüklenemedi. İnternet bağlantısını kontrol edin.")); document.head.appendChild(el); });
-  pdfLibsPromise ||= Promise.all([
-    window.html2canvas ? null : load("lib/html2canvas.min.js"),
-    window.jspdf?.jsPDF ? null : load("lib/jspdf.umd.min.js")
-  ]).catch((e) => { pdfLibsPromise = null; throw e; });
-  return pdfLibsPromise;
-}
 
 let xlsxPromise = null;
 function ensureXlsx() {
@@ -3147,21 +3036,7 @@ async function dbPut(store, obj) {
 
 // Toplu teslim işleminde tek HTTP isteği kullanılır.
 // Mevcut tekli CRUD davranışına dokunulmaz; yalnızca toplu teslim hızlandırılır.
-function toRowWithId(store, obj) {
-  const row = toRow(store, obj);
-  if (obj && obj.id != null) row.id = sanitizeNumber(obj.id, { min: 1, max: 100000000, integer: true });
-  return row;
-}
 
-async function dbUpsertMany(store, list) {
-  if (!Array.isArray(list) || !list.length) return;
-  const rows = list.map((o) => toRowWithId(store, o));
-  await throttleApi();
-  const { data, error } = await supa.from(TABLES[store]).upsert(rows, { onConflict: "id" }).select(STORE_COLUMNS[store]);
-  if (error) dbFail("toplu güncelleme: " + store, error);
-  liveSend(store, "UPDATE", data || []);
-  if (store === "orders") v105ParcaTeslimKontrol((data || []).map((r) => fromRow(store, r)));
-}
 
 async function dbDelete(store, id) {
   const safeId = sanitizeNumber(id, { min: 1, max: 100000000, integer: true });
@@ -3188,17 +3063,6 @@ async function dbDeleteMany(store, ids) {
   rebuildDerivedIndexes();
 }
 
-async function dbClear(store) {
-  await throttleApi();
-  const { error } = await supa.from(TABLES[store]).delete().gte("id", 0);
-  if (error) dbFail("temizleme: " + store, error);
-  liveReload(store);
-  const target = store === "orders" ? allOrders : store === "products" ? allProducts : store === "customers" ? allCustomers : store === "suppliers" ? allSuppliers : allStockMovements;
-  if (Array.isArray(target)) target.length = 0;
-  if (store === "orders") sortedOrders = [];
-  if (store === "stockMovements") stockLoaded = true;
-  rebuildDerivedIndexes();
-}
 
 /* Başka biri değişiklik yapınca sadece değişen kaydı yerelde güncelle.
    Böylece her değişiklikte 4-5 adet SELECT atılmaz; trafik ciddi azalır. */
@@ -3375,9 +3239,6 @@ function liveSend(store, eventType, rows) {
     if (changes.length) liveChannel.send({ type: "broadcast", event: "chg", payload: { changes } }).catch(() => {});
   }
   scheduleCacheSave();
-}
-function liveReload(store) {
-  if (deltaMode && liveChannel) liveChannel.send({ type: "broadcast", event: "reload", payload: { store } }).catch(() => {});
 }
 async function catchUpAfterReconnect() {
   v99YoklariSil();
@@ -5538,31 +5399,14 @@ async function saveOrderFromForm(allowWarnings = false, allowConflict = false) {
    ======================================================= */
 
 const V90_PDF_KEY="pronto_v90_pdf_settings";const V90_PDF_DEF={lang:"tr",size:"A4",orient:"portrait",foto:"m",logoPos:"center",logoSize:"m"};
-function v90PdfSettings(){let r;try{r={...V90_PDF_DEF,...JSON.parse(localStorage.getItem(V90_PDF_KEY)||"{}")}}catch(_){r={...V90_PDF_DEF}}r.orient="portrait";return r}function saveV90PdfSettings(o){localStorage.setItem(V90_PDF_KEY,JSON.stringify(o))}function v90PdfEsc(v){return escapeHtml(v==null?"":String(v))}function v90PdfLogo(){return document.querySelector(".mobile-logo")?.src||""}function v90PdfPhotoSize(o){return ({s:56,m:88,l:130}[o.foto]||88)}function v90PdfLogoSize(o){return ({s:34,m:52,l:76}[o.logoSize]||52)}
-function v90PdfDoc(order,o,photoUrl=""){const p=pricingTotals(order),customer=allCustomers.find(c=>normName(c.name)===normName(order.customer))||{},logo=v90PdfLogo(),L=o.lang==="en"?{photo:"Photo",product:"Product",color:"Color / Fabric",qty:"Qty",unit:"Unit Price",total:"Total",orderDate:"Order Date",delivery:"Delivery Date",status:"Status",desc:"Description",subtotal:"Subtotal",vat:"VAT",grand:"Grand Total"}:{photo:"Fotoğraf",product:"Ürün",color:"Renk / Kumaş",qty:"Adet",unit:"Birim Fiyat",total:"Toplam",orderDate:"Sipariş Tarihi",delivery:"Teslim Tarihi",status:"Durum",desc:"Açıklama",subtotal:"Ara Toplam",vat:"KDV",grand:"Genel Toplam"},logoPos=o.logoPos==="right"?"justify-content:flex-end":o.logoPos==="left"?"":"justify-content:center",ps=v90PdfPhotoSize(o),photo=photoUrl?`<img src="${v90PdfEsc(photoUrl)}" crossorigin="anonymous" style="width:${ps}px;height:${ps}px;object-fit:contain;border-radius:3px">`:`<div class="nofoto" style="width:${ps}px;height:${ps}px">Fotoğraf Yok</div>`;return `<div class="pdoc ${o.size} ${o.orient==="landscape"?"land":""}"><div class="pd-head"><div style="flex:1"><div class="pd-logo" style="${logoPos}">${logo?`<img src="${v90PdfEsc(logo)}" style="height:${v90PdfLogoSize(o)}px;width:auto;max-width:190px">`:`<div class="fn">OFİSCHİ</div>`}</div></div><div class="pd-right"><div class="pd-no">${v90PdfEsc(orderNo(order))}</div><table class="pd-kv"><tr><td>${L.orderDate}</td><td>${v90PdfEsc(formatDate(order.orderDate))}</td></tr><tr><td>${L.delivery}</td><td>${v90PdfEsc(formatDate(order.deliveryDate))}</td></tr><tr><td>${L.status}</td><td>${v90PdfEsc(order.status||"-")}</td></tr></table></div></div><table class="pd-t"><thead><tr><th style="width:76px">${L.photo}</th><th>${L.product}</th><th>${L.color}</th><th class="r">${L.qty}</th></tr></thead><tbody><tr><td class="pcell">${photo}</td><td><div class="nm">${v90PdfEsc(order.product||"-")}</div><div class="ds">${v90PdfEsc(order.supplier||"-")}</div></td><td>${v90PdfEsc([order.colorCode,order.fabricCode].filter(Boolean).join(" / ")||"-")}</td><td class="r">${v90PdfEsc(order.quantity??"-")}</td></tr></tbody></table><div class="pd-sum"><div class="pd-pay"><b>${L.desc}</b><div style="margin-top:5px;white-space:pre-wrap;max-width:110mm">${v90PdfEsc(getOrderDescription(order)||"-")}</div></div></div><div class="pd-foot"><span>OFİSCHİ BÜRO MOBİLYALARI</span></div></div>`}
-async function v90BuildPdfBlob(order,o,photoUrl=""){await ensurePdfLibs();if(!window.html2canvas||!window.jspdf?.jsPDF)throw new Error("PDF motoru yüklenemedi. İnternet bağlantısını kontrol edin.");const host=document.createElement("div");host.style.cssText="position:fixed;left:-100000px;top:0;width:max-content;background:#fff;z-index:-1";host.innerHTML=v90PdfDoc(order,o,photoUrl);document.body.appendChild(host);try{return await v93RenderPdf(host.firstElementChild,o)}finally{host.remove()}}
-function v90PdfFileName(o){return `Siparis-${String(orderNo(o)||o.id).replace(/[^0-9A-Za-zÇĞİÖŞÜçğıöşü_-]+/g,"-")}.pdf`}function v90DownloadBlob(b,n){const u=URL.createObjectURL(b),a=document.createElement("a");a.href=u;a.download=n;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),1500)}async function v90DownloadPdf(o,s,p){v90DownloadBlob(await v90BuildPdfBlob(o,s,p),v90PdfFileName(o));showToast("PDF indirildi.")}async function v90SharePdf(o,s,p){const b=await v90BuildPdfBlob(o,s,p);if(window.prontoDesktop?.saveFile){v93DesktopShare(b,v90PdfFileName(o),o.customer);return}const f=new File([b],v90PdfFileName(o),{type:"application/pdf"});if(navigator.share&&(!navigator.canShare||navigator.canShare({files:[f]}))){await navigator.share({title:orderNo(o),files:[f]});return}v90DownloadBlob(b,v90PdfFileName(o));showToast("Bu cihazda doğrudan paylaşım desteklenmiyor; PDF indirildi.")}function v90PrintPdf(o,s,p){const r=document.getElementById("pdfPrintRoot");r.innerHTML=v90PdfDoc(o,s,p);const c=()=>{r.innerHTML="";window.removeEventListener("afterprint",c)};window.addEventListener("afterprint",c);setTimeout(()=>window.print(),80)}
+function saveV90PdfSettings(o){localStorage.setItem(V90_PDF_KEY,JSON.stringify(o))}function v90PdfLogo(){return document.querySelector(".mobile-logo")?.src||""}
+function v90PdfFileName(o){return `Siparis-${String(orderNo(o)||o.id).replace(/[^0-9A-Za-zÇĞİÖŞÜçğıöşü_-]+/g,"-")}.pdf`}function v90DownloadBlob(b,n){const u=URL.createObjectURL(b),a=document.createElement("a");a.href=u;a.download=n;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),1500)}
 function v90PdfSettingsModal(cur,apply,opt){const o={...cur},fields=[["lang","PDF dili",[["tr","Türkçe"],["en","İngilizce"]]],["size","Sayfa",[["A4","A4"],["A3","A3"]]],["orient","Yön",[["portrait","Dikey"],["landscape","Yatay"]]],["foto","Fotoğraf boyutu",[["s","Küçük"],["m","Orta"],["l","Büyük"]]],["logoPos","Logo konumu",[["left","Sol"],["center","Orta"],["right","Sağ"]]],["logoSize","Logo boyutu",[["s","Küçük"],["m","Orta"],["l","Büyük"]]]].filter(f=>!(opt&&opt.keys)||opt.keys.includes(f[0])),ov=document.createElement("div");ov.className="modal-overlay";ov.style.zIndex="1100";ov.innerHTML=`<div class="modal" style="max-width:620px"><div class="modal-head"><h2>PDF Ayarları</h2><button class="icon-btn" data-x>✕</button></div><div class="modal-body">${fields.map(([k,l,opts])=>`<div class="form-field" style="margin-bottom:14px"><label>${l}</label><div class="seg" data-k="${k}">${opts.map(([v,t])=>`<button type="button" class="btn ${o[k]===v?"btn-primary":"btn-ghost"}" data-v="${v}">${t}</button>`).join("")}</div></div>`).join("")}</div><div class="modal-foot"><button class="btn btn-ghost" data-def>Varsayılan</button><button class="btn btn-primary" data-ok>Uygula</button></div></div>`;document.body.appendChild(ov);const redraw=()=>ov.querySelectorAll("[data-k]").forEach(g=>g.querySelectorAll("button").forEach(b=>{const on=o[g.dataset.k]===b.dataset.v;b.classList.toggle("btn-primary",on);b.classList.toggle("btn-ghost",!on)}));ov.addEventListener("click",e=>{const b=e.target.closest("[data-v]");if(b){o[b.closest("[data-k]").dataset.k]=b.dataset.v;redraw()}if(e.target.closest("[data-x]"))ov.remove();if(e.target.closest("[data-def]")){Object.assign(o,(opt&&opt.def)||V90_PDF_DEF);redraw()}if(e.target.closest("[data-ok]")){((opt&&opt.save)||saveV90PdfSettings)(o);ov.remove();apply({...o})}})}
 /* =======================================================
-   V24 PDF MOTORU — GENEL PENCERE/SEKME PDF ÇIKTILARI
-   Aynı html2canvas + jsPDF motorunu kullanır.
+   PDF yardımcıları (ad, stil) — asıl motor v97 (pdfmake)
    ======================================================= */
 let v91GenericPdfState = null;
 function v91PdfSafeName(v){return String(v||"PDF").replace(/[^0-9A-Za-zÇĞİÖŞÜçğıöşü_-]+/g,"-").replace(/^-+|-+$/g,"")||"PDF"}
-async function v91BuildElementPdfBlob(el,o){await ensurePdfLibs();
-  if(!window.html2canvas||!window.jspdf?.jsPDF) throw new Error("PDF motoru yüklenemedi. İnternet bağlantısını kontrol edin.");
-  const clone=el.cloneNode(true);
-  const css=v91PdfCssForElement();
-  const host=document.createElement("div");
-  const probeWidth=(o?.orient==="landscape"?(o?.size==="A3"?420:297):(o?.size==="A3"?297:210))*3.78+40;
-  host.style.cssText=`position:fixed;left:-100000px;top:0;width:${probeWidth}px;background:#fff;z-index:-1;padding:0;margin:0;`;
-  if(css){const style=document.createElement("style");style.textContent=css;host.appendChild(style);}
-  v91PdfPageGeometry(clone,o||{size:"A4",orient:"portrait"});
-  host.appendChild(clone);
-  document.body.appendChild(host);
-  try{ return await v93RenderPdf(clone,o,Math.max(document.documentElement.clientWidth,host.offsetWidth)); }
-  finally{host.remove();}
-}
 function v91PdfCssForElement(){
   const probe=document.createElement("div");
   probe.innerHTML=v92PdfTemplateStyle();
@@ -5589,134 +5433,15 @@ function v91PdfPageGeometry(el,o){
     el.style.borderRadius="0";
   }
 }
-function v91OpenElementPdf(el,title,filename,orient="portrait",kind){
-  if(!el) return showToast("PDF içeriği bulunamadı.");
-  if(el.nodeType===1 && el.tagName==="STYLE"){const next=el.nextElementSibling;if(next) el=next;}
-  const m=document.getElementById("pdfModal"),host=document.getElementById("pdfZoom");
-  if(!m||!host) return showToast("PDF penceresi bulunamadı.");
-  const state={el,title:String(title||"PDF"),filename:`${v91PdfSafeName(filename||title||"PDF")}.pdf`,o:kind?v95Get(kind):v90PdfSettings(),zoom:null,orient};
-  state.o.orient="portrait";   /* v38: her PDF dikey açılır */
-  v91GenericPdfState=state;
-  const redraw=()=>{
-    host.innerHTML="";
-    const css=v91PdfCssForElement();
-    if(css){const style=document.createElement("style");style.textContent=css;host.appendChild(style);}
-    v95ApplyLogo(state.el,state.o);
-    const clone=state.el.cloneNode(true);
-    v91PdfPageGeometry(clone,state.o);
-    host.appendChild(clone);
-    state.zoom=v93ApplyZoom(host,state.zoom);
-    const zl=document.getElementById("pdfZoomLabel");if(zl)zl.textContent=Math.round(state.zoom*100)+"%";
-  };
-  m.classList.remove("hidden");
-  m.setAttribute("aria-hidden","false");
-  document.body.classList.add("pronto-modal-lock");
-  document.getElementById("pdfModalTitle").textContent=state.title;
-  state.redraw = redraw; redraw(); try { v38YonCiz(); } catch (_) {}
-  document.getElementById("pdfCloseBtn").onclick=()=>{m.classList.add("hidden");m.setAttribute("aria-hidden","true");host.innerHTML="";v91GenericPdfState=null;document.body.classList.remove("pronto-modal-lock");};
-  document.getElementById("pdfSettingsBtn").onclick=()=>v90PdfSettingsModal(state.o,no=>{state.o={...no};redraw()},kind?v95ModalOpt(kind):undefined);
-  document.getElementById("pdfDownloadBtn").onclick=()=>v94Output("download",v94Spec(state));
-  document.getElementById("pdfPrintBtn").onclick=()=>v94Output("print",v94Spec(state));
-  document.getElementById("pdfShareBtn").onclick=()=>v94Output("share",v94Spec(state));
-  m.querySelectorAll("[data-pdf-zoom]").forEach(b=>b.onclick=()=>{state.zoom=Math.min(2.5,Math.max(.25,state.zoom+Number(b.dataset.pdfZoom)*.15));redraw();});
-}
-function v92PdfTemplateStyle(){return `<style>
-.v92-pdf-sheet{background:#fff;color:#171717;width:100%;box-sizing:border-box;font-family:Arial,Helvetica,sans-serif;padding:14mm 12mm;min-height:250mm;}
-.v92-pdf-head{display:flex;justify-content:space-between;align-items:flex-start;gap:18px;border-bottom:2px solid #222;padding-bottom:8mm;margin-bottom:7mm;}
-.v92-pdf-logo{max-width:150px;max-height:48px;object-fit:contain;margin-bottom:4mm}.v92-pdf-title{font-size:21px;font-weight:800;letter-spacing:.03em;margin:0}.v92-pdf-sub{font-size:10px;color:#666;margin-top:2mm}.v92-pdf-meta{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:3mm;margin-bottom:7mm}.v92-pdf-meta-item{border:1px solid #ddd;padding:3.5mm 4mm}.v92-pdf-meta-item span{display:block;font-size:8px;color:#777;text-transform:uppercase;letter-spacing:.05em;margin-bottom:1.2mm}.v92-pdf-meta-item strong{font-size:10px}.v92-pdf-table{width:100%;border-collapse:collapse;font-size:9px;table-layout:fixed}.v92-pdf-table th{background:#222;color:#fff;text-align:left;font-weight:700;padding:3mm 2.5mm;border:1px solid #222}.v92-pdf-table td{padding:2.5mm;border:1px solid #d8d8d8;vertical-align:top}.v92-pdf-table tr{break-inside:avoid;page-break-inside:avoid}.v92-pdf-table .num{text-align:right;white-space:nowrap}.v92-pdf-total{margin-top:7mm;display:flex;justify-content:flex-end}.v92-pdf-total-box{min-width:65mm;border:1px solid #ccc;padding:4mm}.v92-pdf-total-row{display:flex;justify-content:space-between;gap:12mm;font-size:10px;padding:1.5mm 0}.v92-pdf-total-row.grand{border-top:2px solid #222;margin-top:1mm;padding-top:3mm;font-weight:800;font-size:12px}.v92-pdf-foot{margin-top:10mm;padding-top:4mm;border-top:1px solid #ccc;font-size:8px;color:#777;display:flex;justify-content:space-between}.v92-pdf-city{margin-top:6mm;break-inside:avoid;page-break-inside:avoid}.v92-pdf-city h2{font-size:12px;margin:0 0 3mm;padding:2.5mm 3mm;background:#f2f2f2;border-left:4px solid #222}.v92-pdf-note{font-size:9px;color:#555;margin-top:5mm;white-space:pre-wrap}.v92-pdf-sign{display:grid;grid-template-columns:1fr 1fr;gap:20mm;margin-top:25mm}.v92-pdf-sign>div{border-top:1px solid #999;padding-top:3mm;font-size:10px}.v92-pdf-sign strong{display:block;margin-bottom:8mm}@media print{.v92-pdf-sheet{min-height:0;box-shadow:none}.v92-pdf-table th{color:#fff;background:#222;-webkit-print-color-adjust:exact;print-color-adjust:exact}}
-.delivery-form-live-preview{background:linear-gradient(180deg,#f7f7f7,#eeeeee);border:1px solid #e4e4e4;border-radius:12px;padding:14px;overflow:auto}.delivery-form-preview-bar{max-width:210mm;margin:0 auto 10px;display:flex;justify-content:space-between;align-items:center;gap:12px;background:#202226;color:#fff;border-radius:8px;padding:10px 14px;font-size:11px;box-sizing:border-box}.delivery-form-preview-bar span:last-child{color:#E6B22A;font-weight:700}.delivery-form-sheet{transform-origin:top center}@media(max-width:900px){.delivery-form-live-preview{padding:8px}.delivery-form-preview-bar{font-size:10px}.delivery-form-sheet{width:100%!important;min-height:auto!important}}
-.pronto-delivery-pdf-page{width:210mm;min-height:297mm;box-sizing:border-box;background:#fff;color:#171717;font-family:Arial,Helvetica,sans-serif;padding:12mm 13mm;}.pdp-top{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #E6B22A;padding-bottom:7mm}.pdp-top .v92-pdf-logo{max-width:145px;max-height:46px;margin:0}.pdp-badge{background:#202226;color:#fff;border-radius:4px;padding:8px 12px;font-size:10px;font-weight:800;letter-spacing:.08em}.pdp-title{font-size:25px;font-weight:900;margin-top:9mm}.pdp-sub{font-size:9px;color:#777;margin-top:2mm}.pdp-info{display:grid;grid-template-columns:1fr 1fr;gap:3mm;margin-top:8mm}.pdp-info>div{border:1px solid #ddd;padding:4mm;border-radius:4px;min-height:14mm;box-sizing:border-box}.pdp-info .wide{grid-column:1/-1}.pdp-info span{display:block;font-size:7.5px;color:#777;font-weight:800;letter-spacing:.07em;margin-bottom:1.5mm}.pdp-info strong{font-size:10px;line-height:1.4}.pdp-section-title{margin-top:9mm;padding-bottom:3mm;border-bottom:2px solid #202226;font-size:11px;font-weight:900}.pdp-section-title em{float:right;font-style:normal;color:#777;font-size:8px}.pdp-table{width:100%;border-collapse:collapse;table-layout:fixed;font-size:8.5px;margin-top:4mm}.pdp-table th{background:#202226;color:#fff;padding:3mm 2mm;text-align:left;font-size:7.5px}.pdp-table td{border:1px solid #d7d7d7;padding:3mm 2mm;vertical-align:top}.pdp-table th:last-child,.pdp-table td:last-child{text-align:right;width:12%}.pdp-note{margin-top:10mm;border-left:4px solid #E6B22A;background:#faf9f6;padding:5mm;font-size:9px;line-height:1.5}.pdp-note strong{display:block;font-size:8px;margin-bottom:2mm}.pdp-signs{display:grid;grid-template-columns:1fr 1fr;gap:18mm;margin-top:28mm}.pdp-signs>div{text-align:center;font-size:9px}.pdp-signs .line{border-top:1px solid #777;margin-bottom:3mm}.pdp-signs strong{display:block;font-size:9px}.pdp-signs span{display:block;color:#777;margin-top:2mm;font-size:8px}.pdp-foot{margin-top:12mm;padding-top:4mm;border-top:1px solid #ccc;display:flex;justify-content:space-between;color:#777;font-size:7.5px}</style>`}
-function v92PdfShell(inner,landscape=false){return `${v92PdfTemplateStyle()}<div class="v92-pdf-sheet" style="${landscape?'min-height:0;':''}">${inner}</div>`}
-function v92PdfLogoHtml(){const src=(typeof LOGO_SRC!=="undefined"&&LOGO_SRC)||v90PdfLogo()||"";return src?`<img class="v92-pdf-logo" src="${v90PdfEsc(src)}" alt="Ofischi Logo">`:`<div style="font-weight:800;font-size:20px;margin-bottom:4mm;">OFİSCHİ</div>`}
+function v92PdfTemplateStyle(){return `<style>.v92-pdf-meta-item{border:1px solid #ddd;padding:3.5mm 4mm}.v92-pdf-meta-item span{display:block;font-size:8px;color:#777;text-transform:uppercase;letter-spacing:.05em;margin-bottom:1.2mm}.v92-pdf-meta-item strong{font-size:10px}.pdp-info{display:grid;grid-template-columns:1fr 1fr;gap:3mm;margin-top:8mm}.pdp-info>div{border:1px solid #ddd;padding:4mm;border-radius:4px;min-height:14mm;box-sizing:border-box}.pdp-info .wide{grid-column:1/-1}.pdp-info span{display:block;font-size:7.5px;color:#777;font-weight:800;letter-spacing:.07em;margin-bottom:1.5mm}.pdp-info strong{font-size:10px;line-height:1.4}</style>`}
 
 function v91GetGroupPdfOrders(group){
   if(!group) return [];
   const selected=group.orders.filter(o=>selectedOrderIds.has(o.id));
   return selected.length ? selected : group.orders.slice();
 }
-function v91BuildV24GroupPdfHtml(group,orders){
-  const totalQty=orders.reduce((sum,o)=>sum+(Number(o.quantity)||0),0);
-  const rows=orders.map(o=>`<tr><td><strong>${escapeHtml(orderNo(o))}</strong></td><td>${escapeHtml(o.orderDate?formatDate(o.orderDate):"-")}</td><td>${escapeHtml(o.customer||"-")}</td><td><strong>${escapeHtml(o.product||"-")}</strong></td><td>${escapeHtml(o.supplier||"-")}</td><td>${escapeHtml(colorFabricText(o)||"-")}</td><td class="num">${escapeHtml(o.quantity??"-")}</td><td>${formatDate(o.deliveryDate)}</td><td><span class="pronto-v24-status">${escapeHtml(o.status||"-")}</span></td></tr>`).join("");
-  const logo=(typeof LOGO_SRC!=="undefined"&&LOGO_SRC)||v90PdfLogo()||"";
-  return `<div class="pronto-v24-preview-page"><div class="pronto-v24-preview-head"><div style="flex:1;min-width:0">${logo?`<img src="${v90PdfEsc(logo)}" class="pronto-v24-preview-logo" alt="Ofischi Logo">`:`<div style="font-size:22px;font-weight:900;margin-bottom:14px">OFİSCHİ</div>`}<h1 class="pronto-v24-preview-h1">${escapeHtml(group.customer)} · ${orders.length} KALEM</h1><p class="pronto-v24-preview-sub">Sipariş Grubu · Hazırlanma tarihi: ${formatDate(todayISO())}</p></div><div class="pronto-v24-preview-kpis"><div class="pronto-v24-preview-kpi"><span>Teslim</span><strong>${formatDate(orders[0]?.deliveryDate||group.deliveryDate)}</strong></div><div class="pronto-v24-preview-kpi"><span>SİP Adet</span><strong>${escapeHtml(totalQty)}</strong></div></div></div><div style="font-size:13px;font-weight:800;margin:0 0 10px">Sipariş Kalemleri</div><table class="pronto-v24-preview-table"><thead><tr><th>Sipariş No</th><th>Sipariş Tarihi</th><th>Müşteri</th><th>Ürün</th><th>Tedarikçi</th><th>Renk/Kumaş</th><th>Adet</th><th>Teslim</th><th>Durum</th></tr></thead><tbody>${rows}</tbody></table><div class="pronto-v24-preview-foot"><span>OFİSCHİ BÜRO MOBİLYALARI</span><span>PRONTO · V24 ŞABLONU</span></div></div>`;
-}
-async function v91OpenOrderGroupPdf(group){
-  if(!group)return;
-  const orders=v91GetGroupPdfOrders(group);
-  if(!orders.length)return showToast("PDF için sipariş bulunamadı.");
-  const modal=document.getElementById("pdfModal"),host=document.getElementById("pdfZoom");
-  if(!modal||!host)return showToast("PDF penceresi bulunamadı.");
-  const selectedCount=group.orders.filter(o=>selectedOrderIds.has(o.id)).length;
-  const title=`${group.customer} · ${orders.length} kalem${selectedCount?` · ${selectedCount} seçili`:""}`;
-  const safeGroupName=v91PdfSafeName(group.customer||"Grup");
-  const filename=`Siparis-Grubu-${safeGroupName}${selectedCount?`-${selectedCount}-Secili`:""}.pdf`;
-  const wrap=document.createElement("div");wrap.innerHTML=v91BuildV24GroupPdfHtml(group,orders);
-  const source=wrap.firstElementChild;if(!source)return showToast("PDF ön izleme içeriği oluşturulamadı.");
-  const state={el:source,title,filename,o:v95Get("grup"),zoom:null,customer:group.customer};
-  v91GenericPdfState=state;
-  const redraw=()=>{
-    host.innerHTML="";
-    const css=v91PdfCssForElement();if(css){const st=document.createElement("style");st.textContent=css;host.appendChild(st);}
-    v95ApplyLogo(state.el,state.o);const clone=state.el.cloneNode(true);v91PdfPageGeometry(clone,state.o);host.appendChild(clone);
-    state.zoom=v93ApplyZoom(host,state.zoom);
-    const zl=document.getElementById("pdfZoomLabel");if(zl)zl.textContent=Math.round(state.zoom*100)+"%";
-  };
-  modal.classList.remove("hidden");modal.setAttribute("aria-hidden","false");document.body.classList.add("pronto-modal-lock");
-  document.getElementById("pdfModalTitle").textContent=title;state.redraw=redraw;redraw();try{v38YonCiz()}catch(_){}
-  document.getElementById("pdfCloseBtn").onclick=()=>{modal.classList.add("hidden");modal.setAttribute("aria-hidden","true");host.innerHTML="";v91GenericPdfState=null;document.body.classList.remove("pronto-modal-lock");};
-  document.getElementById("pdfSettingsBtn").onclick=()=>v90PdfSettingsModal(state.o,no=>{state.o={...no};redraw();},v95ModalOpt("grup"));
-  document.getElementById("pdfDownloadBtn").onclick=()=>v94Output("download",v94Spec(state));
-  document.getElementById("pdfPrintBtn").onclick=()=>v94Output("print",v94Spec(state));
-  document.getElementById("pdfShareBtn").onclick=()=>v94Output("share",v94Spec(state));
-  modal.querySelectorAll("[data-pdf-zoom]").forEach(btn=>btn.onclick=()=>{state.zoom=Math.min(2.5,Math.max(.25,state.zoom+Number(btn.dataset.pdfZoom)*.15));redraw();});
-}
-function v91OpenEntityHistoryPdf(type,id,range){
-  const list={customer:allCustomers,supplier:allSuppliers,product:allProducts}[type];
-  const entity=(list||[]).find(x=>x.id===id);
-  if(!entity){ if(type!=="product") showToast("Kayıt bulunamadı."); return; }
-  if(type==="product"){ const body=document.getElementById("entityHistoryBody"); if(body){ const wrap=document.createElement("div"); wrap.className=body.className; wrap.innerHTML=`<div style="padding:4px 0 10px;border-bottom:2px solid #111;margin-bottom:12px"><div style="font-size:18px;font-weight:800">${escapeHtml(entity.name)}</div><div style="font-size:11px;color:#555">Ürün geçmişi · İlgili siparişler ve stok hareketleri · ${formatDate(todayISO())}</div></div>`; Array.from(body.childNodes).forEach(n=>wrap.appendChild(n.cloneNode(true))); wrap.querySelectorAll(".detail-item").forEach(d=>{if(/fiyat/i.test(d.querySelector(".detail-label")?.textContent||""))d.remove();}); v91OpenElementPdf(wrap,`${entity.name} · İlgili Siparişler`,`Ilgili-Siparisler-${entity.name}`,"portrait","urun"); } return; }
-  const orderField=type==="customer"?"customer":"supplier";
-  const rows=activeOrdersList().filter(o=>normName(o[orderField])===normName(entity.name)&&v93InRange(o.orderDate,range)).sort((a,b)=>a.id-b.id).map(o=>({o,t:pricingTotals(o)}));
-  const title=type==="customer"?"MÜŞTERİ SİPARİŞ RAPORU":"TEDARİKÇİ SİPARİŞ RAPORU";
-  const header=type==="supplier"?`<th>Sipariş No</th><th>Sipariş</th><th>Ürün</th><th>Renk</th><th>Adet</th><th>Müşteri</th><th>Teslim Edildi</th><th>Durum</th>`:`<th>Sipariş No</th><th>Sipariş</th><th>Ürün</th><th>Renk</th><th>Adet</th><th>Tedarikçi</th><th>Teslim Edildi</th><th>Durum</th>`;
-  const body=rows.map(({o,t})=>type==="supplier"?`<tr><td>${escapeHtml(orderNo(o))}</td><td>${formatDate(o.orderDate)}</td><td>${escapeHtml(o.product||"-")}</td><td>${escapeHtml(o.colorCode||"-")}</td><td class="num">${t.qty}</td><td>${escapeHtml(o.customer||"-")}</td><td>${formatActualDelivery(o)}</td><td>${escapeHtml(o.status||"-")}</td></tr>`:`<tr><td>${escapeHtml(orderNo(o))}</td><td>${formatDate(o.orderDate)}</td><td>${escapeHtml(o.product||"-")}</td><td>${escapeHtml(o.colorCode||"-")}</td><td class="num">${t.qty}</td><td>${escapeHtml(o.supplier||"-")}</td><td>${formatActualDelivery(o)}</td><td>${escapeHtml(o.status||"-")}</td></tr>`).join("");
-  if(!rows.length&&range&&(range.from||range.to)){showToast("Bu tarih aralığında sipariş yok.");return;}
-  const purchase=rows.reduce((s,r)=>s+r.t.purchaseTotal,0), sale=rows.reduce((s,r)=>s+r.t.tlGrand,0);
-  const html=v92PdfShell(`<div class="v92-pdf-head"><div>${v92PdfLogoHtml()}<h1 class="v92-pdf-title">${title}</h1><div class="v92-pdf-sub">${escapeHtml(entity.name)} · ${escapeHtml(v93RangeText(range))} · Rapor tarihi: ${formatDate(todayISO())}</div></div></div><div class="v92-pdf-meta"><div class="v92-pdf-meta-item"><span>${type==="customer"?"Müşteri":"Tedarikçi"}</span><strong>${escapeHtml(entity.name)}</strong></div><div class="v92-pdf-meta-item"><span>İletişim</span><strong>${escapeHtml([entity.phone,entity.email].filter(Boolean).join(" · ")||"-")}</strong></div><div class="v92-pdf-meta-item"><span>Sipariş Sayısı</span><strong>${rows.length}</strong></div><div class="v92-pdf-meta-item"><span>Rapor Tarihi</span><strong>${formatDate(todayISO())}</strong></div></div><table class="v92-pdf-table"><thead><tr>${header}</tr></thead><tbody>${body||`<tr><td colspan="10">İlgili sipariş bulunamadı.</td></tr>`}</tbody></table><div class="v92-pdf-total"><div class="v92-pdf-total-box"><div class="v92-pdf-total-row"><span>Toplam Adet</span><strong>${rows.reduce((n,r)=>n+(Number(r.t.qty)||0),0)}</strong></div></div></div><div class="v92-pdf-foot"><span>OFİSCHİ BÜRO MOBİLYALARI</span><span>PRONTO</span></div>`);
-  const host=document.createElement("div");host.innerHTML=html;v91OpenElementPdf(host.firstElementChild,title,`${type==="customer"?"Musteri":"Tedarikci"}-Siparis-Raporu-${entity.name}${range&&(range.from||range.to)?`-${range.from||"bas"}_${range.to||"bugun"}`:""}`,"landscape",type==="customer"?"musteri":"tedarikci");
-}
 
-function v91OpenShipmentPdf(){
-  const groups=buildShipmentGroups();
-  const selected=selectedShipmentGroups(groups).filter(g=>shipmentShowHidden?g.hasHidden:isShipmentGroupCandidate(g)).sort((a,b)=>a.city.localeCompare(b.city,"tr")||(a.deliveryDate||"").localeCompare(b.deliveryDate||"")||a.customerName.localeCompare(b.customerName,"tr"));
-  if(!selected.length)return showToast("Önce sevkiyata çıkacak müşterileri seç.");
-  const byCity=new Map();selected.forEach(g=>{if(!byCity.has(g.city))byCity.set(g.city,[]);byCity.get(g.city).push(g)});
-  const cityHtml=Array.from(byCity.entries()).map(([city,gs])=>`<div class="v92-pdf-city"><h2>${escapeHtml(city)} — ${gs.length} sevkiyat</h2><table class="v92-pdf-table"><thead><tr><th>Müşteri / Ünvan</th><th>Telefon</th><th>Adres</th><th>Teslim Tarihi</th><th>Teslim Şartları</th></tr></thead><tbody>${gs.map(g=>`<tr><td>${escapeHtml(g.customerName)}</td><td>${escapeHtml(g.phone)}</td><td>${escapeHtml(g.address)}</td><td>${g.deliveryDate?formatDate(g.deliveryDate):"-"}</td><td>${escapeHtml(String(g.shipmentType||"-").toUpperCase())}</td></tr>`).join("")}</tbody></table></div>`).join("");
-  const html=v92PdfShell(`<div class="v92-pdf-head"><div>${v92PdfLogoHtml()}<h1 class="v92-pdf-title">SEVKİYAT LİSTESİ</h1><div class="v92-pdf-sub">Hazırlanma tarihi: ${formatDate(todayISO())} · ${selected.length} sevkiyat</div></div><div style="font-size:10px;text-align:right">OFİSCHİ<br>PRONTO</div></div>${cityHtml}<div class="v92-pdf-foot"><span>Bu liste PRONTO sipariş takip sisteminden oluşturulmuştur.</span><span>OFİSCHİ</span></div>`,true);
-  const host=document.createElement("div");host.innerHTML=html;v91OpenElementPdf(host.firstElementChild,"Sevkiyat","Sevkiyat","landscape","sevkiyat");
-}
-function v91OpenDeliveryFormPdf(){
-  const group=getSelectedDeliveryFormGroup();
-  if(!group)return showToast("Önce bir teslim formu seçin.");
-  const selectedIds=new Set(Array.from(deliveryFormSelectedOrderIds||[]).map(String));
-  const allGroupOrders=Array.isArray(group.orders)?group.orders:[];
-  const orders=selectedIds.size ? allGroupOrders.filter(o=>selectedIds.has(String(o.id))) : allGroupOrders;
-  if(!orders.length)return showToast("Teslim formunda ürün bulunamadı.");
-  const totalQty=orders.reduce((n,o)=>n+(Number(o.quantity)||0),0);
-  const customer=group.customerName||group.customer||orders[0]?.customer||"-";
-  const phone=group.phone||orders[0]?.phone||"-";
-  const address=group.address||orders[0]?.deliveryAddress||"-";
-  const deliveryDate=group.deliveryDate||orders[0]?.deliveryDate||"";
-  const receiver=document.getElementById("deliveryFormReceiver")?.value||"";
-  const deliverer=document.getElementById("deliveryFormDeliverer")?.value||"";
-  const note=document.getElementById("deliveryFormNote")?.value||"";
-  const rows=orders.map(o=>`<tr><td><strong>${escapeHtml(orderNo(o))}</strong></td><td>${escapeHtml(o.product||"-")}</td><td>${escapeHtml(colorFabricText(o)||"-")}</td><td style="text-align:right">${escapeHtml(o.quantity??"-")}</td></tr>`).join("");
-  const html=`<div class="pronto-delivery-pdf-page"><div class="pdp-top"><div>${v92PdfLogoHtml()}</div><div class="pdp-badge">TESLİM FORMU</div></div><div class="pdp-title">TESLİM FORMU</div><div class="pdp-sub">OFİSCHİ BÜRO MOBİLYALARI · PRONTO</div><div class="pdp-info"><div><span>MÜŞTERİ</span><strong>${escapeHtml(customer)}</strong></div><div><span>TESLİM TARİHİ</span><strong>${formatDate(todayISO())}</strong></div><div><span>TELEFON</span><strong>${escapeHtml(phone)}</strong></div><div class="wide"><span>ADRES</span><strong>${escapeHtml(address)}</strong></div></div><div class="pdp-section-title">TESLİM EDİLEN ÜRÜNLER <em>${orders.length} KALEM · ${totalQty} ADET</em></div><table class="pdp-table"><thead><tr><th>SİPARİŞ NO</th><th>ÜRÜN</th><th>RENK / KUMAŞ</th><th>ADET</th></tr></thead><tbody>${rows}</tbody></table>${note?`<div class="pdp-note"><strong>TESLİMAT NOTU</strong><div>${escapeHtml(note)}</div></div>`:`<div class="pdp-note"><strong>TESLİMAT NOTU</strong><div>Ürünler eksiksiz ve teslimat koşullarına uygun şekilde teslim alınmıştır.</div></div>`}<div class="pdp-signs"><div><div class="line"></div><strong>TESLİM ALAN</strong><span>${escapeHtml(receiver||"Ad Soyad / İmza")}</span></div><div><div class="line"></div><strong>TESLİM EDEN</strong><span>${escapeHtml(deliverer||"Ad Soyad / İmza")}</span></div></div><div class="pdp-foot"><span>OFİSCHİ BÜRO MOBİLYALARI</span><span>PRONTO · TESLİM FORMU</span></div></div>`;
-  const wrap=document.createElement("div");wrap.innerHTML=html;
-  v91OpenElementPdf(wrap.firstElementChild,`Teslim Formu · ${customer}`,`Teslim-Formu-${customer}`,"portrait","teslim");
-}
 
-async function v90OpenPdf(id){const order=allOrders.find(o=>o.id===id);if(!order)return;const m=document.getElementById("pdfModal"),host=document.getElementById("pdfZoom");if(!m||!host)return;let o=v90PdfSettings(),zoom=null;m.classList.remove("hidden");document.getElementById("pdfModalTitle").textContent=orderNo(order);const photo=await getOrderPhotoSignedUrl(order.id);if(m.classList.contains("hidden"))return;const redraw=()=>{host.innerHTML=v90PdfDoc(order,o,photo);zoom=v93ApplyZoom(host,zoom)};redraw();document.getElementById("pdfCloseBtn").onclick=()=>m.classList.add("hidden");document.getElementById("pdfSettingsBtn").onclick=()=>v90PdfSettingsModal(o,no=>{o=no;redraw()});const v94s=()=>({html:v90PdfDoc(order,o,photo),o,name:v90PdfFileName(order),contact:{type:"supplier",name:order.supplier},title:orderNo(order),blob:()=>v90BuildPdfBlob(order,o,photo)});document.getElementById("pdfDownloadBtn").onclick=()=>v94Output("download",v94s());document.getElementById("pdfShareBtn").onclick=()=>v94Output("share",v94s());document.getElementById("pdfPrintBtn").onclick=()=>v94Output("print",v94s());m.querySelectorAll("[data-pdf-zoom]").forEach(b=>b.onclick=()=>{zoom=Math.min(2.5,Math.max(.25,zoom+Number(b.dataset.pdfZoom)*.15));redraw()})}
 
 function openDetailModal(id) {
   const order = allOrders.find((o) => o.id === id);
@@ -6988,24 +6713,7 @@ function renderDeliveryForm() {
   detailCard.classList.remove("hidden");
   ensureDeliveryFormSelection(group);
 
-  const customer = group.customer || null;
-  const receiver = document.getElementById("deliveryFormReceiver")?.value || "";
-  const deliverer = document.getElementById("deliveryFormDeliverer")?.value || "";
-  const note = document.getElementById("deliveryFormNote")?.value || "";
-
   const selectedOrders = group.orders.filter((o) => deliveryFormSelectedOrderIds.has(o.id));
-  const deliveryRows = selectedOrders.map((o, index) => {
-    const renk = [o.colorCode, o.fabricCode].filter(Boolean).join(" / ") || "-";
-    const aciklama = getOrderDescription(o) || "-";
-    return `
-    <tr>
-      <td style="width:34px;text-align:center;">${index + 1}</td>
-      <td>${escapeHtml(o.product || "-")}</td>
-      <td style="width:95px;">${escapeHtml(renk)}</td>
-      <td style="width:48px;text-align:center;">${escapeHtml(o.quantity ?? "-")}</td>
-      <td>${escapeHtml(aciklama)}</td>
-    </tr>`;
-  }).join("");
 
   const currentOrders = group.orders.slice().sort((a,b)=>(b.orderDate||"").localeCompare(a.orderDate||"") || Number(b.id||0)-Number(a.id||0));
   const selectedQty = selectedOrders.reduce((n,o)=>n+(Number(o.quantity)||0),0);
@@ -7455,65 +7163,6 @@ function bindSettingsEvents() {
    Yedek dosyası ve gömülü veri güvenilmez girdi sayılır:
    yalnızca bilinen alanlar, doğrulanmış tiplerle alınır.
    ======================================================= */
-function sanitizeOrderRecord(o) {
-  if (!o || typeof o !== "object") return null;
-  const rec = {
-    customer: sanitizeText(o.customer),
-    supplier: sanitizeText(o.supplier),
-    product: sanitizeText(o.product),
-    quantity: sanitizeNumber(o.quantity, { min: 0, max: 1000000 }),
-    orderDate: sanitizeDate(o.orderDate) || todayISO(),
-    deliveryDate: sanitizeDate(o.deliveryDate),
-    colorCode: sanitizeText(o.colorCode, 60),
-    fabricCode: sanitizeText(o.fabricCode, 60),
-    description: sanitizeText(o.description, MAX_NOTE_LEN),
-    status: sanitizeStatus(o.status),
-    stockDeducted: o.stockDeducted === true,
-    createdAt: typeof o.createdAt === "string" ? sanitizeText(o.createdAt, 40) : new Date().toISOString()
-  };
-  if (!rec.customer && !rec.product) return null;
-  return rec;
-}
-function sanitizeProductRecord(p) {
-  if (!p || typeof p !== "object") return null;
-  const name = sanitizeText(p.name);
-  if (!name) return null;
-  return {
-    name,
-    category: sanitizeText(p.category),
-    unit: sanitizeText(p.unit, 30),
-    price: sanitizeNumber(p.price, { min: 0, max: 100000000, integer: false, allowNull: true }),
-    stock: sanitizeNumber(p.stock, { min: 0, max: 1000000, allowNull: true }),
-    description: sanitizeText(p.description, MAX_NOTE_LEN)
-  };
-}
-function sanitizePersonRecord(x) {
-  if (!x || typeof x !== "object") return null;
-  const name = sanitizeText(x.name);
-  if (!name) return null;
-  return {
-    name,
-    phone: sanitizeText(x.phone, 40),
-    email: sanitizeText(x.email, 120),
-    taxNo: sanitizeText(x.taxNo, 40),
-    address: sanitizeText(x.address, MAX_NOTE_LEN),
-    notes: sanitizeText(x.notes, MAX_NOTE_LEN)
-  };
-}
-function sanitizeMovementRecord(m) {
-  if (!m || typeof m !== "object") return null;
-  return {
-    productId: sanitizeNumber(m.productId, { min: 0, max: 100000000, allowNull: true }),
-    productName: sanitizeText(m.productName),
-    delta: sanitizeNumber(m.delta, { min: -1000000, max: 1000000 }),
-    resultingStock: sanitizeNumber(m.resultingStock, { min: -1000000, max: 1000000, allowNull: true }),
-    type: ["delivery", "manual", "stock-in"].includes(m.type) ? m.type : "manual",
-    note: sanitizeText(m.note, MAX_NOTE_LEN),
-    supplier: sanitizeText(m.supplier),
-    date: sanitizeDate(m.date) || todayISO(),
-    createdAt: typeof m.createdAt === "string" ? sanitizeText(m.createdAt, 40) : new Date().toISOString()
-  };
-}
 
 /* =======================================================
    GENEL OLAY BAĞLAMALARI
@@ -7604,68 +7253,6 @@ function v93ApplyZoom(host, z) {
   return z;
 }
 /* 7-8) PDF motoru: satırları bölmeden sayfalar, sonraki sayfalarda kenar boşluğu ve tablo başlığı, boş sayfa yok */
-function v93Layout(root) {
-  const top = root.getBoundingClientRect().top, pts = new Set();
-  root.querySelectorAll("tr, .history-item, .v92-pdf-meta, .v92-pdf-meta-item, .v92-pdf-city, h1, h2, h3, p, img, .pdp-info, .pdp-sign, .detail-item, table, .v92-pdf-head, .pronto-v24-preview-head").forEach((e) => {
-    const r = e.getBoundingClientRect(); if (r.height > 0) pts.add(Math.round((r.bottom - top) * 100) / 100);
-  });
-  const heads = Array.from(root.querySelectorAll("table")).map((t) => {
-    const th = t.tHead; if (!th) return null;
-    const tr = t.getBoundingClientRect(), hr = th.getBoundingClientRect();
-    return { headTop: hr.top - top, headBottom: hr.bottom - top, tableBottom: tr.bottom - top };
-  }).filter(Boolean);
-  return { breaks: Array.from(pts).sort((a, b) => a - b), heads, height: root.getBoundingClientRect().height };
-}
-function v93IsBlank(canvas, y0, y1) {
-  try {
-    const h = Math.max(1, Math.round(y1 - y0)), d = canvas.getContext("2d").getImageData(0, Math.round(y0), canvas.width, h).data;
-    for (let i = 0; i < d.length; i += 32) if (d[i] < 238 || d[i + 1] < 238 || d[i + 2] < 238) return false;
-    return true;
-  } catch (_) { return false; }
-}
-function v93CanvasToPdf(canvas, lay, o) {
-  const landscape = o?.orient === "landscape", size = o?.size === "A3" ? [297, 420] : [210, 297];
-  const pageW = landscape ? size[1] : size[0], pageH = landscape ? size[0] : size[1];
-  const { jsPDF } = window.jspdf;
-  const pdf = new jsPDF({ orientation: landscape ? "landscape" : "portrait", unit: "mm", format: o?.size === "A3" ? "a3" : "a4", compress: true });
-  const k = canvas.height / Math.max(1, lay.height), mm = pageW / canvas.width, M = 10 / mm, pageHpx = pageH / mm;
-  const breaks = lay.breaks.map((b) => b * k);
-  const draw = (sy, sh, dy) => {
-    const part = document.createElement("canvas"); part.width = canvas.width; part.height = Math.max(1, Math.round(sh));
-    part.getContext("2d").drawImage(canvas, 0, sy, canvas.width, sh, 0, 0, canvas.width, sh);
-    pdf.addImage(part.toDataURL("image/jpeg", .92), "JPEG", 0, dy * mm, pageW, sh * mm);
-  };
-  let y = 0, page = 0;
-  while (y < canvas.height - 1) {
-    if (page > 0 && v93IsBlank(canvas, y, canvas.height)) break;          // kalan kısım boşsa yeni sayfa açma
-    const head = page > 0 ? lay.heads.find((h) => h.headBottom * k <= y + 1 && h.tableBottom * k > y + 4) : null;
-    const hb = head ? { sy: head.headTop * k, h: (head.headBottom - head.headTop) * k } : null;
-    const startOff = page === 0 ? 0 : M;
-    const rest = canvas.height - y;
-    let end;
-    if (rest <= pageHpx - startOff - (hb ? hb.h : 0)) end = canvas.height;   // kalanı sığıyor
-    else {
-      const avail = pageHpx - startOff - M - (hb ? hb.h : 0);
-      end = y + avail;
-      const cand = breaks.filter((b) => b > y + avail * .25 && b <= end);
-      if (cand.length) end = cand[cand.length - 1];
-    }
-    if (page) pdf.addPage();
-    let dy = startOff;
-    if (hb) { draw(hb.sy, hb.h, dy); dy += hb.h; }
-    draw(y, end - y, dy);
-    y = end; page++;
-    if (page > 400) break;
-  }
-  return pdf.output("blob");
-}
-async function v93RenderPdf(node, o, windowWidth) {
-  node.style.minHeight = "0";
-  await Promise.all(Array.from(node.querySelectorAll("img")).map((i) => i.decode().catch(() => {})));
-  const lay = v93Layout(node);
-  const canvas = await html2canvas(node, { backgroundColor: "#fff", scale: 2, useCORS: true, allowTaint: false, logging: false, imageTimeout: 15000, windowWidth: windowWidth || Math.max(document.documentElement.clientWidth, node.offsetWidth) });
-  return v93CanvasToPdf(canvas, lay, o);
-}
 /* 16) Esc, açık PDF ayarları penceresini kapatır */
 document.addEventListener("keydown", (e) => {
   if (e.key !== "Escape") return;
@@ -9117,11 +8704,11 @@ function v97OpenDelivery() {
   showToast("PDF hazırlanıyor…");
   v45Fotolar(orders).then((fot) => { const mk = v97ModelDelivery(group, orders, rv.trim(), dv.trim(), nt.trim(), fot); v97Open("teslim", (o) => mk(o)); });
 }
-window.v90OpenPdf = v97OpenOrder;
-window.v91OpenOrderGroupPdf = v97OpenGroup;
-window.v91OpenEntityHistoryPdf = v97OpenEntity;
-window.v91OpenShipmentPdf = v97OpenShipment;
-window.v91OpenDeliveryFormPdf = v97OpenDelivery;
+function v90OpenPdf(...a) { return v97OpenOrder(...a); }
+function v91OpenOrderGroupPdf(...a) { return v97OpenGroup(...a); }
+function v91OpenEntityHistoryPdf(...a) { return v97OpenEntity(...a); }
+function v91OpenShipmentPdf(...a) { return v97OpenShipment(...a); }
+function v91OpenDeliveryFormPdf(...a) { return v97OpenDelivery(...a); }
 
 /* ===== v96: arayüz düzeltmeleri ===== */
 function v96OpenGroupOrOrder(groups, key) { const g = groups.find((x) => x.key === key); if (!g) return; if (g.lineCount === 1) openDetailModal(g.first.id); else openOrderGroupModal(g.key); }
@@ -9176,22 +8763,6 @@ document.addEventListener("keydown", (e) => {
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", bind); else bind();
 })();
 /* ===== v95: PDF türüne göre ayarlar ===== */
-const V95_ORIENT={};   /* v38: hepsi dikey */
-function v95Def(kind){return {size:"A4",orient:V95_ORIENT[kind]||"portrait",logoPos:"left",logoSize:"m"};}
-function v95Clean(kind,o){const d=v95Def(kind),r={...d};if(o&&(o.size==="A4"||o.size==="A3"))r.size=o.size;if(o&&(o.orient==="portrait"||o.orient==="landscape"))r.orient=o.orient;if(o&&["left","center","right"].includes(o.logoPos))r.logoPos=o.logoPos;if(o&&["s","m","l"].includes(o.logoSize))r.logoSize=o.logoSize;return r;}
-function v95Get(kind){let r;try{r=v95Clean(kind,JSON.parse(localStorage.getItem("pronto_v95_pdf_"+kind)||"{}"));}catch(_){r=v95Def(kind);}r.orient="portrait";return r;}
-function v95Save(kind,o){try{localStorage.setItem("pronto_v95_pdf_"+kind,JSON.stringify(v95Clean(kind,o)));}catch(_){}}
-function v95Keys(kind){return kind==="urun"?["size","orient"]:["size","orient","logoPos","logoSize"];}
-function v95ModalOpt(kind){return {keys:v95Keys(kind),save:(o)=>v95Save(kind,o),def:v95Def(kind)};}
-function v95ApplyLogo(el,o){
-  if(!el||!o)return;
-  const img=el.querySelector("img.v92-pdf-logo,img.pronto-v24-preview-logo");if(!img)return;
-  const h={s:34,l:76}[o.logoSize];
-  img.style.maxHeight=h?h+"px":"";img.style.height=h?h+"px":"";img.style.maxWidth=h?(h*4)+"px":"";img.style.width=h?"auto":"";
-  const p=img.parentElement;if(p&&p.dataset.v95f==null){p.dataset.v95f=p.style.flex||"";p.dataset.v95w=p.style.minWidth||"";}
-  if(o.logoPos==="center"||o.logoPos==="right"){img.style.display="block";img.style.marginLeft="auto";img.style.marginRight=o.logoPos==="center"?"auto":"0";if(p){p.style.flex="1";p.style.minWidth="0";}}
-  else{img.style.display="";img.style.marginLeft="";img.style.marginRight="";if(p){p.style.flex=p.dataset.v95f;p.style.minWidth=p.dataset.v95w;}}
-}
 /* ===== v94: gerçek PDF ===== */
 function v94Fill(spec) {
   const root = document.getElementById("pdfPrintRoot"); root.innerHTML = "";
@@ -9248,7 +8819,6 @@ async function v94Output(kind, spec) {
   } catch (e) { if (!e || e.name !== "AbortError") showToast((e && e.message) || "PDF paylaşılamadı."); }
   finally { if (b) b.disabled = false; }
 }
-function v94Spec(state) { return { el: state.el, o: state.o, name: state.filename, customer: state.customer, title: state.title, blob: () => v91BuildElementPdfBlob(state.el, state.o) }; }
 </script>
 <style id="tf-sutun">
 /* Teslim Formu listesi: şart etiketleri alt satıra geçsin, buton bir tık küçük */
@@ -10941,27 +10511,6 @@ function v32ChipCiz() {
   if (c) { c.classList.toggle("bos", !k); c.innerHTML = `<span style="flex:1;min-width:0"><span>Bu cihazda çalışan</span>${escapeHtml(k || "Ad seçin")}</span><span style="font-size:15px">✎</span>`; }
   const b = document.getElementById("v32KisiBtn"); if (b) b.textContent = k ? `Çalışan: ${k} — değiştir` : "Çalışan adını seçin";
 }
-async function v32KisiSor() {
-  let liste = [];
-  try { const { data } = await supa.from("pronto_kisi").select("ad").order("ad").limit(60); liste = (data || []).map((r) => r.ad); } catch (_) {}
-  const sec = (ad) => { window.__prontoKisi = v32Temiz(ad, 40); v32S("pronto_kisi", window.__prontoKisi); v32ChipCiz(); showToast(`Bu cihazda çalışan: ${window.__prontoKisi}`); };
-  const m = v98Ov(`<div class="modal-head"><h2>Bu cihazda kim çalışıyor?</h2><button class="icon-btn" data-x aria-label="Kapat">✕</button></div><div class="modal-body">
-    <p class="v98-s" style="margin:0 0 10px">Yaptığınız değişiklikler bu adla kaydedilir (sipariş geçmişinde görünür). Cihaz başına bir kez sorulur; Ayarlar'dan değiştirilebilir. Bu bir şifre değildir, yalnızca kayıt içindir.</p>
-    ${liste.length ? `<div class="v32-kg">${liste.map((a) => `<button type="button" class="btn ${a === window.__prontoKisi ? "btn-primary" : "btn-secondary"}" data-ad="${escapeHtml(a)}">${escapeHtml(a)}</button>`).join("")}</div>` : ""}
-    <label class="v98-l" style="margin-top:14px;display:block">${liste.length ? "Listede yoksa adınızı yazın" : "Adınızı yazın"}</label>
-    <input class="v98-in" id="v32Yeni" maxlength="40" placeholder="Ad Soyad" autocomplete="off"><p class="v98-s" id="v32H" style="color:#B02A37;margin:6px 0 0"></p></div>
-    <div class="modal-foot"><button class="btn btn-ghost" data-x>Şimdi değil</button><button class="btn btn-primary" id="v32Devam">Devam</button></div>`);
-  m.ov.addEventListener("click", async (e) => {
-    const b = e.target.closest("[data-ad]"); if (b) { sec(b.dataset.ad); m.close(); return; }
-    if (!e.target.closest("#v32Devam")) return;
-    const ad = v32Temiz(m.$("#v32Yeni").value, 40);
-    if (!ad) { m.$("#v32H").textContent = "Bir ad seçin ya da yazın."; return; }
-    let son = ad.replace(/i/g, "İ").replace(/ı/g, "I").toLocaleUpperCase("tr-TR");
-    try { const { data, error } = await supa.rpc("pronto_kisi_ekle", { p_ad: ad }); if (!error && data && data.ad) son = data.ad; } catch (_) {}
-    sec(son); m.close();
-  });
-  m.ov.querySelector("#v32Yeni").addEventListener("keydown", (e) => { if (e.key === "Enter") m.$("#v32Devam").click(); });
-}
 /* ---- İşlem geçmişi: sipariş detayı ---- */
 const _v32Odm = openDetailModal;
 openDetailModal = function (id) { _v32Odm.apply(this, arguments); try { v32Gecmis(id); } catch (_) {} };
@@ -11188,7 +10737,7 @@ async function v34Adlar() {
   v34Liste = [...new Set(L.map((x) => v32Temiz(x, 40)).filter(Boolean))]; v34T = Date.now();
   return v34Liste;
 }
-v32KisiSor = function (islem) {
+function v32KisiSor(islem) {
   return new Promise(async (res) => {
     const liste = supa ? await v34Adlar() : [];
     const cur = window.__prontoKisi || "", curVar = liste.includes(cur);
