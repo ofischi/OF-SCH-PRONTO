@@ -4123,6 +4123,7 @@ function bindNav() {
 }
 function switchView(view) {
   currentView = view;
+  try { v45Fab(); } catch (_) {}
   document.querySelectorAll(".view").forEach((el) => {
     el.classList.add("hidden");
     el.classList.remove("view-enter");
@@ -7017,7 +7018,7 @@ function renderDeliveryForm() {
       <td style="text-align:center;width:44px;"><input type="checkbox" class="delivery-form-order-check" data-order-id="${escapeHtml(String(o.id))}" ${selected ? "checked" : ""} ${o.status !== "Sevkiyata Hazır" ? "disabled" : ""}></td>
       <td><strong>${escapeHtml(orderNo(o))}</strong></td>
       <td>${escapeHtml(o.orderDate ? formatDate(o.orderDate) : "-")}</td>
-      <td><strong>${escapeHtml(o.product || "-")}</strong></td>
+      <td><strong>${escapeHtml(o.product || "-")}</strong>${typeof v45SshParca === "function" && v45SshParca(o) ? '<span class="v45-ssh">SSH</span>' : ""}</td>
       <td>${escapeHtml(o.supplier || "-")}</td>
       <td>${escapeHtml(renk)}</td>
       <td style="text-align:center;"><strong>${escapeHtml(o.quantity ?? "-")}</strong></td>
@@ -8834,21 +8835,58 @@ function v97ModelShipment(selected) {
       rows: gs.map((g) => [{ text: v97Txt(g.customerName), bold: true }, v97Txt(g.phone), v97Txt(g.address), g.deliveryDate ? formatDate(g.deliveryDate) : "-", v97Upper(g.shipmentType || "-")]) } }))
   };
 }
-function v97ModelDelivery(group, orders, receiver, deliverer, note) {
-  const qty = orders.reduce((n, x) => n + (Number(x.quantity) || 0), 0);
+/* v45: Teslim Formu — fotoğraflı; normal ürünler ve SSH parçaları ayrı bölümde; ölçü · yön · kalem notu */
+const v45Desc = (o, ad) => { const m = String((o && o.description) || "").match(new RegExp(ad + ":\\s*([^·\\[\\]]+)")); return m ? m[1].trim() : ""; };
+function v45Not(o) {   // açıklamadan iç işaretler, ölçü/yön ve "Teklif 0001" eki temizlenir
+  return getOrderDescription(o).split("·").map((x) => x.trim()).filter((x) => x && !/^(Ölçü|Yön):/i.test(x) && !/^Teklif\s+\S+$/i.test(x) && !/^\[\[/.test(x)).join(" · ");
+}
+function v45SshParca(o) { return !!o && (!!o.sshAnaId || (typeof v105EskiSsh === "function" && v105EskiSsh(o))); }
+function v45SshBilgi(o) {   // asıl sipariş + son SSH kaydı
+  const ana = o.sshAnaId ? allOrders.find((x) => x.id === Number(o.sshAnaId)) : null;
+  const L = ana && Array.isArray(ana.ssh) ? ana.ssh : [];
+  const k = L.slice().reverse().find((x) => Number(x && x.parca_id) === o.id) || L[L.length - 1] || null;
+  return { ana, kayit: k };
+}
+function v97ModelDelivery(group, orders, receiver, deliverer, note, fot) {
+  fot = fot || {};
+  const qty = (L) => L.reduce((n, x) => n + (Number(x.quantity) || 0), 0);
   const customer = group.customerName || group.customer || orders[0]?.customer || "-";
-  return {
-    kind: "teslim", previewTitle: `Teslim Formu · ${customer}`, filename: `Teslim-Formu-${v91PdfSafeName(customer)}.pdf`,
-    title: "TESLİM FORMU", sub: "OFİSCHİ BÜRO MOBİLYALARI · PRONTO",
-    meta: [["Müşteri", customer], ["Teslim Tarihi", formatDate(todayISO())], ["Telefon", v97Txt(group.phone || orders[0]?.phone)]].concat(v105Acik ? [["Teslim Şartları", Array.from(new Set(orders.map((x) => v105SartMetni(x)))).join(" / ")]] : []).concat([["Adres", v97Txt(group.address || orders[0]?.deliveryAddress), true]]),
-    sections: [
-      { heading: "Teslim Edilen Ürünler", headRight: `${orders.length} KALEM · ${qty} ADET`, table: {
-        cols: [{ h: "Sipariş No", w: "auto" }, { h: "Ürün", w: "*" }, { h: "Renk / Kumaş", w: "*" }, { h: "Adet", w: 50, align: "r" }],
-        rows: orders.map((x) => [{ text: orderNo(x), bold: true }, v97Txt(x.product), v97Txt(colorFabricText(x)), String(x.quantity ?? "-")]) } },
-      { note: { title: "Teslimat Notu", text: note || "Ürünler eksiksiz ve teslimat koşullarına uygun şekilde teslim alınmıştır." } }
-    ],
-    signs: [{ title: "Teslim Alan", name: receiver }, { title: "Teslim Eden", name: deliverer }]
+  const normal = orders.filter((o) => !v45SshParca(o)), ssh = orders.filter(v45SshParca);
+  const olcuYon = (o) => [v45Desc(o, "Ölçü") ? "Ölçü " + v45Desc(o, "Ölçü") : "", v45Desc(o, "Yön") ? "Yön " + v45Desc(o, "Yön") : ""].filter(Boolean).join(" · ");
+  const foto = (o, ps) => ({ img: fot[o.id] || "", size: ps, alt: "Fotoğraf Yok" });
+  return (o) => {
+    const ps = Math.min(V97_PHOTO[o && o.foto] || 64, 72);
+    const sections = [];
+    if (normal.length) sections.push({ heading: "Teslim Edilen Ürünler", headRight: `${normal.length} KALEM · ${qty(normal)} ADET`, table: {
+      cols: [{ h: "Fotoğraf", w: ps + 10 }, { h: "Sipariş No", w: "auto" }, { h: "Ürün", w: "*" }, { h: "Renk / Kumaş", w: "*" }, { h: "Adet", w: 40, align: "r" }],
+      rows: normal.map((x) => [foto(x, ps), { text: orderNo(x), bold: true }, { text: x.product, bold: true, sub: olcuYon(x), note: v45Not(x) }, v97Txt(colorFabricText(x)), { text: String(x.quantity ?? "-"), bold: true }]) } });
+    if (ssh.length) sections.push({ heading: "SSH — Servis / Parça Teslimi", headRight: `${ssh.length} KALEM · ${qty(ssh)} ADET`, danger: true, table: {
+      cols: [{ h: "Fotoğraf", w: ps + 10 }, { h: "Sipariş No", w: "auto" }, { h: "Parça", w: "*" }, { h: "Asıl Sipariş", w: "*" }, { h: "Sorun", w: "*" }, { h: "Adet", w: 40, align: "r" }],
+      rows: ssh.map((x) => { const b = v45SshBilgi(x), k = b.kayit;
+        return [foto(x, ps), { text: orderNo(x), bold: true }, { text: x.product, bold: true, tag: "SSH", sub: [colorFabricText(x), olcuYon(x)].filter((v) => v && v !== "-").join(" · "), note: v45Not(x) },
+          b.ana ? { text: orderNo(b.ana), bold: true, sub: [b.ana.product, b.ana.colorCode].filter(Boolean).join(" · ") } : "-",
+          k ? { text: k.tur || "-", sub: k.aciklama || "" } : "-", { text: String(x.quantity ?? "-"), bold: true }]; }) } });
+    sections.push({ note: { title: "Teslimat Notu", text: note || "Ürünler eksiksiz ve teslimat koşullarına uygun şekilde teslim alınmıştır." } });
+    return {
+      kind: "teslim", previewTitle: `Teslim Formu · ${customer}`, filename: `Teslim-Formu-${v91PdfSafeName(customer)}.pdf`,
+      title: "TESLİM FORMU", sub: "OFİSCHİ BÜRO MOBİLYALARI · PRONTO",
+      meta: [["Müşteri", customer], ["Teslim Tarihi", formatDate(todayISO())], ["Telefon", v97Txt(group.phone || orders[0]?.phone)]].concat(v105Acik ? [["Teslim Şartları", Array.from(new Set(orders.map((x) => v105SartMetni(x)))).join(" / ")]] : []),
+      sections,
+      signs: [{ title: "Teslim Alan", name: receiver }, { title: "Teslim Eden", name: deliverer }]
+    };
   };
+}
+/* fotoğraf: siparişin kendi fotoğrafı, yoksa katalogdaki model fotoğrafı (yalnız PDF açılırken) */
+async function v45Fotolar(orders) {
+  try { if (typeof v25KatYukle === "function") await v25KatYukle(false); } catch (_) {}
+  const out = {};
+  await Promise.all(orders.map(async (o) => {
+    let u = ""; try { u = await getOrderPhotoSignedUrl(o.id) || ""; } catch (_) {}
+    if (!u) { const src = v45SshParca(o) ? null : (typeof v44Esle === "function" ? v44Esle(o) : null);
+      if (src) { let k = null; try { k = v25FotoBul(src.kategori, src.model, src.modul); } catch (_) {} if (k) u = await v38FotoAl(k); } }
+    out[o.id] = u || "";
+  }));
+  return out;
 }
 
 /* ---------- HTML çıktı (önizleme, yazdırma, masaüstü gerçek PDF) ---------- */
@@ -8873,6 +8911,9 @@ const V97_CSS = `.v97p{--ink:#222;--mut:#8b9098;--line:#e8e8e8;background:#fff;c
 .v97p table.t{width:100%;border-collapse:collapse;font-size:10px}
 .v97p .t th{text-align:left;font-weight:500;color:var(--mut);font-size:8px;text-transform:uppercase;letter-spacing:.05em;padding:5px 8px 5px 0;border-bottom:1px solid var(--ink);white-space:nowrap}
 .v97p .t td{padding:7px 8px 7px 0;border-bottom:1px solid var(--line);vertical-align:top}
+.v97p .t td .v45-sub{margin-top:2px;font-size:.9em;font-weight:400;color:#555}
+.v97p .t td .v45-tag{display:inline-block;margin-left:5px;padding:1px 4px;border-radius:3px;background:#C0392B;color:#fff;font-size:.75em;font-weight:800;vertical-align:1px}
+.v97p h2.v45-kirmizi{color:#C0392B}
 .v97p .t td .v43-not{margin-top:3px;font-size:.9em;font-weight:400;font-style:italic;color:#555}
 .v97p .t td .v43-not b{font-style:normal;font-weight:700;color:#8a6a10}
 .v97p .t .r{text-align:right}.v97p .t .b{font-weight:600}
@@ -8896,7 +8937,10 @@ function v97Cell(c, col) {
   const t = c && typeof c === "object" ? c.text : c, b = c && typeof c === "object" && c.bold;
   const cls = [col.align === "r" ? "r" : "", b ? "b" : ""].filter(Boolean).join(" ");
   const not = c && typeof c === "object" && c.note ? String(c.note).trim() : "";   /* v43: kalem notu, hücrenin altında */
-  return `<td${cls ? ` class="${cls}"` : ""}>${escapeHtml(v97Txt(t))}${not ? `<div class="v43-not"><b>Not:</b> ${escapeHtml(not)}</div>` : ""}</td>`;
+  const nl = c && typeof c === "object" && c.noteLabel ? String(c.noteLabel) : "Not";
+  const tag = c && typeof c === "object" && c.tag ? `<span class="v45-tag">${escapeHtml(c.tag)}</span>` : "";   /* v45: SSH etiketi */
+  const sub = c && typeof c === "object" && c.sub ? String(c.sub).trim() : "";                                     /* v45: ölçü · yön vb. alt satır */
+  return `<td${cls ? ` class="${cls}"` : ""}>${escapeHtml(v97Txt(t))}${tag}${sub ? `<div class="v45-sub">${escapeHtml(v97Txt(sub))}</div>` : ""}${not ? `<div class="v43-not"><b>${escapeHtml(nl)}:</b> ${escapeHtml(not)}</div>` : ""}</td>`;
 }
 function v97Html(m, o) {
   V97_LANG = o && o.lang === "en" ? "en" : "tr";
@@ -8908,7 +8952,7 @@ function v97Html(m, o) {
   const title = m.title ? `<h1>${escapeHtml(m.title)}</h1>${m.sub ? `<div class="sub">${escapeHtml(m.sub)}</div>` : ""}` : "";
   const meta = m.meta && m.meta.length ? `<div class="meta">${m.meta.map(([k, v, wide]) => `<div${wide ? ' class="wide"' : ""}><span>${escapeHtml(k)}</span><b>${escapeHtml(v97Txt(v))}</b></div>`).join("")}</div>` : "";
   const secs = (m.sections || []).map((s) => {
-    let out = s.heading ? `<h2><span>${escapeHtml(s.heading)}</span>${s.headRight ? `<em>${escapeHtml(s.headRight)}</em>` : ""}</h2>` : "";
+    let out = s.heading ? `<h2${s.danger ? ' class="v45-kirmizi"' : ""}><span>${escapeHtml(s.heading)}</span>${s.headRight ? `<em>${escapeHtml(s.headRight)}</em>` : ""}</h2>` : "";
     if (s.table) {
       const cols = s.table.cols;
       out += `<table class="t"><thead><tr>${cols.map((c) => `<th${c.align === "r" ? ' class="r"' : ""}>${escapeHtml(c.h)}</th>`).join("")}</tr></thead><tbody>${s.table.rows.length ? s.table.rows.map((r) => `<tr>${r.map((c, i) => v97Cell(c, cols[i])).join("")}</tr>`).join("") : `<tr><td class="e" colspan="${cols.length}">${escapeHtml(s.table.empty || "Kayıt yok.")}</td></tr>`}</tbody></table>`;
@@ -8981,16 +9025,23 @@ async function v97Pdf(m, o) {
     content.push({ margin: [0, 16, 0, 16], table: { widths: ["*", "*", "*", "*"], body: rows }, layout: { hLineWidth: (i) => (i === 0 ? 0.8 : 0), hLineColor: () => INK, vLineWidth: () => 0, paddingLeft: () => 0, paddingRight: () => 10, paddingTop: (i) => (i === 0 ? 9 : 5), paddingBottom: () => 3 } });
   }
   for (const s of m.sections || []) {
-    if (s.heading) content.push({ columns: [{ text: v97Upper(s.heading), fontSize: 6.5, color: MUT, characterSpacing: 0.3 }, s.headRight ? { text: s.headRight, fontSize: 6.5, color: MUT, characterSpacing: 0.3, alignment: "right" } : { text: "" }], margin: [0, 16, 0, 5] });
+    if (s.heading) { const hc = s.danger ? "#C0392B" : MUT; content.push({ columns: [{ text: v97Upper(s.heading), fontSize: 6.5, color: hc, bold: !!s.danger, characterSpacing: 0.3 }, s.headRight ? { text: s.headRight, fontSize: 6.5, color: hc, characterSpacing: 0.3, alignment: "right" } : { text: "" }], margin: [0, 16, 0, 5] }); }
     if (s.table) {
       const cols = s.table.cols;
       const head = cols.map((c) => ({ text: v97Upper(c.h), fontSize: 6, color: MUT, characterSpacing: 0.3, alignment: c.align === "r" ? "right" : "left", noWrap: true }));
       const body = [head].concat(s.table.rows.length ? s.table.rows.map((r) => r.map((c, i) => {
         if (c && typeof c === "object" && "img" in c) { const im = imgs[c.img], sz = px(c.size || 88); return im ? { image: im.data, fit: [sz, sz] } : { text: c.alt || "", fontSize: 6.5, color: "#aaaaaa" }; }
         const t = c && typeof c === "object" ? c.text : c;
-        const hucre = { text: v97Txt(t), bold: !!(c && typeof c === "object" && c.bold), alignment: cols[i].align === "r" ? "right" : "left", fontSize: 7.6 };
-        const not = c && typeof c === "object" && c.note ? String(c.note).trim() : "";   /* v43: kalem notu, hücrenin altında */
-        return not ? { stack: [hucre, { text: [{ text: "Not: ", bold: true, italics: false, color: "#8a6a10" }, { text: not }], fontSize: 6.8, italics: true, color: "#555555", margin: [0, 2.5, 0, 0] }] } : hucre;
+        const ob = c && typeof c === "object";
+        const hucre = ob && c.tag ? { text: [{ text: v97Txt(t) }, { text: "  " + c.tag, color: "#C0392B", fontSize: 6.5 }], bold: !!c.bold, alignment: cols[i].align === "r" ? "right" : "left", fontSize: 7.6 }
+          : { text: v97Txt(t), bold: !!(ob && c.bold), alignment: cols[i].align === "r" ? "right" : "left", fontSize: 7.6 };
+        const not = ob && c.note ? String(c.note).trim() : "";   /* v43: kalem notu, hücrenin altında */
+        const sub = ob && c.sub ? String(c.sub).trim() : "";     /* v45: alt satır */
+        if (!not && !sub) return hucre;
+        const st = [hucre];
+        if (sub) st.push({ text: v97Txt(sub), fontSize: 6.8, color: "#555555", margin: [0, 2, 0, 0] });
+        if (not) st.push({ text: [{ text: (ob && c.noteLabel ? c.noteLabel : "Not") + ": ", bold: true, italics: false, color: "#8a6a10" }, { text: not }], fontSize: 6.8, italics: true, color: "#555555", margin: [0, 2.5, 0, 0] });
+        return { stack: st };
       })) : [[{ text: s.table.empty || "Kayıt yok.", colSpan: cols.length, color: MUT, fontSize: 7.6 }].concat(cols.slice(1).map(() => ({})))]);
       content.push({ table: { headerRows: 1, dontBreakRows: true, widths: cols.map((c) => (typeof c.w === "number" ? px(c.w) : c.w || "*")), body },
         layout: { hLineWidth: (i, node) => (i === 0 ? 0 : i === 1 ? 0.8 : 0.5), hLineColor: (i) => (i === 1 ? INK : LINE), vLineWidth: () => 0, paddingLeft: (i) => (i === 0 ? 0 : 3), paddingRight: () => 6, paddingTop: () => 5, paddingBottom: () => 5 } });
@@ -9063,7 +9114,8 @@ function v97OpenDelivery() {
   const orders = ids.size ? all.filter((x) => ids.has(String(x.id))) : all;
   if (!orders.length) return showToast("Teslim formunda ürün bulunamadı.");
   const rv = document.getElementById("deliveryFormReceiver")?.value || "", dv = document.getElementById("deliveryFormDeliverer")?.value || "", nt = document.getElementById("deliveryFormNote")?.value || "";
-  v97Open("teslim", () => v97ModelDelivery(group, orders, rv.trim(), dv.trim(), nt.trim()));
+  showToast("PDF hazırlanıyor…");
+  v45Fotolar(orders).then((fot) => { const mk = v97ModelDelivery(group, orders, rv.trim(), dv.trim(), nt.trim(), fot); v97Open("teslim", (o) => mk(o)); });
 }
 window.v90OpenPdf = v97OpenOrder;
 window.v91OpenOrderGroupPdf = v97OpenGroup;
@@ -12246,5 +12298,42 @@ if (typeof V27_TUR === "object") { V27_TUR.iade_giris = "Müşteri iadesi (depoy
 }
 </style>
 
+<script id="v45-teslim-js">
+/* ===== v45: Teslim Formu — yüzen yuvarlak PDF düğmesi (müşteri ve en az bir kalem seçilince) ===== */
+function v45Fab() {
+  let b = document.getElementById("v45Fab");
+  if (!b) {
+    b = document.createElement("button"); b.type = "button"; b.id = "v45Fab"; b.className = "v45-fab"; b.hidden = true;
+    b.title = "PDF oluştur"; b.setAttribute("aria-label", "Teslim formu PDF oluştur");
+    b.innerHTML = '<span class="v45-fab-t">PDF</span><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M12 4v12"/><path d="M6 11l6 6 6-6"/><path d="M5 20h14"/></svg><span class="v45-fab-rz"></span>';
+    b.addEventListener("click", () => { try { v97OpenDelivery(); } catch (e) { showToast("PDF açılamadı."); } });
+    document.body.appendChild(b);
+  }
+  let n = 0;
+  try {
+    const g = currentView === "delivery-form" ? getSelectedDeliveryFormGroup() : null;
+    if (g) { const ids = new Set(Array.from(deliveryFormSelectedOrderIds || []).map(String)); n = g.orders.filter((o) => ids.has(String(o.id))).length; }
+  } catch (_) {}
+  b.hidden = !n;
+  b.querySelector(".v45-fab-rz").textContent = String(n);
+}
+if (typeof renderDeliveryForm === "function") {
+  const v45Ilk = renderDeliveryForm;
+  renderDeliveryForm = function () { const r = v45Ilk.apply(this, arguments); try { v45Fab(); } catch (_) {} return r; };
+}
+</script>
+<style id="v45-teslim-css">
+.v45-fab{position:fixed;right:24px;bottom:24px;z-index:900;width:62px;height:62px;border-radius:50%;border:0;background:#1c1c1e;color:#E6B22A;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;cursor:pointer;box-shadow:0 12px 28px rgba(0,0,0,.28);animation:v45In .22s ease-out}
+.v45-fab[hidden]{display:none}
+.v45-fab:hover{transform:translateY(-2px)}
+.v45-fab:focus-visible{outline:3px solid #E6B22A;outline-offset:3px}
+.v45-fab-t{font-weight:900;font-size:14px;letter-spacing:.04em}
+.v45-fab svg{color:#fff}
+.v45-fab-rz{position:absolute;top:-4px;right:-4px;min-width:22px;height:22px;padding:0 6px;border-radius:999px;background:#C0392B;color:#fff;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;border:2px solid var(--color-surface-solid,#fff)}
+body:has(.modal-overlay:not(.hidden)) .v45-fab{display:none}
+@keyframes v45In{from{opacity:0;transform:scale(.8)}to{opacity:1;transform:none}}
+@media (max-width:900px){.v45-fab{bottom:calc(84px + env(safe-area-inset-bottom,0px));right:16px}}
+.v45-ssh{display:inline-block;margin-left:6px;padding:1px 5px;border-radius:4px;background:#C0392B;color:#fff;font-size:10px;font-weight:800;vertical-align:1px}
+</style>
 </body>
 </html>
