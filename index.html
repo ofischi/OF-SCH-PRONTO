@@ -8846,6 +8846,8 @@ const V97_CSS = `.v97p{--ink:#222;--mut:#8b9098;--line:#e8e8e8;background:#fff;c
 .v97p table.t{width:100%;border-collapse:collapse;font-size:10px}
 .v97p .t th{text-align:left;font-weight:500;color:var(--mut);font-size:8px;text-transform:uppercase;letter-spacing:.05em;padding:5px 8px 5px 0;border-bottom:1px solid var(--ink);white-space:nowrap}
 .v97p .t td{padding:7px 8px 7px 0;border-bottom:1px solid var(--line);vertical-align:top}
+.v97p .t td .v43-not{margin-top:3px;font-size:.9em;font-weight:400;font-style:italic;color:#555}
+.v97p .t td .v43-not b{font-style:normal;font-weight:700;color:#8a6a10}
 .v97p .t .r{text-align:right}.v97p .t .b{font-weight:600}
 .v97p .t .e{color:var(--mut)}
 .v97p .ph{border:1px solid #eee;display:flex;align-items:center;justify-content:center;color:#bbb;font-size:8px;text-align:center}
@@ -8866,7 +8868,8 @@ function v97Cell(c, col) {
   }
   const t = c && typeof c === "object" ? c.text : c, b = c && typeof c === "object" && c.bold;
   const cls = [col.align === "r" ? "r" : "", b ? "b" : ""].filter(Boolean).join(" ");
-  return `<td${cls ? ` class="${cls}"` : ""}>${escapeHtml(v97Txt(t))}</td>`;
+  const not = c && typeof c === "object" && c.note ? String(c.note).trim() : "";   /* v43: kalem notu, hücrenin altında */
+  return `<td${cls ? ` class="${cls}"` : ""}>${escapeHtml(v97Txt(t))}${not ? `<div class="v43-not"><b>Not:</b> ${escapeHtml(not)}</div>` : ""}</td>`;
 }
 function v97Html(m, o) {
   V97_LANG = o && o.lang === "en" ? "en" : "tr";
@@ -8958,7 +8961,9 @@ async function v97Pdf(m, o) {
       const body = [head].concat(s.table.rows.length ? s.table.rows.map((r) => r.map((c, i) => {
         if (c && typeof c === "object" && "img" in c) { const im = imgs[c.img], sz = px(c.size || 88); return im ? { image: im.data, fit: [sz, sz] } : { text: c.alt || "", fontSize: 6.5, color: "#aaaaaa" }; }
         const t = c && typeof c === "object" ? c.text : c;
-        return { text: v97Txt(t), bold: !!(c && typeof c === "object" && c.bold), alignment: cols[i].align === "r" ? "right" : "left", fontSize: 7.6 };
+        const hucre = { text: v97Txt(t), bold: !!(c && typeof c === "object" && c.bold), alignment: cols[i].align === "r" ? "right" : "left", fontSize: 7.6 };
+        const not = c && typeof c === "object" && c.note ? String(c.note).trim() : "";   /* v43: kalem notu, hücrenin altında */
+        return not ? { stack: [hucre, { text: [{ text: "Not: ", bold: true, italics: false, color: "#8a6a10" }, { text: not }], fontSize: 6.8, italics: true, color: "#555555", margin: [0, 2.5, 0, 0] }] } : hucre;
       })) : [[{ text: s.table.empty || "Kayıt yok.", colSpan: cols.length, color: MUT, fontSize: 7.6 }].concat(cols.slice(1).map(() => ({})))]);
       content.push({ table: { headerRows: 1, dontBreakRows: true, widths: cols.map((c) => (typeof c.w === "number" ? px(c.w) : c.w || "*")), body },
         layout: { hLineWidth: (i, node) => (i === 0 ? 0 : i === 1 ? 0.8 : 0.5), hLineColor: (i) => (i === 1 ? INK : LINE), vLineWidth: () => 0, paddingLeft: (i) => (i === 0 ? 0 : 3), paddingRight: () => 6, paddingTop: () => 5, paddingBottom: () => 5 } });
@@ -11637,7 +11642,7 @@ async function v38SaPdf(t, L, sup, fiyat, kdv) {
     const k = v38R2(ara * (Number(kdv) || 0) / 100), ek = coklu ? ` · ${d}` : "";
     totals.push([`Toplam (KDV hariç)${ek}`, v38Para(ara, d)], [`KDV %${String(kdv).replace(".", ",")}${ek}`, v38Para(k, d)], [`Toplam (KDV dahil)${ek}`, v38Para(v38R2(ara + k), d)]);
   }
-  const notlar = L.filter((r) => v38S(r.aciklama)).map((r) => `${r.no}: ${v38S(r.aciklama)}`);
+  const notlar = [];   /* v43: kalem notları artık kendi satırında; altta yalnız fiyat uyarısı */
   if (fiyatsiz.length) notlar.push(`Fiyatı girilmemiş kalem toplama dahil değil: ${fiyatsiz.join(", ")}`);
   const iletisim = [sup.phone, sup.email].filter(Boolean).join(" · ");
   v97Open("satinalma", (o) => {
@@ -11647,7 +11652,7 @@ async function v38SaPdf(t, L, sup, fiyat, kdv) {
     const rows = L.map((r, i) => {
       const fiyatVar = r.alis_fiyat != null && r.alis_fiyat !== "" && isFinite(Number(r.alis_fiyat));
       return [{ img: fot[anah[i]] || "", size: ps, alt: "Fotoğraf Yok" },
-        { text: `${r.no} · ${r.kategori} / ${r.model}${r.modul ? " · " + r.modul : ""}`, bold: true },
+        { text: `${r.no} · ${r.kategori} / ${r.model}${r.modul ? " · " + r.modul : ""}`, bold: true, note: v38S(r.aciklama) },
         v38S(r.olcu) || "-", v38S(r.renk) || "-", v38Yon(r.yon) || "-", { text: String(kalan(r)), bold: true },
         r.teslim_tarihi ? formatDate(r.teslim_tarihi) : "-"]
         .concat(fiyat ? [fiyatVar ? v38Para(r.alis_fiyat, r.doviz) : "-", fiyatVar ? v38Para(v38R2(Number(r.alis_fiyat) * kalan(r)), r.doviz) : "-"] : []);
