@@ -11880,16 +11880,71 @@ function v44SecimOku(root) {
 const v44SecimEksik = (er) => er && (er.code === "PT422" || /Depoya alınacak ürünü seçin/.test(er.message || ""));
 const v44SecimIdler = (er) => Array.from(String(er.message || "").matchAll(/PR-(\d+)/g)).map((x) => Number(x[1]));
 
+/* ---------- katalog: fotoğraf + değişimde yeni ürün (aynı ürünün varyantları / fotoğraflı arama) ---------- */
+const v44K = (x) => v25Ky(String(x || ""));
+const v44Desc = (o, ad) => { const m = String((o && o.description) || "").match(new RegExp(ad + ":\\s*([^·\\[\\]]+)")); return m ? m[1].trim() : ""; };
+function v44Esle(o) {   // siparişin katalogdaki karşılığı (Teklif'ten gelen ürün adı = kategori model modül)
+  if (!o || typeof v25Kat === "undefined" || !v25Kat) return null;
+  const p = v44K(o.product), renk = v44K(o.colorCode), olcu = v44Desc(o, "Ölçü"), yon = v44Desc(o, "Yön");
+  let best = null, bs = -1;
+  for (const r of v25Kat.rows.values()) {
+    const tam = v44K([r.kategori, r.model, r.modul].filter(Boolean).join(" "));
+    if (tam !== p && v44K(r.kategori + " " + r.model) !== p && v44K(r.model) !== p) continue;
+    const sc = (tam === p ? 8 : 0) + (v44K(r.renk) === renk ? 4 : 0) + (olcu && v44K(r.olcu) === v44K(olcu) ? 2 : 0) + (yon && v44K(r.yon) === v44K(yon) ? 1 : 0);
+    if (sc > bs) { bs = sc; best = r; }
+  }
+  if (!best) return null;
+  return { kategori: best.kategori, model: best.model, modul: best.modul || "", olcu: olcu || best.olcu || "", renk: o.colorCode || best.renk || "", yon: yon || best.yon || "" };
+}
+const v44Ayni = (r, b) => v44K(r.kategori) === v44K(b.kategori) && v44K(r.model) === v44K(b.model) && v44K(r.modul) === v44K(b.modul);
+function v44Varyantlar(b) { return b && v25Kat ? Array.from(v25Kat.rows.values()).filter((r) => v44Ayni(r, b)) : []; }
+const v44Ad = (y) => { const v = [y.olcu, y.renk, y.yon].filter(Boolean); return [y.kategori, y.model, y.modul].filter(Boolean).join(" ") + (v.length ? " · " + v.join(" · ") : ""); };
+function v44Th(y) { let k = null; try { k = y ? v25FotoBul(y.kategori, y.model, y.modul) : null; } catch (_) {} return `<span class="v25-th v44-th"${k ? ` data-fk="${escapeHtml(k)}"` : ""}>${k ? "" : "Foto yok"}</span>`; }
+function v44Katalogda(y) { return v44Varyantlar(y).some((r) => ["olcu", "renk", "yon"].every((d) => v44K(r[d]) === v44K(y[d]))); }
+function v44AraSonuc(q) {
+  if (!v25Kat) return "";
+  const t = v106Ara(q || ""); if (!t) return `<div class="v98-s">Kategori, model, renk yazın…</div>`;
+  const gz = v36Gizli(), L = [];
+  for (const r of v25Kat.rows.values()) {
+    if (gz.has(v25Ky(r.kategori))) continue;
+    if (!v106Ara([r.kod, r.kategori, r.model, r.modul, r.olcu, r.renk, r.yon].join(" ")).includes(t)) continue;
+    L.push(r); if (L.length >= 20) break;
+  }
+  return L.length ? L.map((r) => `<button type="button" class="v44-ks" data-v44-kat="${escapeHtml(String(r.id))}">${v44Th(r)}<span><b>${escapeHtml([r.kategori, r.model].join(" / "))}</b><br><span class="v98-s">${escapeHtml(v25VarAd(r))}</span></span></button>`).join("") : `<div class="v98-s">Katalogda bulunamadı.</div>`;
+}
+function v44DegisimHtml(S, o) {
+  const y = S.yeni[o.id];
+  if (typeof v25Kat === "undefined" || !v25Kat || v25Yok) {
+    const t = S.yeniYazi[o.id] || {};
+    return `<div class="v44-yeni"><input class="v98-in" data-v44-yu="${o.id}" maxlength="200" placeholder="Yeni ürün (aynıysa boş)" value="${escapeHtml(t.urun || "")}"><input class="v98-in" data-v44-yr2="${o.id}" maxlength="80" placeholder="Yeni renk (aynıysa boş)" value="${escapeHtml(t.renk || "")}"></div>`;
+  }
+  let h = `<div class="v44-dg">`;
+  if (y) {
+    const V = v44Varyantlar(y);
+    for (const [d, ad] of [["renk", "Renk"], ["olcu", "Ölçü"], ["yon", "Yön"]]) {
+      const ops = Array.from(new Map(V.map((r) => [v44K(r[d]), r[d]])).values()).filter((x) => x);
+      if (ops.length < 2 && !(ops.length === 1 && v44K(ops[0]) !== v44K(y[d]))) continue;
+      h += `<div class="v44-l">${ad}</div><div class="v44-chips">${ops.map((x) => `<button type="button" class="${v44K(x) === v44K(y[d]) ? "on" : ""}" data-v44-v="${o.id}" data-d="${d}" data-deger="${escapeHtml(x)}">${escapeHtml(x)}</button>`).join("")}</div>`;
+    }
+    h += `<div class="v44-sonuc">${v44Th(y)}<div>→ <b>${escapeHtml(v44Ad(y))}</b>${v44Katalogda(y) ? "" : `<br><span class="v98-s">Bu birleşim katalogda yok; yine de seçilebilir.</span>`}</div></div>`;
+  }
+  h += S.ara[o.id] != null
+    ? `<input class="v98-in" data-v44-q="${o.id}" maxlength="80" placeholder="Katalogda ara: kategori, model, renk…" value="${escapeHtml(S.ara[o.id])}" style="margin-top:8px"><div class="v44-ks-l" id="v44KS${o.id}">${v44AraSonuc(S.ara[o.id])}</div>`
+    : `<button type="button" class="btn btn-ghost v44-baska" data-v44-baska="${o.id}">${y ? "Başka ürün seç…" : "Katalogdan yeni ürün seç…"}</button>`;
+  return h + `</div>`;
+}
+
 /* ---------- İade / Değişim aç (A + C: tek sayfa, aynı siparişin teslim edilmiş kalemleri) ---------- */
 async function v44Ac(id) {
   if (!supa) { showToast("İade için internet bağlantısı gerekli."); return; }
   try { await v44Yukle(false); } catch (e) { showToast(v44Hata(e)); return; }
   if (v44Yok) { showToast("İade kurulumu (pronto-iade.sql) henüz yapılmamış."); return; }
+  try { await v25KatYukle(false); } catch (_) {}
   const a = allOrders.find((o) => o.id === id); if (!a) return;
   if (!v44Teslimli(a)) { showToast("İade yalnızca teslim edilmiş siparişte açılır."); return; }
   let L = a.teklifId != null ? allOrders.filter((o) => o.teklifId === a.teklifId && normName(o.customer) === normName(a.customer) && !isDeletedOrder(o) && !o.sshAnaId) : [a];
   L = [a, ...L.filter((o) => o.id !== a.id).sort((x, y) => x.id - y.id)];
-  const S = { tur: "iade", sec: new Map([[a.id, v44Kalan(a)]]), yeni: {}, sebep: "", sebepNot: "", alindi: false, urun: "depo", para: "yok", not: "", teslim: "", secim: null };
+  const S = { tur: "iade", sec: new Map([[a.id, v44Kalan(a)]]), yeni: {}, yeniYazi: {}, ara: {}, sebep: "", sebepNot: "", alindi: false, urun: "depo", para: "yok", not: "", teslim: "", secim: null };
   if (!S.sec.get(a.id)) { showToast("Bu siparişin tüm adedi için zaten iade açılmış."); return; }
   const gun = (() => { const d = getDeliveredAt(a); if (!d) return 0; const t = new Date(String(d).slice(0, 10) + "T12:00:00"); return Math.floor((Date.now() - t.getTime()) / 86400000); })();
   const m = v98Ov(`<div class="modal-head"><h2>İade / Değişim — ${escapeHtml(orderNo(a))}</h2><button class="icon-btn" data-x aria-label="Kapat">✕</button></div>
@@ -11898,17 +11953,19 @@ async function v44Ac(id) {
   m.ov.querySelector(".modal").classList.add("v44-modal");
   const seg = (k, opts, v) => `<div class="v44-seg" role="group">${opts.map(([x, l]) => `<button type="button" class="${x === v ? "on" : ""}" data-v44-seg="${k}" data-v="${x}" aria-pressed="${x === v}">${escapeHtml(l)}</button>`).join("")}</div>`;
   const ciz = () => {
-    const kal = L.map((o) => { const kalan = v44Kalan(o), on = S.sec.has(o.id), n = S.sec.get(o.id) || 0, tes = v44Teslimli(o), y = S.yeni[o.id] || {};
+    const kal = L.map((o) => { const kalan = v44Kalan(o), on = S.sec.has(o.id), n = S.sec.get(o.id) || 0, tes = v44Teslimli(o);
+      if (on && S.tur === "degisim" && !(o.id in S.yeni)) S.yeni[o.id] = v44Esle(o);
       return `<div class="v44-k${on ? " on" : ""}${!tes || !kalan ? " kapali" : ""}">
         <button type="button" class="v44-cb${on ? " on" : ""}" data-v44-cb="${o.id}" ${!tes || !kalan ? "disabled" : ""} aria-label="Seç"></button>
+        ${v44Th(v44Esle(o))}
         <div class="v44-ku"><b>${escapeHtml(o.product || "")}</b><span>${escapeHtml(v44Pr(o.id))}${o.colorCode ? " · " + escapeHtml(o.colorCode) : ""} · ${!tes ? escapeHtml(o.status || "") + " (teslim edilmedi)" : kalan ? `teslim ${escapeHtml(o.quantity)}, iade edilebilir ${kalan}` : "tamamı iade edilmiş"}</span>
-          ${on && S.tur === "degisim" ? `<div class="v44-yeni"><input class="v98-in" data-v44-yu="${o.id}" maxlength="200" placeholder="Yeni ürün (aynıysa boş)" value="${escapeHtml(y.urun || "")}"><input class="v98-in" data-v44-yr2="${o.id}" maxlength="80" placeholder="Yeni renk (aynıysa boş)" value="${escapeHtml(y.renk || "")}"></div>` : ""}</div>
+          ${on && S.tur === "degisim" ? `<div class="v44-l">Yeni ürün</div>${v44DegisimHtml(S, o)}` : ""}</div>
         ${on ? `<div class="v44-step"><button type="button" data-v44-ad="${o.id}" data-d="-1" aria-label="Azalt">−</button><b>${n}</b><button type="button" data-v44-ad="${o.id}" data-d="1" aria-label="Artır">+</button></div>` : ""}</div>`; }).join("");
     m.$("#v44Body").innerHTML = `
       <div class="v44-ust">${escapeHtml(a.customer)}${a.teklifId != null ? " · Teklif'ten gelen sipariş" : ""}</div>
       <div class="v44-l">İşlem</div>${seg("tur", [["iade", "İade"], ["degisim", "Değişim"]], S.tur)}
       <div class="v44-l">Ürünler</div><div class="v44-kl">${kal}</div>
-      ${S.tur === "degisim" ? `<label class="v44-lbl" style="max-width:260px">Yeni ürünün teslim tarihi <b>*</b><input type="date" class="v98-in" id="v44Teslim" value="${escapeHtml(S.teslim)}"></label>` : ""}
+      ${S.tur === "degisim" ? `<label class="v44-lbl" style="max-width:260px"><span>Yeni ürünün teslim tarihi <b>*</b></span><input type="date" class="v98-in" id="v44Teslim" value="${escapeHtml(S.teslim)}"></label>` : ""}
       <div class="v44-l">Sebep</div><div class="v44-chips">${V44_SEBEP.map((s) => `<button type="button" class="${S.sebep === s ? "on" : ""}" data-v44-sebep="${escapeHtml(s)}">${escapeHtml(s)}</button>`).join("")}</div>
       ${S.sebep === "Diğer" ? `<input class="v98-in" id="v44SebepNot" maxlength="300" placeholder="Sebebi kısaca yazın" value="${escapeHtml(S.sebepNot)}" style="margin-top:6px">` : ""}
       <div class="v44-g">
@@ -11921,12 +11978,14 @@ async function v44Ac(id) {
       <div class="v44-l">Not</div><textarea class="v98-in" id="v44Not" maxlength="1000" rows="2" placeholder="İsteğe bağlı">${escapeHtml(S.not)}</textarea>
       ${gun > 14 ? `<div class="v44-uyari">⚠ Teslimden ${gun} gün geçmiş (14 gün uyarı sınırı). Yine de açılabilir.</div>` : ""}`;
     m.$("#v44Kaydet").textContent = S.tur === "degisim" ? "Değişimi Aç" : "İadeyi Aç";
+    try { v25ThumbBagla(m.$("#v44Body")); } catch (_) {}
   };
   ciz();
   m.ov.addEventListener("input", (e) => {
     const t = e.target;
     if (t.id === "v44SebepNot") S.sebepNot = t.value; else if (t.id === "v44Not") S.not = t.value; else if (t.id === "v44Teslim") S.teslim = t.value;
-    else if (t.dataset.v44Yu) (S.yeni[t.dataset.v44Yu] ||= {}).urun = t.value; else if (t.dataset.v44Yr2) (S.yeni[t.dataset.v44Yr2] ||= {}).renk = t.value;
+    else if (t.dataset.v44Yu) (S.yeniYazi[t.dataset.v44Yu] ||= {}).urun = t.value; else if (t.dataset.v44Yr2) (S.yeniYazi[t.dataset.v44Yr2] ||= {}).renk = t.value;
+    else if (t.dataset.v44Q) { const id = t.dataset.v44Q; S.ara[id] = t.value; const box = m.$("#v44KS" + id); if (box) { box.innerHTML = v44AraSonuc(t.value); try { v25ThumbBagla(box); } catch (_) {} } }
   });
   m.ov.addEventListener("change", (e) => { if (e.target.id === "v44Teslim") S.teslim = e.target.value; });
   m.ov.addEventListener("click", async (e) => {
@@ -11936,6 +11995,13 @@ async function v44Ac(id) {
     if (cb && !cb.disabled) { const o = L.find((x) => x.id === Number(cb.dataset.v44Cb)); if (S.sec.has(o.id)) S.sec.delete(o.id); else S.sec.set(o.id, v44Kalan(o)); ciz(); return; }
     const st = e.target.closest("[data-v44-ad]");
     if (st) { const o = L.find((x) => x.id === Number(st.dataset.v44Ad)); const n = Math.min(v44Kalan(o), Math.max(1, (S.sec.get(o.id) || 1) + Number(st.dataset.d))); S.sec.set(o.id, n); ciz(); return; }
+    const vv = e.target.closest("[data-v44-v]");
+    if (vv) { const id = vv.dataset.v44V, y = S.yeni[id]; if (y) { S.yeni[id] = { ...y, [vv.dataset.d]: vv.dataset.deger }; ciz(); } return; }
+    const bs = e.target.closest("[data-v44-baska]");
+    if (bs) { S.ara[bs.dataset.v44Baska] = ""; ciz(); m.$(`[data-v44-q="${bs.dataset.v44Baska}"]`)?.focus(); return; }
+    const ks = e.target.closest("[data-v44-kat]");
+    if (ks) { const box = ks.closest(".v44-ks-l"), id = box ? box.id.slice(5) : null, r = v25Kat && Array.from(v25Kat.rows.values()).find((x) => String(x.id) === ks.dataset.v44Kat);
+      if (id && r) { S.yeni[id] = { kategori: r.kategori, model: r.model, modul: r.modul || "", olcu: r.olcu || "", renk: r.renk || "", yon: r.yon || "" }; delete S.ara[id]; ciz(); } return; }
     const sb = e.target.closest("[data-v44-sebep]");
     if (sb) { S.sebep = sb.dataset.v44Sebep; ciz(); if (S.sebep === "Diğer") m.$("#v44SebepNot")?.focus(); return; }
     if (e.target.closest("#v44Kaydet")) {
@@ -11945,7 +12011,8 @@ async function v44Ac(id) {
       if (S.tur === "degisim" && !S.teslim) return showToast("Yeni ürünün teslim tarihini seçin.");
       const p = { tur: S.tur, sebep: S.sebep, sebep_not: S.sebep === "Diğer" ? S.sebepNot.trim() : "", para_sonuc: S.tur === "iade" ? S.para : "yok", not: S.not.trim(),
         teslim: S.tur === "degisim" ? S.teslim : null, teslim_alindi: S.alindi, urun_sonuc: S.alindi ? S.urun : null,
-        kalemler: Array.from(S.sec.entries()).map(([oid, n]) => ({ order_id: oid, adet: n, yeni_urun: (S.yeni[oid] && S.yeni[oid].urun || "").trim(), yeni_renk: (S.yeni[oid] && S.yeni[oid].renk || "").trim() })) };
+        kalemler: Array.from(S.sec.entries()).map(([oid, n]) => ({ order_id: oid, adet: n, ...(S.tur === "degisim" && S.yeni[oid] ? { yeni: S.yeni[oid] } : {}),
+          yeni_urun: (S.yeniYazi[oid] && S.yeniYazi[oid].urun || "").trim(), yeni_renk: (S.yeniYazi[oid] && S.yeniYazi[oid].renk || "").trim() })) };
       if (S.secim) p.secim = v44SecimOku(m.ov);
       const btn = m.$("#v44Kaydet"); btn.disabled = true;
       try {
@@ -12111,6 +12178,19 @@ if (typeof V27_TUR === "object") { V27_TUR.iade_giris = "Müşteri iadesi (depoy
 </script>
 <style id="v44-iade-css">
 .v44-modal{max-width:720px !important}
+.v44-k{align-items:flex-start}
+.v44-k .v44-cb{margin-top:12px}
+.v44-th{flex:0 0 44px;width:44px;height:44px;font-size:9px;border-radius:8px}
+.v44-dg{margin-top:2px}
+.v44-dg .v44-l{margin:8px 0 4px;font-size:10px}
+.v44-dg .v44-chips button{padding:5px 10px;min-height:32px;font-size:12.5px}
+.v44-sonuc{display:flex;gap:8px;align-items:center;margin-top:8px;padding:8px;border-radius:10px;background:rgba(27,92,153,.06);border:1px dashed rgba(27,92,153,.35);font-size:13px}
+.v44-baska{margin-top:8px;min-height:34px;padding:0 10px;font-size:13px}
+.v44-ks-l{display:flex;flex-direction:column;gap:4px;margin-top:6px;max-height:260px;overflow:auto}
+.v44-ks{display:flex;gap:8px;align-items:center;text-align:left;border:1px solid var(--color-border);border-radius:10px;background:var(--color-surface-solid);padding:6px 8px;font:inherit;font-size:13px;color:var(--color-text);cursor:pointer}
+.v44-ks:hover{border-color:#E6B22A}
+.v44-ks .v44-th{flex-basis:36px;width:36px;height:36px}
+
 .v44-ust{background:rgba(127,127,127,.08);border-radius:10px;padding:9px 12px;font-size:13px;color:var(--color-text-muted);margin-bottom:4px}
 .v44-l{font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--color-text-muted);margin:14px 0 6px}
 .v44-lbl{display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:700;color:var(--color-text-muted);margin-top:12px}
