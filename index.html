@@ -8345,7 +8345,7 @@ function v97Clean(kind, o) {
 }
 function v97Get(kind) { let r; try { r = v97Clean(kind, JSON.parse(localStorage.getItem("pronto_v97_pdf_" + kind) || "{}")); } catch (_) { r = v97Def(kind); } r.orient = "portrait"; return r; }
 function v97Save(kind, o) { try { localStorage.setItem("pronto_v97_pdf_" + kind, JSON.stringify(v97Clean(kind, o))); } catch (_) {} }
-function v97Keys(kind) { return kind === "tek" ? ["lang", "size", "orient", "foto", "logoPos", "logoSize"] : kind === "satinalma" ? ["size", "orient", "foto", "logoPos", "logoSize"] : ["size", "orient", "logoPos", "logoSize"]; }
+function v97Keys(kind) { return kind === "tek" ? ["lang", "size", "orient", "foto", "logoPos", "logoSize"] : kind === "satinalma" || kind === "grup" || kind === "teslim" ? ["size", "orient", "foto", "logoPos", "logoSize"] : ["size", "orient", "logoPos", "logoSize"]; }
 function v97LogoSrc() { return v90PdfLogo() || ""; }
 function v97Txt(v) { return v == null || v === "" ? "-" : String(v); }
 let V97_LANG = "tr";
@@ -8368,7 +8368,12 @@ function v97ModelOrder(order, o, photo) {
     ].concat(v105PdfNot(order, en))
   };
 }
-function v97ModelGroup(group, orders) {
+function v97ModelGroup(group, orders, fot, o) {   // v46: fotoğraflı; ölçü · yön · not; SSH etiketi; müşteri sütunu yok (başlıkta)
+  fot = fot || {};
+  const ps = Math.min(V97_PHOTO[o && o.foto] || 64, 72);
+  const olcuYon = (x) => [v45Desc(x, "Ölçü"), v45Desc(x, "Yön")].filter(Boolean).join(" · ");
+  const urun = (x) => { const ssh = v45SshParca(x), ana = ssh ? v45SshBilgi(x).ana : null;
+    return { text: x.product, bold: true, tag: ssh ? "SSH" : "", sub: [olcuYon(x), ana ? "Asıl: " + orderNo(ana) : ""].filter(Boolean).join(" · "), note: v45Not(x) }; };
   const total = orders.reduce((n, x) => n + (Number(x.quantity) || 0), 0);
   const sel = group.orders.filter((x) => selectedOrderIds.has(x.id)).length;
   return {
@@ -8377,8 +8382,8 @@ function v97ModelGroup(group, orders) {
     title: `${group.customer} · ${orders.length} KALEM`, sub: `Sipariş Grubu · Hazırlanma tarihi: ${formatDate(todayISO())}`,
     kv: [["Teslim", formatDate(orders[0]?.deliveryDate || group.deliveryDate)], ["Sip. Adet", String(total)]].concat(v105Acik ? [["Teslim Şartları", Array.from(new Set(orders.map((x) => v105SartMetni(x)))).join(" / ")]] : []),
     sections: [{ heading: "Sipariş Kalemleri", table: {
-      cols: [{ h: "Sipariş No", w: "auto" }, { h: "Sipariş Tarihi", w: "auto" }, { h: "Müşteri", w: "*" }, { h: "Ürün", w: "*" }, { h: "Tedarikçi", w: "*" }, { h: "Renk/Kumaş", w: "*" }, { h: "Adet", w: "auto", align: "r" }, { h: "Teslim", w: "auto" }, { h: "Durum", w: "auto" }],
-      rows: orders.map((x) => [{ text: orderNo(x), bold: true }, formatDate(x.orderDate), v97Txt(x.customer), { text: v97Txt(x.product), bold: true }, v97Txt(x.supplier), v97Txt(colorFabricText(x)), String(x.quantity ?? "-"), formatDate(x.deliveryDate), v97Txt(x.status)]) } }]
+      cols: [{ h: "Fotoğraf", w: ps + 10 }, { h: "Sipariş No", w: "auto" }, { h: "Ürün", w: "*" }, { h: "Tedarikçi", w: "auto" }, { h: "Renk/Kumaş", w: "auto" }, { h: "Adet", w: "auto", align: "r" }, { h: "Teslim", w: "auto" }, { h: "Durum", w: "auto" }],
+      rows: orders.map((x) => [{ img: fot[x.id] || "", size: ps, alt: "Fotoğraf Yok" }, { text: orderNo(x), bold: true, sub: formatDate(x.orderDate) }, urun(x), v97Txt(x.supplier), v97Txt(colorFabricText(x)), String(x.quantity ?? "-"), formatDate(x.deliveryDate), v97Txt(x.status)]) } }]
   };
 }
 function v97ModelEntity(type, entity, range) {
@@ -8676,7 +8681,8 @@ async function v97OpenOrder(id) {
 function v97OpenGroup(group) {
   if (!group) return; const orders = v91GetGroupPdfOrders(group);
   if (!orders.length) return showToast("PDF için sipariş bulunamadı.");
-  v97Open("grup", () => v97ModelGroup(group, orders));
+  showToast("PDF hazırlanıyor…");
+  return v45Fotolar(orders).then((fot) => v97Open("grup", (o) => v97ModelGroup(group, orders, fot, o)));
 }
 function v97OpenEntity(type, id, range) {
   const list = { customer: allCustomers, supplier: allSuppliers, product: allProducts }[type];
