@@ -11890,5 +11890,135 @@ body:has(.modal-overlay:not(.hidden)) .v45-fab{display:none}
 @media (max-width:900px){.v45-fab{bottom:calc(84px + env(safe-area-inset-bottom,0px));right:16px}}
 .v45-ssh{display:inline-block;margin-left:6px;padding:1px 5px;border-radius:4px;background:#C0392B;color:#fff;font-size:10px;font-weight:800;vertical-align:1px}
 </style>
+<script id="v47-pencere-js">
+/* ===== v47: AKILLI PENCERE =====
+   Pencere içeriğine göre genişler: sığmayan tablo, yana taşan kutu, tek satırda kesilen yazı ve
+   kutusuna sığmayan giriş değeri ölçülür; pencere en çok ekranın %96'sına kadar açılır.
+   Yalnız büyür (açıkken zıplamaz); kapanınca / ekran boyutu değişince baştan ölçülür.
+   Ağ isteği yok; yalnız pencere açıkken ve içeriği değişince çalışır. */
+(function () {
+  const OV = ".modal-overlay", MD = ".modal", ATLA = ".pdf-ov", MASA = 1025, ORAN = 0.96;
+  const durum = new WeakMap(), gozcu = new WeakMap(), kuyruk = new Set(), kimlik = new WeakMap(), olcu = new WeakMap(), yazilan = new WeakSet();
+  let kare = 0, tuval = null, sayac = 0, surum = 0;
+  const no = (el) => { let n = kimlik.get(el); if (!n) { n = ++sayac; kimlik.set(el, n); } return n; };
+  const kutu = (ov) => ov.querySelector(MD);
+  const gorunur = (ov) => ov.isConnected && !ov.classList.contains("hidden") && ov.getClientRects().length > 0;
+  function ayarla(md, w, enCok) {
+    if (!w) { md.style.removeProperty("width"); md.style.removeProperty("max-width"); return; }
+    md.style.setProperty("width", w + "px", "important"); md.style.setProperty("max-width", enCok + "px", "important");
+  }
+  function sifirla(md) { ayarla(md, 0); md.classList.remove("akilli-dar"); durum.delete(md); }
+  function yaziEni(el, yazi, cs) {
+    try {
+      tuval = tuval || document.createElement("canvas").getContext("2d");
+      tuval.font = `${cs.fontStyle} ${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
+      return tuval.measureText(String(yazi || "")).width;
+    } catch (_) { return 0; }
+  }
+  /* pencerenin genişlemesini isteyen yerler: [{ k: anahtar, el, d: eksik px, cw: şimdiki en, sert }] */
+  function eksikler(md, yok) {
+    const out = [];
+    const ekle = (el, d, cw, sert) => { const k = (sert ? "s" : "t") + no(el); if (d > 2 && cw > 0 && !yok.has(k)) out.push({ k, el, d, cw, sert: !!sert }); };
+    md.querySelectorAll("table").forEach((t) => {             // tablo: satırlar bölünmeden sığacağı en
+      const p = t.parentElement; if (!p || !t.getClientRects().length) return;
+      const cs = getComputedStyle(t); if (cs.display !== "table" || cs.tableLayout === "fixed") return;
+      const ps = getComputedStyle(p), yer = p.clientWidth - (parseFloat(ps.paddingLeft) || 0) - (parseFloat(ps.paddingRight) || 0);
+      /* tablonun istediği en, içeriği değişmedikçe yeniden ölçülmez (büyük tabloda ölçüm pahalıdır) */
+      const imza = surum + ":" + t.rows.length + ":" + t.textContent.length + ":" + t.getElementsByTagName("img").length;
+      let c = olcu.get(t);
+      if (!c || c.imza !== imza) {
+        const eski = t.style.getPropertyValue("width"), onc = t.style.getPropertyPriority("width");
+        t.style.setProperty("width", "max-content", "important"); c = { imza, ister: t.offsetWidth }; olcu.set(t, c);
+        if (eski) t.style.setProperty("width", eski, onc); else t.style.removeProperty("width");
+      }
+      ekle(p, c.ister - yer, p.clientWidth, false);
+    });
+    const hepsi = [md, ...md.querySelectorAll("*")];
+    for (const el of hepsi) {
+      const cw = el.clientWidth; if (!cw) continue;
+      const tag = el.tagName;
+      if (yazilan.has(el)) continue;                           // kullanıcı o an yazıyor: pencere yazarken oynamaz
+      if (tag === "SELECT") {                                  // seçili yazı kutuya sığıyor mu
+        const o = el.options && el.options[el.selectedIndex]; if (!o || el.multiple) continue;
+        const cs = getComputedStyle(el), en = yaziEni(el, o.text, cs) + (parseFloat(cs.paddingLeft) || 0) + (parseFloat(cs.paddingRight) || 0) + 30;
+        ekle(el, Math.min(en, 440) - el.offsetWidth, el.offsetWidth, true); continue;
+      }
+      const d = el.scrollWidth - cw; if (d <= 2) continue;
+      if (tag === "TEXTAREA") continue;
+      if (tag === "INPUT") { if (/^(text|search|tel|email|url|)$/.test(el.type || "")) ekle(el, Math.min(el.scrollWidth, 440) - cw, cw, true); continue; }
+      if (el !== md) {
+        const cs = getComputedStyle(el); if (cs.overflowX === "visible") continue;
+        if (cs.textOverflow === "ellipsis") { ekle(el, Math.min(el.scrollWidth, 640) - cw, cw, true); continue; }
+      }
+      ekle(el, d, cw, true);
+    }
+    return out;
+  }
+  function sigdir(ov) {
+    const md = kutu(ov); if (!md) return;
+    if (!gorunur(ov) || window.innerWidth < MASA || (ATLA && ov.matches(ATLA))) { if (durum.has(md)) sifirla(md); return; }
+    const enCok = Math.floor(window.innerWidth * ORAN);
+    let st = durum.get(md); if (!st) { st = { w: 0, dar: false }; durum.set(md, st); }
+    const yok = new Set(); let dar = st.dar;
+    for (let tur = 0; tur < 6; tur++) {
+      ayarla(md, st.w, enCok);
+      let w = md.offsetWidth, bastan = false; const ilk = w, onc = new Map();
+      for (let i = 0; i < 10; i++) {
+        const L = eksikler(md, yok);
+        /* pencere büyüdüğü halde eksiği azalmayan kutu pencere eniyle ilgili değildir → sayılmaz, baştan ölçülür */
+        const direncli = L.filter((x) => { const o = onc.get(x.k); return o && w - o.w >= 6 && x.d >= o.d - 0.5; });
+        if (direncli.length) { direncli.forEach((x) => yok.add(x.k)); bastan = true; break; }
+        if (!L.length) break;
+        if (w >= enCok) { if (L.some((x) => x.sert && x.el.tagName !== "INPUT" && x.el.tagName !== "SELECT")) dar = true; break; }
+        let ist = 0;
+        for (const x of L) { const o = onc.get(x.k); const hiz = o && w > o.w ? Math.min(1, Math.max(0.15, (o.d - x.d) / (w - o.w))) : (o ? o.hiz : 1); ist = Math.max(ist, x.d / hiz); onc.set(x.k, { d: x.d, w, hiz }); }
+        w = Math.min(enCok, w + Math.ceil(ist) + 1);
+        ayarla(md, w, enCok);
+      }
+      if (bastan) continue;
+      if (w > ilk && w > st.w) st.w = w;
+      break;
+    }
+    ayarla(md, st.w, enCok);
+    if (md.classList.contains("akilli-dar") !== dar) md.classList.toggle("akilli-dar", dar);
+    st.dar = dar;
+    const g = gozcu.get(ov); if (g) g.takeRecords();
+  }
+  function iste(ov) {
+    kuyruk.add(ov);
+    if (!kare) kare = requestAnimationFrame(() => { kare = 0; const K = Array.from(kuyruk); kuyruk.clear(); K.forEach((o) => { try { sigdir(o); } catch (e) { console.warn("Akıllı pencere:", e); } }); });
+  }
+  function izle(ov) {
+    if (gozcu.has(ov) || (ATLA && ov.matches(ATLA))) return;
+    /* pencerenin kendi sınıfı değiştiyse (kapandı/açıldı, kip değişti) eski genişlik unutulur */
+    const g = new MutationObserver((R) => { if (R.some((x) => x.type === "attributes" && x.target === ov)) { const md = kutu(ov); if (md) sifirla(md); } iste(ov); }); gozcu.set(ov, g);
+    g.observe(ov, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ["class", "hidden", "open"] });
+    ov.addEventListener("load", () => { surum++; iste(ov); }, true);   // sonradan gelen fotoğraf
+    ov.addEventListener("input", (e) => { if (e.target && e.target.tagName === "INPUT") yazilan.add(e.target); }, true);
+    ov.addEventListener("focusout", (e) => { if (e.target) yazilan.delete(e.target); }, true);
+    iste(ov);
+  }
+  function hepsi() { surum++; document.querySelectorAll(OV).forEach((ov) => { const md = kutu(ov); if (md) sifirla(md); izle(ov); iste(ov); }); }
+  function baslat() {
+    document.querySelectorAll(OV).forEach(izle);
+    new MutationObserver((R) => { for (const r of R) r.addedNodes.forEach((n) => { if (n.nodeType === 1 && n.matches(OV)) izle(n); }); }).observe(document.body, { childList: true });
+    let t = 0; window.addEventListener("resize", () => { clearTimeout(t); t = setTimeout(hepsi, 120); });
+    try { document.fonts && document.fonts.ready.then(() => { surum++; document.querySelectorAll(OV).forEach(iste); }); } catch (_) {}
+  }
+  if (document.body) baslat(); else document.addEventListener("DOMContentLoaded", baslat);
+  window.v47Olc = (ov) => sigdir(ov);
+})();
+</script>
+<style id="v47-pencere-css">
+/* v47: ekran yetmezse tablo yazıları alt satıra iner (yana kaydırma yerine) */
+.modal.akilli-dar table.v98-t td{white-space:normal}
+/* telefon/tablet kart görünümü: uzun ürün adı kesilmez, alt satıra iner */
+@media screen and (max-width:1024px){table.v98-t{white-space:normal;overflow:visible;text-overflow:clip}}
+/* Siparişi Düzenle: sağ sütun (kalem listesi) gizliyken form pencerenin tamamını kullanır; pencere içeriği kadar olur */
+@media screen and (min-width:1025px){
+ #orderModal:not(.v107) .order-entry-layout:has(> #orderEntryRight[style*="display: none"]){grid-template-columns:minmax(0,1fr)}
+ #orderModal:not(.v107) .modal--order-form:has(#orderEntryRight[style*="display: none"]){width:min(760px,calc(100vw - 32px))}
+}
+</style>
 </body>
 </html>
