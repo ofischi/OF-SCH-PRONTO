@@ -2458,6 +2458,15 @@ table.v98-t{width:100%;border-collapse:collapse;font-size:13px}
           <span>Kumaş Kodu</span>
           <input type="text" id="f_fabricCode" list="dl_fabrics">
         </label>
+        <label class="form-field hidden-v105" id="f_olcuWrap">
+          <span>Ölçü</span>
+          <input type="text" id="f_olcu" maxlength="80" placeholder="Örn. 160X80">
+        </label>
+        <label class="form-field hidden-v105" id="f_yonWrap">
+          <span>Yön</span>
+          <input type="text" id="f_yon" maxlength="20" list="dl_yon" placeholder="Örn. SAĞ">
+          <datalist id="dl_yon"><option value="SAĞ"><option value="SOL"></datalist>
+        </label>
         <div class="form-field form-field--wide hidden-v105" id="f_sartWrap">
           <span>Teslim Şartları <small id="f_sartKilit" class="v105-kilit"></small></span>
           <div class="v105-sart">
@@ -2899,7 +2908,7 @@ const FIELD_MAP = {
     orderDate: "order_date", deliveryDate: "delivery_date",
     colorCode: "color_code", fabricCode: "fabric_code",
     stockDeducted: "stock_deducted", stockDeductedQty: "stock_deducted_qty",
-    createdAt: "created_at", teklifId: "teklif_id", teslimYeri: "teslim_yeri", sshAnaId: "ssh_ana_id"
+    createdAt: "created_at", teklifId: "teklif_id", teslimYeri: "teslim_yeri", sshAnaId: "ssh_ana_id", teklifNo: "teklif_no"
   },
   products: { createdAt: "created_at" },
   customers: { taxNo: "tax_no", createdAt: "created_at" },
@@ -4085,7 +4094,8 @@ function getFilteredOrders() {
       v106Ara(o.customer).includes(q) ||
       v106Ara(o.product).includes(q) ||
       v106Ara(o.supplier).includes(q) ||
-      v106Ara(orderNo(o)).includes(q)
+      v106Ara(orderNo(o)).includes(q) ||
+      (!!v48No(o) && v106Ara(v48No(o)).includes(q))
     );
   }
   return list;
@@ -5044,6 +5054,7 @@ function getOrderDraftFromForm() {
     customer, phone, address, supplier, product, quantity, orderDate, deliveryDate,
     colorCode: sanitizeText(document.getElementById("f_colorCode").value,60),
     fabricCode: sanitizeText(document.getElementById("f_fabricCode").value,60),
+    ...v48FormAlan(),
     shipmentType: v105Acik ? "" : document.getElementById("f_shipmentType").value,
     ...(v105Acik ? v105FormSart(null) : {}),
     salePrice, purchasePrice, vatRate,
@@ -5057,7 +5068,7 @@ function getOrderDraftFromForm() {
 }
 
 function clearOrderLineFields() {
-  ["f_supplier","f_product","f_quantity","f_colorCode","f_fabricCode","f_salePrice","f_purchasePrice","f_description"].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=""; });
+  ["f_supplier","f_product","f_quantity","f_colorCode","f_fabricCode","f_olcu","f_yon","f_salePrice","f_purchasePrice","f_description"].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=""; });
   resetOrderPhotoState();
   document.getElementById("f_status").value = "Beklemede";
   renderOrderPriceSummary();
@@ -5111,6 +5122,7 @@ function editOrderDraftItem(index) {
   document.getElementById("f_deliveryDate").value=item.deliveryDate||"";
   document.getElementById("f_colorCode").value=item.colorCode||"";
   document.getElementById("f_fabricCode").value=item.fabricCode||"";
+  document.getElementById("f_olcu").value=item.olcu||""; document.getElementById("f_yon").value=item.yon||"";
   document.getElementById("f_shipmentType").value=item.shipmentType||"Ofischi Sevkiyat";
   if(v105Acik){ document.getElementById("f_montaj").value=item.montaj||""; document.getElementById("f_nakliye").value=item.nakliye||""; document.getElementById("f_teslimYeri").value=item.teslimYeri||""; }
   document.getElementById("f_salePrice").value=item.salePrice||"";
@@ -5197,6 +5209,7 @@ async function performSaveOrderDraftBatch(items) {
       const order={
         customer:item.customer,supplier:item.supplier,product:item.product,quantity:item.quantity,
         orderDate:item.orderDate,deliveryDate:item.deliveryDate,colorCode:item.colorCode,fabricCode:item.fabricCode,status:item.status,
+        ...(v48Acik ? { olcu:item.olcu||null, yon:item.yon||null } : {}),
         ...(v105Acik ? { montaj:item.montaj||null, nakliye:item.nakliye||null, teslimYeri:item.teslimYeri||null } : {}),
         description:withOrderMetadata(item.description,item.shipmentType,pricingMeta,[],item.status==="Teslim Edildi"?todayISO():"")
       };
@@ -5245,7 +5258,9 @@ function openOrderModal(id) {
   document.getElementById("f_deliveryDate").value = order ? order.deliveryDate : "";
   document.getElementById("f_colorCode").value = order ? order.colorCode || "" : "";
   document.getElementById("f_fabricCode").value = order ? order.fabricCode || "" : "";
-  document.getElementById("f_description").value = order ? getOrderDescription(order) : "";
+  document.getElementById("f_olcu").value = order ? v48Olcu(order) : "";
+  document.getElementById("f_yon").value = order ? v48Yon(order) : "";
+  document.getElementById("f_description").value = order ? (v48Acik ? v48Not(order) : getOrderDescription(order)) : "";
   document.getElementById("f_shipmentType").value = order ? (getShipmentType(order) || "Ofischi Sevkiyat") : "Ofischi Sevkiyat";
   document.getElementById("f_status").value = order ? order.status : "Beklemede";
   v105FormDoldur(order);
@@ -5284,6 +5299,7 @@ async function saveOrderFromForm(allowWarnings = false, allowConflict = false) {
     deliveryDate: sanitizeDate(document.getElementById("f_deliveryDate").value),
     colorCode: sanitizeText(document.getElementById("f_colorCode").value, 60),
     fabricCode: sanitizeText(document.getElementById("f_fabricCode").value, 60),
+    ...v48FormAlan(),
     description: "",
     status: oldOrder && oldOrder.status === "SSH" ? "SSH" : sanitizeStatus(document.getElementById("f_status").value)
   });
@@ -5460,7 +5476,10 @@ function openDetailModal(id) {
       <div class="detail-item"><span class="detail-label">Teslim Edildiği Tarih</span><span class="detail-value">${(order.status === "Teslim Edildi" || order.status === "SSH") ? (getDeliveredAt(order) ? formatDate(getDeliveredAt(order)) : "Kayıtlı değil") : "-"}</span></div>
       <div class="detail-item"><span class="detail-label">Renk Kodu</span><span class="detail-value">${escapeHtml(order.colorCode) || "-"}</span></div>
       <div class="detail-item"><span class="detail-label">Kumaş Kodu</span><span class="detail-value">${escapeHtml(order.fabricCode) || "-"}</span></div>
-      <div class="detail-item detail-item--wide"><span class="detail-label">Açıklama</span><span class="detail-value">${escapeHtml(getOrderDescription(order)) || "-"}</span></div>
+      ${v48Olcu(order) ? `<div class="detail-item"><span class="detail-label">Ölçü</span><span class="detail-value">${escapeHtml(v48Olcu(order))}</span></div>` : ""}
+      ${v48Yon(order) ? `<div class="detail-item"><span class="detail-label">Yön</span><span class="detail-value">${escapeHtml(v48Yon(order))}</span></div>` : ""}
+      ${v48No(order) ? `<div class="detail-item"><span class="detail-label">Sipariş</span><span class="detail-value">${escapeHtml(v48No(order))}</span></div>` : ""}
+      <div class="detail-item detail-item--wide"><span class="detail-label">Açıklama</span><span class="detail-value">${escapeHtml(v48Not(order)) || "-"}</span></div>
       <div class="detail-item"><span class="detail-label">Durum</span><span class="detail-value">${statusBadgeHtml(order)}</span></div>
       ${v105DetayHtml(order)}
       ${typeof v44DetayHtml === "function" ? v44DetayHtml(order) : ""}
@@ -5672,7 +5691,7 @@ async function exportToExcel() {
   const rows = activeOrdersList().slice().sort(compareOrderDateDesc).map((o) => ({
     "Sipariş No": orderNo(o), "Müşteri": o.customer, "Tedarikçi": o.supplier, "Ürün": o.product,
     "Adet": o.quantity, "Sipariş Tarihi": formatDate(o.orderDate), "Teslim Tarihi": formatDate(o.deliveryDate),
-    "Renk Kodu": o.colorCode || "", "Kumaş Kodu": o.fabricCode || "", "Açıklama": getOrderDescription(o) || "",
+    "Renk Kodu": o.colorCode || "", "Kumaş Kodu": o.fabricCode || "", "Ölçü": v48Olcu(o), "Yön": v48Yon(o), "Sipariş": v48No(o), "Açıklama": v48Not(o) || "",
     "Durum": o.status, "Gecikti mi": isOverdue(o) ? "Evet" : "Hayır"
   }));
   if (rows.length === 0) { exportBusy = false; showToast("Aktarılacak sipariş bulunamadı."); return; }
@@ -7841,7 +7860,7 @@ function v103GeriYukle(id, tarih) {
    - SSH durumu ve parça bağı yalnızca sunucu fonksiyonlarıyla değişir (veritabanı da ayrıca korur). */
 var v105Acik = false;
 var v105NoOnbellek = null;
-var V105_SADECE_SUNUCU = new Set(["teklifId", "teklif_id", "teklif_kalem", "teklifKalem", "ssh", "sshAnaId", "ssh_ana_id", "iade_id", "iadeId", "stok_anahtar", "stok_adet"]);
+var V105_SADECE_SUNUCU = new Set(["teklifId", "teklif_id", "teklif_kalem", "teklifKalem", "ssh", "sshAnaId", "ssh_ana_id", "iade_id", "iadeId", "stok_anahtar", "stok_adet", "teklifNo", "teklif_no"]);
 const V105_TUR = ["Eksik parça", "Hasarlı", "Montaj sorunu", "Yanlış ürün", "Diğer"];
 const V105_PARCALI_TUR = ["Eksik parça", "Hasarlı", "Yanlış ürün"];
 const V105_SECIM = { montaj: { dahil: "Dahil", haric: "Hariç" }, nakliye: { dahil: "Dahil", haric: "Hariç" }, teslimYeri: { fabrika: "Fabrika", adres: "Adrese" } };
@@ -7853,6 +7872,10 @@ const V105_ETIKET = {
 async function v105Algila() {
   try { const { error } = await supa.from("orders").select("ssh_ana_id").limit(1); v105Acik = !error; } catch (_) { v105Acik = false; }
   if (v105Acik && !/ssh_ana_id/.test(STORE_COLUMNS.orders)) STORE_COLUMNS.orders += ",teklif_id,montaj,nakliye,teslim_yeri,ssh,ssh_ana_id";
+  try { const { error } = await supa.from("orders").select("olcu,yon,teklif_no").limit(1); v48Acik = !error; } catch (_) { v48Acik = false; }
+  if (v48Acik && !/teklif_no/.test(STORE_COLUMNS.orders)) STORE_COLUMNS.orders = STORE_COLUMNS.orders.replace(",updated_at", "") + ",olcu,yon,teklif_no" + (/updated_at/.test(STORE_COLUMNS.orders) ? ",updated_at" : "");
+  document.getElementById("f_olcuWrap")?.classList.toggle("hidden-v105", !v48Acik);
+  document.getElementById("f_yonWrap")?.classList.toggle("hidden-v105", !v48Acik);
   v105ArayuzKur();
 }
 function v105ArayuzKur() {
@@ -8233,7 +8256,7 @@ document.addEventListener("click", (e) => {
    Masaüstü, .exe ve mevcut siparişi düzenleme eski formu kullanır. Alanlar ve kayıt kodu aynıdır;
    yalnızca hangi alanların görüneceği adıma göre değişir. */
 const V107_ADIM = ["Müşteri", "Teslim", "Ürünler", "Özet"];
-const V107_GRUP = { 1: ["f_customer", "f_customerPhone", "f_customerAddress"], 2: ["f_orderDate", "f_deliveryDate", "f_sartWrap", "f_shipmentTypeWrap"], 3: ["f_supplier", "f_product", "f_quantity", "f_colorCode", "f_fabricCode", "f_status", "f_description", "orderPhotoBox"] };
+const V107_GRUP = { 1: ["f_customer", "f_customerPhone", "f_customerAddress"], 2: ["f_orderDate", "f_deliveryDate", "f_sartWrap", "f_shipmentTypeWrap"], 3: ["f_supplier", "f_product", "f_quantity", "f_colorCode", "f_fabricCode", "f_olcuWrap", "f_yonWrap", "f_status", "f_description", "orderPhotoBox"] };
 let v107Adim = 0;
 const v107Mod = () => !window.prontoDesktop && matchMedia("(max-width:1024px)").matches;
 const v107El = (id) => document.getElementById(id);
@@ -8354,18 +8377,18 @@ function v97Upper(v) { return String(v || "").toLocaleUpperCase(V97_LANG === "en
 /* ---------- İçerik modelleri ---------- */
 function v97ModelOrder(order, o, photo) {
   const en = o.lang === "en";
-  const L = en ? { photo: "Photo", product: "Product", color: "Color / Fabric", qty: "Qty", orderDate: "Order Date", delivery: "Delivery Date", status: "Status", supplier: "Supplier", desc: "Description", nophoto: "No photo" }
-               : { photo: "Fotoğraf", product: "Ürün", color: "Renk / Kumaş", qty: "Adet", orderDate: "Sipariş Tarihi", delivery: "Teslim Tarihi", status: "Durum", supplier: "Tedarikçi", desc: "Açıklama", nophoto: "Fotoğraf Yok" };
+  const L = en ? { photo: "Photo", product: "Product", color: "Color / Fabric", qty: "Qty", orderDate: "Order Date", delivery: "Delivery Date", status: "Status", supplier: "Supplier", desc: "Description", nophoto: "No photo", size: "Size", side: "Side", ref: "Order" }
+               : { photo: "Fotoğraf", product: "Ürün", color: "Renk / Kumaş", qty: "Adet", orderDate: "Sipariş Tarihi", delivery: "Teslim Tarihi", status: "Durum", supplier: "Tedarikçi", desc: "Açıklama", nophoto: "Fotoğraf Yok", size: "Ölçü", side: "Yön", ref: "Sipariş" };
+  const olc = v48Olcu(order), yon = v48Yon(order), not = v48Not(order), tno = v48No(order);
   const ps = V97_PHOTO[o.foto] || 88;
   return {
     kind: "tek", docNo: orderNo(order), previewTitle: orderNo(order), filename: v90PdfFileName(order),
     contact: { type: "supplier", name: order.supplier },
-    kv: [[L.orderDate, formatDate(order.orderDate)], [L.delivery, formatDate(order.deliveryDate)], [L.status, v97Txt(en ? ({ "Beklemede": "Pending", "Üretimde": "In production", "Sevkiyata Hazır": "Ready to ship", "Teslim Edildi": "Delivered", "SSH": "After-sales service", "İptal": "Cancelled", "Gecikti": "Delayed" }[order.status] || order.status) : order.status)], [L.supplier, v97Txt(order.supplier)]].concat(v105Acik ? [[en ? "Terms" : "Teslim Şartları", v105SartMetni(order, { en })]] : []),
+    kv: [[L.orderDate, formatDate(order.orderDate)], [L.delivery, formatDate(order.deliveryDate)], [L.status, v97Txt(en ? ({ "Beklemede": "Pending", "Üretimde": "In production", "Sevkiyata Hazır": "Ready to ship", "Teslim Edildi": "Delivered", "SSH": "After-sales service", "İptal": "Cancelled", "Gecikti": "Delayed" }[order.status] || order.status) : order.status)], [L.supplier, v97Txt(order.supplier)]].concat(tno ? [[L.ref, tno]] : [], v105Acik ? [[en ? "Terms" : "Teslim Şartları", v105SartMetni(order, { en })]] : []),
     sections: [
-      { table: { cols: [{ h: L.photo, w: ps + 10 }, { h: L.product, w: "*" }, { h: L.color, w: "*" }, { h: L.qty, w: 50, align: "r" }],
-        rows: [[{ img: photo || "", size: ps, alt: L.nophoto }, { text: v97Txt(order.product), bold: true }, v97Txt([order.colorCode, order.fabricCode].filter(Boolean).join(" / ")), { text: v97Txt(order.quantity), bold: true }]] } },
-      { note: { title: L.desc, text: v97Txt(getOrderDescription(order)) } }
-    ].concat(v105PdfNot(order, en))
+      { table: { cols: [{ h: L.photo, w: ps + 10 }, { h: L.product, w: "*" }].concat(olc ? [{ h: L.size, w: "auto" }] : [], yon ? [{ h: L.side, w: "auto" }] : [], [{ h: L.color, w: "*" }, { h: L.qty, w: 50, align: "r" }]),
+        rows: [[{ img: photo || "", size: ps, alt: L.nophoto }, { text: v97Txt(order.product), bold: true }].concat(olc ? [olc] : [], yon ? [yon] : [], [v97Txt([order.colorCode, order.fabricCode].filter(Boolean).join(" / ")), { text: v97Txt(order.quantity), bold: true }])] } }
+    ].concat(not ? [{ note: { title: L.desc, text: not } }] : [], v105PdfNot(order, en))
   };
 }
 function v97ModelGroup(group, orders, fot, o) {   // v46: fotoğraflı; ölçü · yön · not; SSH etiketi; müşteri sütunu yok (başlıkta)
@@ -8428,8 +8451,11 @@ function v97ModelShipment(selected) {
   };
 }
 /* v45: Teslim Formu — fotoğraflı; normal ürünler ve SSH parçaları ayrı bölümde; ölçü · yön · kalem notu */
-const v45Desc = (o, ad) => { const m = String((o && o.description) || "").match(new RegExp(ad + ":\\s*([^·\\[\\]]+)")); return m ? m[1].trim() : ""; };
+const v45Desc = (o, ad) => (ad === "Ölçü" ? v48Olcu(o) : ad === "Yön" ? v48Yon(o) : v48Parca(o, ad));
 function v45Not(o) {   // açıklamadan iç işaretler, ölçü/yön ve "Teklif 0001" eki temizlenir
+  return v48Not(o);
+}
+function v48NotEski(o) {
   return getOrderDescription(o).split("·").map((x) => x.trim()).filter((x) => x && !/^(Ölçü|Yön):/i.test(x) && !/^Teklif\s+\S+$/i.test(x) && !/^\[\[/.test(x)).join(" · ");
 }
 function v45SshParca(o) { return !!o && (!!o.sshAnaId || (typeof v105EskiSsh === "function" && v105EskiSsh(o))); }
@@ -11489,7 +11515,7 @@ const v44SecimIdler = (er) => Array.from(String(er.message || "").matchAll(/PR-(
 
 /* ---------- katalog: fotoğraf + değişimde yeni ürün (aynı ürünün varyantları / fotoğraflı arama) ---------- */
 const v44K = (x) => v25Ky(String(x || ""));
-const v44Desc = (o, ad) => { const m = String((o && o.description) || "").match(new RegExp(ad + ":\\s*([^·\\[\\]]+)")); return m ? m[1].trim() : ""; };
+const v44Desc = (o, ad) => v45Desc(o, ad);
 function v44Esle(o) {   // siparişin katalogdaki karşılığı (Teklif'ten gelen ürün adı = kategori model modül)
   if (!o || typeof v25Kat === "undefined" || !v25Kat) return null;
   const p = v44K(o.product), renk = v44K(o.colorCode), olcu = v44Desc(o, "Ölçü"), yon = v44Desc(o, "Yön");
@@ -11890,6 +11916,29 @@ body:has(.modal-overlay:not(.hidden)) .v45-fab{display:none}
 @media (max-width:900px){.v45-fab{bottom:calc(84px + env(safe-area-inset-bottom,0px));right:16px}}
 .v45-ssh{display:inline-block;margin-left:6px;padding:1px 5px;border-radius:4px;background:#C0392B;color:#fff;font-size:10px;font-weight:800;vertical-align:1px}
 </style>
+<script id="v48-olcu-js">
+/* ===== v48: Ölçü · Yön · Sipariş no ayrı alanlarda (sunucu: pronto-olcu-yon.sql) =====
+   Sütunlar kuruluysa (v48Acik) alanlardan okunur ve formdan yazılır. Kurulu değilse eski açıklama metninden ayrıştırılır;
+   böylece SQL çalıştırılmadan önce de ekran ve PDF aynı görünür. Yalnız okuma; ek istek yok (algılama açılıştaki kontrole eklendi). */
+var v48Acik;   // açılıştaki kontrol (v105Algila) doldurur
+function v48Parca(o, ad) {
+  const m = String((o && o.description) || "").match(new RegExp("(?:^|·)\\s*" + ad + ":\\s*([^·\\[\\]]+)"));
+  return m ? m[1].trim() : "";
+}
+const v48YonBos = (y) => ["", "yok", "—", "-"].includes(String(y || "").trim().toLocaleLowerCase("tr-TR"));
+function v48Olcu(o) { return String((o && o.olcu) || "").trim() || v48Parca(o, "Ölçü"); }
+function v48Yon(o) { const y = String((o && o.yon) || "").trim() || v48Parca(o, "Yön"); return v48YonBos(y) ? "" : y; }
+function v48No(o) {   // PRONTO Teklif'teki sipariş numarası; ekranda "Sipariş 00067" olarak geçer
+  if (o && o.teklifNo) return String(o.teklifNo).trim();
+  const m = getOrderDescription(o).match(/(?:^|·)\s*Teklif\s+(\S+)\s*(?=$|·)/);
+  return m ? m[1] : "";
+}
+function v48Not(o) { return typeof v48NotEski === "function" ? v48NotEski(o) : getOrderDescription(o); }
+function v48FormAlan() {
+  if (!v48Acik) return {};
+  return { olcu: sanitizeText(document.getElementById("f_olcu").value, 80) || null, yon: sanitizeText(document.getElementById("f_yon").value, 20) || null };
+}
+</script>
 <script id="v47-pencere-js">
 /* ===== v47: AKILLI PENCERE =====
    Pencere içeriğine göre genişler: sığmayan tablo, yana taşan kutu, tek satırda kesilen yazı ve
