@@ -2156,6 +2156,7 @@ table.v98-t{width:100%;border-collapse:collapse;font-size:13px}
             <input type="text" id="v25Ara" maxlength="100" placeholder="Kategori, model, renk, ölçü veya kod ara…" autocomplete="off">
           </div>
           <button type="button" class="btn btn-secondary" id="v36KatBtn">Kategoriler</button>
+          <button type="button" class="btn btn-secondary" id="v49RenkBtn">Renk kopyaları</button>
         </div>
         <p class="v101-info">Bu liste <b>PRONTO Teklif</b>'in ürün kataloğudur. Yeni ürün Teklif'ten eklenir, burada hemen görünür; buradan eklenen model fotoğrafı Teklif'te de hemen görünür. Kategori / model adı <b>Kategoriler</b>'den değişir; fiyat Teklif'ten.</p>
         <div id="v25Liste"></div>
@@ -9251,7 +9252,7 @@ async function v25KatYukle(force) {
   v25KatP = (async () => {
     if (!v25Kat) {
       const c = await cacheGet(V25_KAT_C);
-      v25Kat = { rows: new Map(((c && c.rows) || []).map((r) => [r.id, r])), foto: (c && c.foto) || {}, son: (c && c.son) || null, gizli: (c && Array.isArray(c.gizli)) ? c.gizli : [] };
+      v25Kat = { rows: new Map(((c && c.rows) || []).map((r) => [r.id, r])), foto: (c && c.foto) || {}, son: (c && c.son) || null, gizli: (c && Array.isArray(c.gizli)) ? c.gizli : [], renkler: (c && c.renkler && typeof c.renkler === "object") ? c.renkler : {} };
     }
     if (!v25Foto) { const f = await cacheGet(V25_FOTO_C); v25Foto = (f && f.map) || {}; }
     if (!supa) return v25Kat;
@@ -9266,8 +9267,9 @@ async function v25KatYukle(force) {
     Object.assign(v25Kat.foto, d.fotolar || {});
     for (const k of d.silinen_foto || []) { delete v25Kat.foto[k]; delete v25Foto[k]; }
     if (Array.isArray(d.gizli)) v25Kat.gizli = d.gizli.map(String).slice(0, 500);
+    if (d.renkler && typeof d.renkler === "object") for (const [k, L] of Object.entries(d.renkler)) if (Array.isArray(L)) v25Kat.renkler[v25Ky(k)] = L.map((x) => v25Up(x)).filter(Boolean).slice(0, 300);   // v49: kategori renk önerileri
     if (d.son) v25Kat.son = d.son;
-    cachePut(V25_KAT_C, { rows: Array.from(v25Kat.rows.values()), foto: v25Kat.foto, son: v25Kat.son, gizli: v25Kat.gizli || [] });
+    cachePut(V25_KAT_C, { rows: Array.from(v25Kat.rows.values()), foto: v25Kat.foto, son: v25Kat.son, gizli: v25Kat.gizli || [], renkler: v25Kat.renkler || {} });
     return v25Kat;
   })().finally(() => { v25KatP = null; });
   return v25KatP;
@@ -9388,14 +9390,16 @@ function v25Secici(host, opt) {
     const R = rows(), kk = v25Ky(v.kategori), mk = v25Ky(v.model);
     const kat = R.filter((r) => v25Ky(r.kategori) === kk), mod = kat.filter((r) => v25Ky(r.model) === mk);
     const gz = v36Gizli(), L = { kategori: uniq(R.filter((r) => !gz.has(v25Ky(r.kategori))).map((r) => r.kategori)), model: uniq(kat.map((r) => r.model)), modul: uniq(mod.map((r) => r.modul)),
-      olcu: uniq((mod.length ? mod : kat).map((r) => r.olcu)), renk: uniq((mod.length ? mod : kat).map((r) => r.renk)), yon: uniq(["SOL", "SAĞ"].concat(R.map((r) => r.yon))) };
+      olcu: uniq((mod.length ? mod : kat).map((r) => r.olcu)), renk: uniq((mod.length ? mod : kat).map((r) => r.renk).concat((v25Kat && v25Kat.renkler && v25Kat.renkler[kk]) || [])), yon: uniq(["SOL", "SAĞ"].concat(R.map((r) => r.yon))) };
     for (const [k] of V25_ALAN) { const dl = host.querySelector(`#${id}-${k}`); if (dl) dl.innerHTML = L[k].slice(0, 300).map((x) => `<option value="${escapeHtml(x)}">`).join(""); }
   };
   const tam = () => { const a = v25Anahtar(v); return rows().find((r) => v25Anahtar(r) === a) || null; };
+  const temel = () => { const a = v49Temel(v); return rows().find((r) => v49Temel(r) === a) || null; };   // v49: renk hariç aynı ürün
   const durum = () => {
     const d = host.querySelector("[data-v25d]"), t = tam();
     if (!v25Ky(v.kategori) || !v25Ky(v.model)) { d.className = "v25-durum"; d.textContent = "Kategori ve model seçin."; }
     else if (t) { d.className = "v25-durum var"; d.innerHTML = `<b>Katalogda var:</b> ${escapeHtml(t.kod || "")} — ${escapeHtml(t.kategori)} / ${escapeHtml(t.model)} / ${escapeHtml(v25VarAd(t))}`; }
+    else if (temel()) { const b = temel(); d.className = "v25-durum var"; d.innerHTML = `<b>Katalogda var:</b> ${escapeHtml(b.kod || "")} — ${escapeHtml(b.kategori)} / ${escapeHtml(b.model)}. <b>${escapeHtml(v25Up(v.renk))}</b> bu ürünün renk seçeneği olarak eklenir; yeni ürün açılmaz.`; }
     else {
       const modelVar = rows().some((r) => v25Ky(r.kategori) === v25Ky(v.kategori) && v25Ky(r.model) === v25Ky(v.model));
       d.className = "v25-durum yeni"; d.innerHTML = `<b>Yeni ${modelVar ? "çeşit" : "ürün"}:</b> kaydedilince PRONTO Teklif kataloğuna da eklenir.`;
@@ -9406,7 +9410,7 @@ function v25Secici(host, opt) {
   host.addEventListener("change", (e) => { const k = e.target.dataset && e.target.dataset.v25k; if (!k) return; v[k] = e.target.value; listeler(); durum(); });
   const api = {
     deger: () => { const o = {}; for (const [k] of V25_ALAN) o[k] = v25Up(v[k]); return o; },
-    tam, gecerli: () => !!v25Ky(v.kategori) && !!v25Ky(v.model),
+    tam, temel, gecerli: () => !!v25Ky(v.kategori) && !!v25Ky(v.model),
     fotoAnahtar: () => v25FotoBul(v.kategori, v.model, v.modul),
     yenile: () => { listeler(); durum(); }, odak: () => inp("kategori") && inp("kategori").focus()
   };
@@ -9458,7 +9462,8 @@ async function v25YeniAc() {
   const S = v25Secici(m.$("#v25SecHost"), { onChange: (api) => {
     kirli = true; hata.textContent = "";
     const fk = api.fotoAnahtar(), t = api.tam();
-    btn.disabled = !api.gecerli() || !!t; btn.textContent = t ? "Zaten katalogda" : "Kataloğa Ekle";
+    const tm = !t && api.temel();
+    btn.disabled = !api.gecerli() || !!t; btn.textContent = t ? "Zaten katalogda" : tm ? "Renk seçeneği olarak ekle" : "Kataloğa Ekle";
     if (fk) { sec.style.display = "none"; sil.style.display = "none"; bilgi.textContent = "Bu modelin fotoğrafı katalogda var."; if (son !== fk) { son = fk; thGoster(""); v25FotoIste(fk, (v) => { if (son === fk) thGoster(v); }); } }
     else { son = null; sec.style.display = api.gecerli() ? "" : "none"; bilgi.textContent = api.gecerli() ? "Bu modelin fotoğrafı yok. İsterseniz ekleyin (Teklif'te de görünür)." : ""; thGoster(foto); sil.style.display = foto ? "" : "none"; sec.textContent = foto ? "Fotoğrafı değiştir" : "Model fotoğrafı seç"; }
   } });
@@ -9473,11 +9478,11 @@ async function v25YeniAc() {
       const { data, error } = await supa.rpc("pronto_katalog_ekle", { p_urun: S.deger(), p_foto: !S.fotoAnahtar() && foto ? foto : null });
       if (error) throw error;
       const r = data || {}, u = r.urun || {};
-      if (u.id) v25Kat.rows.set(u.id, u);
+      v49KatYerel(r);
       if (r.foto === "eklendi" && r.foto_anahtar) { const at = new Date().toISOString(); v25Kat.foto[r.foto_anahtar] = at; v25Foto[r.foto_anahtar] = { at, v: foto }; cachePut(V25_FOTO_C, { map: v25Foto }); }
       cachePut(V25_KAT_C, { rows: Array.from(v25Kat.rows.values()), foto: v25Kat.foto, son: v25Kat.son, gizli: v25Kat.gizli || [] });
       m.close();
-      showToast(r.yeni ? `${u.kod || "Ürün"} PRONTO Teklif kataloğuna eklendi.` : `Bu ürün zaten katalogda (${u.kod || ""}).`);
+      showToast(r.yeni ? `${u.kod || "Ürün"} PRONTO Teklif kataloğuna eklendi.` : r.renk_yeni ? `${u.kod || "Ürün"} katalogda var; ${u.renk || "renk"} renk seçeneği olarak eklendi.` : `Bu ürün zaten katalogda (${u.kod || ""}).`);
       if (currentView === "products" && v25Tab === "kat") v25Ciz(false);
     } catch (er) { btn.disabled = false; btn.textContent = "Kataloğa Ekle"; hata.textContent = "Eklenemedi: " + v25Hata(er); }
   });
@@ -9804,9 +9809,9 @@ async function v26FormAc(id) {
       if (error) throw error;
       const r = data && data.kayit; v26Al(r);
       const k = data && data.katalog;
-      if (k && k.urun && k.urun.id && v25Kat) { v25Kat.rows.set(k.urun.id, k.urun); if (k.foto === "eklendi" && p.foto) { const fk2 = v25FotoKey(k.urun.kategori, k.urun.model, k.urun.modul), at = new Date().toISOString(); v25Kat.foto[fk2] = at; v25Foto[fk2] = { at, v: p.foto }; cachePut(V25_FOTO_C, { map: v25Foto }); } cachePut(V25_KAT_C, { rows: Array.from(v25Kat.rows.values()), foto: v25Kat.foto, son: v25Kat.son }); }
+      if (k && k.urun && k.urun.id && v25Kat) { v49KatYerel(k); if (k.foto === "eklendi" && p.foto) { const fk2 = v25FotoKey(k.urun.kategori, k.urun.model, k.urun.modul), at = new Date().toISOString(); v25Kat.foto[fk2] = at; v25Foto[fk2] = { at, v: p.foto }; cachePut(V25_FOTO_C, { map: v25Foto }); } cachePut(V25_KAT_C, { rows: Array.from(v25Kat.rows.values()), foto: v25Kat.foto, son: v25Kat.son }); }
       m.close();
-      showToast(e ? `${r.no} güncellendi.` : `${r.no} kaydedildi${k && k.yeni ? " — yeni ürün Teklif kataloğuna da eklendi" : ""}.`);
+      showToast(e ? `${r.no} güncellendi.` : `${r.no} kaydedildi${k && k.yeni ? " — yeni ürün Teklif kataloğuna da eklendi" : k && k.renk_yeni ? " — renk, katalogdaki ürünün seçeneklerine eklendi" : ""}.`);
       try { refreshDatalists(true); } catch (_) {}
       if (currentView === "purchase") v26Ciz(false);
     } catch (er2) { btn.disabled = false; btn.textContent = e ? "Değişiklikleri Kaydet" : "Satın Almayı Kaydet"; hata.textContent = "Kaydedilemedi: " + v26Hata(er2); }
@@ -11916,6 +11921,63 @@ body:has(.modal-overlay:not(.hidden)) .v45-fab{display:none}
 @media (max-width:900px){.v45-fab{bottom:calc(84px + env(safe-area-inset-bottom,0px));right:16px}}
 .v45-ssh{display:inline-block;margin-left:6px;padding:1px 5px;border-radius:4px;background:#C0392B;color:#fff;font-size:10px;font-weight:800;vertical-align:1px}
 </style>
+<script id="v49-renk-js">
+/* ===== v49: Renk / kumaş / deri ürünü çoğaltmasın (sunucu: pronto-katalog-renk.sql) =====
+   Katalog ürünü = kategori + model + modül + ölçü + yön. Renk ürünün seçeneğidir (Teklif'teki renk önerileri).
+   Renk kopyaları: liste tek okuma; birleştirme tek istek (sunucu önce yedek alır, kopyayı gizler, arşive yazar). */
+/* sunucu cevabını yerel kataloğa işler: yeni ürünse eklenir; mevcut ürüne yeni renkse yalnız renk önerisine eklenir
+   (ürün satırının kendi rengi değişmez — dönen urun.renk istenen renktir) */
+function v49KatYerel(k) {
+  if (!k || !k.urun || !k.urun.id || !v25Kat) return;
+  if (k.yeni || !v25Kat.rows.has(k.urun.id)) v25Kat.rows.set(k.urun.id, k.urun);
+  const kk = v25Ky(k.urun.kategori), rk = v25Up(k.urun.renk);
+  if (rk) { v25Kat.renkler = v25Kat.renkler || {}; const L = v25Kat.renkler[kk] || []; if (!L.some((x) => v25Ky(x) === v25Ky(rk))) v25Kat.renkler[kk] = [rk].concat(L).slice(0, 300); }
+}
+const v49Temel = (r) => ["kategori", "model", "modul", "olcu", "yon"].map((k) => v25Ky(r && r[k])).join("|");
+async function v49RenkKopya() {
+  if (!supa) { showToast("İnternet bağlantısı gerekli."); return; }
+  let G = [];
+  const m = v98Ov(`<div class="modal-head"><h2>Renk kopyaları</h2><button class="icon-btn" data-x aria-label="Kapat">✕</button></div><div class="modal-body">
+    <p class="v36-not">Aynı ürünün yalnız <b>rengi / kumaşı / derisi</b> farklı olduğu için katalogda ayrı satır olmuş kayıtlar. <b>Birleştir</b> deyince işaretli kopyalar Teklif'in ürün listesinden <b>gizlenir</b> (silinmez, tam hali saklanır); renkleri ürünün renk seçeneklerine eklenir. Satın alma, stok, teklif ve siparişler bozulmaz. İşlemden önce otomatik yedek alınır. Liste fiyatı girilmiş ürünler Teklif'te bilerek ayrı açılmış sayılır ve birleştirilmez.</p>
+    <div class="v36-l" id="v49L"><div class="v98-s">Yükleniyor…</div></div></div>`, true);
+  const ciz = () => {
+    m.$("#v49L").innerHTML = G.length ? G.map((g, gi) => {
+      const ad = [g.kategori, g.model, g.modul, g.olcu, g.yon].filter(Boolean).join(" / ");
+      const sec = g.urunler.filter((u) => !u.kalacak && !u.fiyatli).length;
+      return `<div class="v36-r" style="display:block"><div class="v36-a" style="margin-bottom:6px"><b>${escapeHtml(ad)}</b><span>${g.urunler.length} kayıt · ${sec} kopya birleştirilebilir</span></div>
+        ${g.urunler.map((u) => `<label style="display:flex;gap:8px;align-items:center;padding:3px 0;font-size:13px">
+          <input type="checkbox" data-g="${gi}" data-u="${escapeHtml(u.id)}" ${u.kalacak || u.fiyatli ? "disabled" : "checked"}>
+          <span style="min-width:84px;color:var(--color-muted,#6b7280)">${escapeHtml(u.kod || "")}</span><b>${escapeHtml(u.renk || "(renksiz)")}</b>
+          ${u.kalacak ? `<span class="v36-p">Kalacak ürün</span>` : u.fiyatli ? `<span class="v36-p">Fiyatlı — ayrı kalır</span>` : `<span class="v36-p">${u.kaynak === "siparis" ? "Sipariş'ten eklenmiş" : "Teklif'te açılmış"}</span>`}</label>`).join("")}
+        <div style="margin-top:6px"><button type="button" class="btn btn-primary" data-bir="${gi}" ${sec ? "" : "disabled"}>Birleştir</button></div></div>`;
+    }).join("") : `<div class="v98-s">Renk yüzünden çoğalmış ürün yok.</div>`;
+  };
+  const yukle = async () => {
+    try { G = (await v36Rpc("pronto_katalog_renk_kopya", {})) || []; ciz(); }
+    catch (e) { const t = String((e && (e.message || e.code)) || ""); m.$("#v49L").innerHTML = `<div class="v98-warn">${escapeHtml(/renk_kopya|schema cache|Could not find|PGRST202/i.test(t) ? "pronto-katalog-renk.sql henüz kurulmamış." : v36Hata(e))}</div>`; }
+  };
+  m.ov.addEventListener("click", async (e) => {
+    const b = e.target.closest("[data-bir]"); if (!b) return;
+    const g = G[Number(b.dataset.bir)]; if (!g) return;
+    const kalan = (g.urunler.find((u) => u.kalacak) || {}).id;
+    const ids = Array.from(m.ov.querySelectorAll(`input[data-g="${b.dataset.bir}"]:checked:not(:disabled)`)).map((x) => x.dataset.u);
+    if (!kalan || !ids.length) return showToast("Birleştirilecek kopya seçin.");
+    if (!(await v106Sor(`${g.model}: ${ids.length} renk kopyası Teklif'in ürün listesinden gizlenecek, renkleri bu ürünün renk seçeneklerine eklenecek.\n\nÖnce otomatik yedek alınır. Devam edilsin mi?`))) return;
+    if (!(await v32KisiSor("Katalog renk birleştirme"))) return;
+    b.disabled = true;
+    try {
+      const r = await v36Rpc("pronto_katalog_renk_birlestir", { p_kalan: kalan, p_gizle: ids });
+      showToast(`${Number(r && r.gizlenen) || 0} kopya birleştirildi.`);
+      await v25KatYukle(true).catch(() => {});
+      await yukle();
+    } catch (er) { showToast(v36Hata(er)); b.disabled = false; }
+  });
+  yukle();
+}
+(function v49Kur() {
+  const b = document.getElementById("v49RenkBtn"); if (b) b.addEventListener("click", () => v49RenkKopya());
+})();
+</script>
 <script id="v48-olcu-js">
 /* ===== v48: Ölçü · Yön · Sipariş no ayrı alanlarda (sunucu: pronto-olcu-yon.sql) =====
    Sütunlar kuruluysa (v48Acik) alanlardan okunur ve formdan yazılır. Kurulu değilse eski açıklama metninden ayrıştırılır;
